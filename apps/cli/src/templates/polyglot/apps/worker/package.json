@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
-    "lint": "oxlint",
+    "lint": "oxlint -c ../../.oxlintrc.json",
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {

@@ -1,20 +1,46 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  renderGeneratedAgentsMd,
-  renderInternalDocsIndex,
-  renderPlansIndex,
-} from '../src/render/docs/agent-context'
+import { buildRootAgentsMd } from '../src/lib/generators/agent-docs'
+import { renderInternalDocsIndex, renderPlansIndex } from '../src/render/docs/agent-context'
+import type { ProjectConfig } from '../src/types/schemas'
+
+function makeConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
+  return {
+    projectName: 'acme',
+    destinationDir: '/tmp/acme',
+    family: 'fullstack',
+    bundles: ['product'],
+    packageManager: 'bun',
+    database: 'postgres',
+    vectorDatabase: 'none',
+    orm: 'prisma',
+    backend: 'express-bun',
+    runtime: 'bun',
+    addons: [],
+    example: 'none',
+    testing: 'bun',
+    deployment: 'vercel-railway',
+    includeShowcase: false,
+    includeWorker: false,
+    includeDocker: true,
+    includeCi: true,
+    initializeGit: false,
+    installDependencies: false,
+    presets: [],
+    rustAuth: 'placeholder',
+    ...overrides,
+  }
+}
 
 describe('agent context renderers', () => {
-  it('keeps AGENTS.md short and directive', () => {
-    const content = renderGeneratedAgentsMd({ projectName: 'acme' })
-    expect(content).toContain('# Agent guide')
-    expect(content).toContain('Read this file first')
-    expect(content).toContain('.docs/README.md')
+  it('renders family-aware AGENTS.md with loading rules', () => {
+    const content = buildRootAgentsMd(makeConfig())
+    expect(content).toContain('# acme')
+    expect(content).toContain('## Loading order')
+    expect(content).toContain('docs/README.md')
     expect(content).toContain('.plans/active')
-    expect(content).not.toContain('CONTEXT.md')
-    expect(content).not.toContain('.cursor/rules')
-    expect(content).not.toContain('.claude/rules')
+    expect(content).toContain('`apps/server`')
+    expect(content).not.toContain('packages/ui')
+    expect(content).toContain('duplicate instruction directories')
   })
 
   it('renders internal docs index with loading rules', () => {

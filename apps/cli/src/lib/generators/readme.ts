@@ -1,11 +1,33 @@
 import type { ProjectConfig } from '../../types/schemas'
 import { sanitizeProjectName } from '../slug'
 
+function runScript(config: ProjectConfig, script: string): string {
+  if (config.packageManager === 'npm') return `npm run ${script}`
+  return `${config.packageManager} run ${script}`
+}
+
+function installCommand(config: ProjectConfig): string {
+  return config.packageManager === 'npm' ? 'npm install' : `${config.packageManager} install`
+}
+
 function quickStart(config: ProjectConfig): string {
   if (config.family === 'rust') {
     return 'cp .env.example .env\ncargo run'
   }
-  return 'bun install\nbun dev'
+  const devCommand = config.packageManager === 'bun' ? 'bun dev' : runScript(config, 'dev')
+  if (
+    config.backend === 'rust-axum' ||
+    config.backend === 'rust-actix' ||
+    config.backend === 'go-fiber' ||
+    config.backend === 'python-fastapi'
+  ) {
+    const webCommand =
+      config.packageManager === 'bun' ? 'bun dev:web' : runScript(config, 'dev:web')
+    const apiCommand =
+      config.packageManager === 'bun' ? 'bun dev:api' : runScript(config, 'dev:api')
+    return `${installCommand(config)}\n# Terminal 1\n${webCommand}\n# Terminal 2\n${apiCommand}`
+  }
+  return `${installCommand(config)}\n${devCommand}`
 }
 
 export function buildReadme(config: ProjectConfig): string {
@@ -26,10 +48,10 @@ ${quickStart(config)}
 
 | Command | Description |
 | ------- | ----------- |
-| \`bun dev\` | Start development (or \`cargo run\` for Rust-only) |
-| \`bun run build\` | Build all packages |
-| \`bun run lint\` | Lint |
-| \`bun run check-types\` | Typecheck |
+| \`${runScript(config, 'dev')}\` | Start development (or \`cargo run\` for Rust-only) |
+| \`${runScript(config, 'build')}\` | Build |
+| \`${runScript(config, 'lint')}\` | Lint when the scaffold includes a lint script |
+| \`${runScript(config, 'check-types')}\` | Typecheck when the scaffold includes a typecheck script |
 
 ## Project context
 

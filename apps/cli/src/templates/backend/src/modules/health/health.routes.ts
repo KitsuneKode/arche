@@ -1,6 +1,6 @@
 import { Router } from 'express'
-import { asyncHandler } from '@/common/middleware/async-handler'
-import { healthController } from './health.controller'
+import { asyncHandler } from '../../common/middleware/async-handler.js'
+import { healthController } from './health.controller.js'
 
 export const healthRoutes = Router()
 

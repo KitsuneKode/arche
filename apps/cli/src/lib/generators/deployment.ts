@@ -28,7 +28,58 @@ function backendLabel(backend: ProjectConfig['backend']): string {
   }
 }
 
+function backendUsesServiceApi(config: ProjectConfig): boolean {
+  return (
+    config.backend === 'rust-axum' ||
+    config.backend === 'rust-actix' ||
+    config.backend === 'go-fiber' ||
+    config.backend === 'python-fastapi'
+  )
+}
+
 export function renderDeploymentGuide(config: ProjectConfig): string {
+  if (config.family === 'polyglot') {
+    return `# Deployment Guide
+
+Generated for **${config.projectName}** (polyglot monorepo).
+
+## Stack
+
+- Web: \`apps/web\` (Next.js)
+- API: \`apps/api\` (Express HTTP boundary)
+- Worker: \`apps/worker\` (Bun background process)
+- Future services: \`services/*\` for Rust, Go, Python, or other runtimes
+
+## Local services
+
+\`\`\`bash
+bun install
+bun dev
+docker compose up -d redis
+\`\`\`
+
+## Docker production shape
+
+\`docker-compose.prod.yml\` defines:
+
+- \`web\` from \`apps/web/Dockerfile\`
+- \`api\` from \`apps/api/Dockerfile\`
+- \`worker\` from \`apps/worker/Dockerfile\`
+- \`redis\` for background job coordination
+
+## Rollout order
+
+1. Deploy \`api\`; verify \`/health\`.
+2. Deploy \`web\` with \`NEXT_PUBLIC_API_URL\` pointed at the API host.
+3. Deploy \`worker\` only when jobs are used; set \`REDIS_URL\`.
+4. Add non-TypeScript services under \`services/*\` only when their runtime owns a clear concern.
+
+## Notes
+
+Polyglot is intentionally service-first. Do not share hidden runtime state across services; use HTTP, queues, events, or generated client contracts.
+`
+  }
+
   if (config.family === 'convex' || config.preset === 'convex-product') {
     return `# Deployment Guide
 
@@ -65,6 +116,37 @@ No Render/Railway API host or external Postgres is required for this route.
     ? `- Local: \`docker compose\` for ${config.database === 'postgres' ? 'Postgres and ' : config.database === 'mongodb' ? 'MongoDB and ' : ''}Redis.`
     : `- Provide managed Postgres and Redis URLs in production (Neon + Upstash recommended).`
 
+  if (config.family === 'backend') {
+    return `# Deployment Guide
+
+Generated for **${config.projectName}** (${backendLabel(config.backend)} API-only service).
+
+## Stack
+
+- Backend: ${backendLabel(config.backend)}
+- Database: none by default
+- Web: none
+
+## Rollout order
+
+1. Deploy this service to Render, Railway, Fly.io, or any Node/Bun host.
+2. Set \`PORT\` and \`FRONTEND_URL\` for CORS.
+3. Verify \`/health\`.
+
+## Commands
+
+\`\`\`bash
+bun install
+bun run build
+bun run start
+\`\`\`
+
+## Local services
+
+${config.includeDocker ? '- Docker is optional for this API-only starter; add database services when you add persistence.' : '- No Docker services are generated for this API-only starter.'}
+`
+  }
+
   const serverBlock =
     config.backend === 'express-bun' || config.backend === 'hono-bun'
       ? `
@@ -94,13 +176,22 @@ See template repo \`docs/deployment-railway.md\`.
 
 ${workerLine}
 `
-      : config.backend !== 'none'
+      : backendUsesServiceApi(config)
         ? `
+## Backend hosting
+
+- Deploy \`services/api\` to Render or Railway Docker with \`services/api/Dockerfile\`.
+- Local API command: \`cargo run --manifest-path services/api/Cargo.toml\`.
+- Set \`DATABASE_URL\`, \`FRONTEND_URL\`, and \`REDIS_URL\` or \`ENABLE_REDIS=false\` on the API host.
+- Web: \`NEXT_PUBLIC_API_URL\` points at the service API URL.
+`
+        : config.backend !== 'none'
+          ? `
 ## Backend hosting
 
 Deploy \`apps/server\` to Render or Railway Docker (see template \`docs/deployment-render.md\` / \`docs/deployment-railway.md\`). Use external Neon + Upstash URLs only.
 `
-        : ''
+          : ''
 
   return `# Deployment Guide
 

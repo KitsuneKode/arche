@@ -22,13 +22,43 @@ function patchTrpcAppRouter(dest: string): string[] {
   }
 }
 
-function productBundle(dest: string): string[] {
+function backendUsesServiceApi(config: ProjectConfig): boolean {
+  return (
+    config.backend === 'rust-axum' ||
+    config.backend === 'rust-actix' ||
+    config.backend === 'go-fiber' ||
+    config.backend === 'python-fastapi'
+  )
+}
+
+function productBundle(dest: string, config: ProjectConfig): string[] {
   const files: string[] = []
   const gettingStarted = join(dest, 'docs/getting-started.md')
+  const serviceApi = backendUsesServiceApi(config)
   mkdirSync(dirname(gettingStarted), { recursive: true })
   writeFileSync(
     gettingStarted,
-    `# Getting Started
+    serviceApi
+      ? `# Getting Started
+
+This project was scaffolded with the **product** bundle using a service API backend.
+
+## Core workspaces
+
+- \`apps/web\` — Next.js frontend
+- \`services/api\` — ${config.backend === 'rust-actix' ? 'Rust Actix Web' : 'Rust Axum'} API
+
+## Commands
+
+\`\`\`bash
+bun install
+bun run dev:web
+bun run dev:api
+\`\`\`
+
+See \`AGENTS.md\` and \`.docs/architecture/generated-project.md\` for architecture details.
+`
+      : `# Getting Started
 
 This project was scaffolded with the **product** bundle (auth, database, API).
 
@@ -45,7 +75,6 @@ This project was scaffolded with the **product** bundle (auth, database, API).
 \`\`\`bash
 bun install
 bun dev
-bun run repo:doctor
 \`\`\`
 
 See \`AGENTS.md\` and \`.docs/architecture/generated-project.md\` for architecture details.
@@ -246,12 +275,12 @@ export { openai, generateText }
   return files
 }
 
-const BUNDLE_HANDLERS: Record<string, (dest: string) => string[]> = {
+const BUNDLE_HANDLERS: Record<string, (dest: string, config: ProjectConfig) => string[]> = {
   product: productBundle,
-  realtime: realtimeBundle,
-  growth: growthBundle,
-  infra: infraBundle,
-  ai: aiBundle,
+  realtime: (dest) => realtimeBundle(dest),
+  growth: (dest) => growthBundle(dest),
+  infra: (dest) => infraBundle(dest),
+  ai: (dest) => aiBundle(dest),
 }
 
 /** Apply bundle transforms — generate additive packages and configs */
@@ -261,7 +290,7 @@ export function applyBundleTransforms(destinationDir: string, config: ProjectCon
   for (const bundle of config.bundles) {
     const handler = BUNDLE_HANDLERS[bundle]
     if (handler) {
-      const files = handler(destinationDir)
+      const files = handler(destinationDir, config)
       generated.push(...files)
     }
   }

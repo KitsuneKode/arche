@@ -22,6 +22,10 @@ export function renderPnpmWorkspaceYaml(options: PnpmWorkspaceYamlOptions): stri
     ([name, version]) => `  ${quoteYamlKey(name)}: ${version}`,
   )
 
+  if (catalogLines.length === 0) {
+    return ['packages:', ...packageLines, ''].join('\n')
+  }
+
   return ['packages:', ...packageLines, '', 'catalog:', ...catalogLines, ''].join('\n')
 }
 

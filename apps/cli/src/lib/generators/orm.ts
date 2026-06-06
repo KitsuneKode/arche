@@ -718,7 +718,7 @@ export async function applyOrmTransform(
   destinationDir: string,
   config: ProjectConfig,
 ): Promise<void> {
-  if (config.orm === 'prisma' || config.orm === 'none' || config.orm === 'mongoose') return
+  if (config.orm === 'prisma' || config.orm === 'none') return
 
   if (config.orm === 'drizzle') {
     const database = config.database as 'postgres' | 'sqlite'

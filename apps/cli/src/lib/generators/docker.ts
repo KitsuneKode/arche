@@ -13,6 +13,15 @@
 import type { ProjectConfig } from '../../types/schemas'
 import { sanitizeProjectName } from '../slug'
 
+function backendUsesServiceApi(config: ProjectConfig): boolean {
+  return (
+    config.backend === 'rust-axum' ||
+    config.backend === 'rust-actix' ||
+    config.backend === 'go-fiber' ||
+    config.backend === 'python-fastapi'
+  )
+}
+
 function buildDbService(config: ProjectConfig): { services: string[]; volumes: string[] } {
   const services: string[] = []
   const volumes: string[] = []
@@ -51,6 +60,9 @@ function buildDbService(config: ProjectConfig): { services: string[]; volumes: s
 }
 
 function buildRedisService(config: ProjectConfig): { services: string[]; volumes: string[] } {
+  if (config.family !== 'fullstack' && config.family !== 'polyglot') {
+    return { services: [], volumes: [] }
+  }
   if (config.backend === 'none') return { services: [], volumes: [] }
 
   return {
@@ -74,6 +86,21 @@ export function renderDockerCompose(config: ProjectConfig): string {
     return renderRustDockerCompose(config)
   }
 
+  if (config.family === 'polyglot') {
+    return `services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
+`
+  }
+
   const { services: dbServices, volumes: dbVolumes } = buildDbService(config)
   const { services: redisServices, volumes: redisVolumes } = buildRedisService(config)
 
@@ -88,10 +115,74 @@ export function renderDockerCompose(config: ProjectConfig): string {
 }
 
 export function renderDockerComposeProd(config: ProjectConfig): string {
-  const { volumes: dbVolumes } = buildDbService(config)
-  const { volumes: redisVolumes } = buildRedisService(config)
+  if (config.family === 'polyglot') {
+    return `# Production Docker Compose
+# Usage: docker compose -f docker-compose.prod.yml up -d
 
-  const appServices: string[] = []
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://api:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_started
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - FRONTEND_URL=http://web:3000
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_started
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
+
+networks:
+  default:
+    name: ${sanitizeProjectName(config.projectName)}-polyglot
+`
+  }
+
+  const { services: dbServices, volumes: dbVolumes } = buildDbService(config)
+  const { services: redisServices, volumes: redisVolumes } = buildRedisService(config)
+  const serviceApi = backendUsesServiceApi(config)
+  const apiServiceName = serviceApi ? 'api' : 'server'
+
+  const appServices: string[] = [...dbServices, ...redisServices]
   const appVolumes: string[] = [...dbVolumes, ...redisVolumes]
 
   // Web (Next.js)
@@ -106,21 +197,21 @@ export function renderDockerComposeProd(config: ProjectConfig): string {
     ports:
       - "3000:3000"
     depends_on:
-      - server`)
+      - ${apiServiceName}`)
 
   // Server
-  appServices.push(`  server:
+  appServices.push(`  ${apiServiceName}:
     build:
       context: .
-      dockerfile: apps/server/Dockerfile
+      dockerfile: ${serviceApi ? 'services/api/Dockerfile' : 'apps/server/Dockerfile'}
     restart: unless-stopped
-    env_file: ./apps/server/.env
+    env_file: ./${serviceApi ? 'services/api' : 'apps/server'}/.env
     environment:
       - NODE_ENV=production
     ports:
       - "3001:3001"
     depends_on:
-      - redis${config.database !== 'none' && config.database !== 'sqlite' ? '\n      - postgres' : ''}${config.database === 'mongodb' ? '\n      - mongo' : ''}`)
+      - redis${config.database === 'postgres' ? '\n      - postgres' : ''}${config.database === 'mongodb' ? '\n      - mongo' : ''}`)
 
   // Worker
   if (config.includeWorker) {
@@ -149,11 +240,7 @@ export function renderDockerComposeProd(config: ProjectConfig): string {
       - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
       - web
-      - server`)
-
-  const appServiceNames = ['web', 'server']
-  if (config.includeWorker) appServiceNames.push('worker')
-  appServiceNames.push('nginx')
+      - ${apiServiceName}`)
 
   return `# Production Docker Compose
 # Usage: docker compose -f docker-compose.prod.yml up -d

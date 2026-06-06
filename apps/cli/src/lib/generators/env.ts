@@ -93,7 +93,7 @@ NEXT_PUBLIC_SITE_NAME=My App
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SITE_DESCRIPTION=A full-stack TypeScript application
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_API_URL=http://localhost:3001
 
 # Production: NEXT_PUBLIC_API_URL=https://api.example.com
 `

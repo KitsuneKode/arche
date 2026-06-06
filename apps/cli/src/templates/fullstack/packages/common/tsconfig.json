@@ -1,0 +1,8 @@
+{
+  "extends": "@arche-template/typescript-config/backend.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": false
+  }
+}

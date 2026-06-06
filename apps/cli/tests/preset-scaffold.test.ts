@@ -51,6 +51,14 @@ describe('preset scaffold output', () => {
       expect(existsSync(join(destinationDir, 'Cargo.toml'))).toBe(true)
       expect(existsSync(join(destinationDir, 'services/api/Cargo.toml'))).toBe(true)
       expect(existsSync(join(destinationDir, 'services/api/src/main.rs'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'services/api/.env.example'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'services/api/.env'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'services/api/Dockerfile'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'apps/web/trpc'))).toBe(false)
+      expect(existsSync(join(destinationDir, 'packages/auth'))).toBe(false)
+      expect(existsSync(join(destinationDir, 'packages/store'))).toBe(false)
+      expect(existsSync(join(destinationDir, 'packages/trpc'))).toBe(false)
+      expect(existsSync(join(destinationDir, 'packages/backend-common'))).toBe(false)
 
       const cargoWorkspace = readFileSync(join(destinationDir, 'Cargo.toml'), 'utf8')
       expect(cargoWorkspace).toContain('[workspace]')
@@ -59,10 +67,25 @@ describe('preset scaffold output', () => {
       const rootPackage = JSON.parse(readFileSync(join(destinationDir, 'package.json'), 'utf8'))
       expect(rootPackage.packageManager).toStartWith('bun@')
       expect(rootPackage.workspaces.packages).toContain('services/*')
+      expect(rootPackage.scripts.postinstall).toBeUndefined()
+      expect(rootPackage.scripts['db:generate']).toBeUndefined()
+      expect(rootPackage.scripts.prepare).toBeUndefined()
+      expect(rootPackage.devDependencies.husky).toBeUndefined()
+      expect(rootPackage.devDependencies['@changesets/cli']).toBeUndefined()
 
       const apiCargo = readFileSync(join(destinationDir, 'services/api/Cargo.toml'), 'utf8')
       expect(apiCargo).toContain('axum = "0.8"')
       expect(apiCargo).toContain('sqlx =')
+
+      const webPackage = JSON.parse(
+        readFileSync(join(destinationDir, 'apps/web/package.json'), 'utf8'),
+      )
+      expect(webPackage.dependencies['@arche-template/auth']).toBeUndefined()
+      expect(webPackage.dependencies['@arche-template/store']).toBeUndefined()
+      expect(webPackage.dependencies['@arche-template/trpc']).toBeUndefined()
+      expect(Object.keys(webPackage.dependencies).some((key) => key.endsWith('/auth'))).toBe(false)
+      expect(Object.keys(webPackage.dependencies).some((key) => key.endsWith('/store'))).toBe(false)
+      expect(Object.keys(webPackage.dependencies).some((key) => key.endsWith('/trpc'))).toBe(false)
 
       const apiMain = readFileSync(join(destinationDir, 'services/api/src/main.rs'), 'utf8')
       expect(apiMain).toContain('let allowed_origin = frontend_url')

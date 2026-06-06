@@ -7,16 +7,17 @@
     ".env.example",
     "apps/api/package.json",
     "apps/api/tsconfig.json",
-    "apps/api/src/app.ts",
-    "apps/api/src/server.ts",
+    "apps/api/Dockerfile",
+    "apps/api/src",
     "apps/web/package.json",
     "apps/web/tsconfig.json",
     "apps/web/next.config.js",
-    "apps/web/app/layout.tsx",
-    "apps/web/app/page.tsx",
+    "apps/web/Dockerfile",
+    "apps/web/app",
     "apps/worker/package.json",
     "apps/worker/tsconfig.json",
-    "apps/worker/src/index.ts",
+    "apps/worker/Dockerfile",
+    "apps/worker/src",
     ".oxlintrc.json"
   ]
 }

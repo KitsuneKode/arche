@@ -79,14 +79,6 @@ describe('checkCompatibility', () => {
     expect(result.errors.some((e: string) => e.includes('Drizzle'))).toBe(true)
   })
 
-  it('errors when Mongoose is requested', () => {
-    const result = checkCompatibility({
-      database: 'mongodb',
-      orm: 'mongoose',
-    })
-    expect(result.errors.some((e: string) => e.includes('Mongoose'))).toBe(true)
-  })
-
   it('errors when fastify-node backend is requested', () => {
     const result = checkCompatibility({
       family: 'fullstack',

@@ -16,7 +16,7 @@ import pc from 'picocolors'
 import { addFeature } from './lib/add'
 import { renderCompletion } from './lib/completions'
 import { createProject, validateConfig } from './lib/create'
-import { recordHistory, printHistory } from './lib/history'
+import { tryRecordHistory, printHistory } from './lib/history'
 import { buildReproducibleCommand } from './lib/reproducible'
 import { scaffoldProject } from './lib/scaffold'
 import { resolveDestinationDir, sanitizeProjectName } from './lib/slug'
@@ -33,6 +33,7 @@ import {
   hasDatabaseOptions,
   hasOrmOptions,
   hasRustDatabaseOptions,
+  familySupportsBundles,
   familySupportsShowcase,
   familySupportsWorker,
   PresetSchema,
@@ -244,6 +245,8 @@ function parseArgs(argv: string[]): CLIArgs {
     if (arg.startsWith('--database='))
       parsed.database = arg.slice('--database='.length) as CLIArgs['database']
     if (arg.startsWith('--orm=')) parsed.orm = arg.slice('--orm='.length) as CLIArgs['orm']
+    if (arg.startsWith('--example='))
+      parsed.example = arg.slice('--example='.length) as CLIArgs['example']
     if (arg.startsWith('--pm=') || arg.startsWith('--package-manager=')) {
       const val = arg.startsWith('--pm=')
         ? arg.slice('--pm='.length)
@@ -537,17 +540,6 @@ async function main(): Promise<void> {
                 value: 'rust-actix' as const,
                 hint: 'experimental — Actix in services/api',
               },
-              {
-                label: 'Go (Fiber)',
-                value: 'go-fiber' as const,
-                hint: 'experimental — replaces apps/server with services/api',
-              },
-              {
-                label: 'Python (FastAPI)',
-                value: 'python-fastapi' as const,
-                hint: 'experimental — replaces apps/server with services/api',
-              },
-              { label: 'None', value: 'none', hint: 'no backend' },
             ],
           })
           if (isCancel(value)) {
@@ -618,25 +610,27 @@ async function main(): Promise<void> {
 
   // --- Bundle selection ---
 
-  const bundles: Bundle[] = args.yes
-    ? (args.bundles ?? presetDefaults.bundles ?? ['product'])
-    : await promptIfNeeded(args.bundles, async () => {
-        const value = await multiselect({
-          message: 'Feature bundles (additive)',
-          options: BUNDLES.map((b) => ({
-            label: b,
-            value: b,
-            hint: BUNDLE_LABELS[b],
-          })),
-          initialValues: ['product'],
-          required: false,
+  const bundles: Bundle[] = familySupportsBundles(family)
+    ? args.yes
+      ? (args.bundles ?? presetDefaults.bundles ?? ['product'])
+      : await promptIfNeeded(args.bundles, async () => {
+          const value = await multiselect({
+            message: 'Feature bundles (additive)',
+            options: BUNDLES.map((b) => ({
+              label: b,
+              value: b,
+              hint: BUNDLE_LABELS[b],
+            })),
+            initialValues: ['product'],
+            required: false,
+          })
+          if (isCancel(value)) {
+            cancel('Project creation cancelled.')
+            process.exit(0)
+          }
+          return value as Bundle[]
         })
-        if (isCancel(value)) {
-          cancel('Project creation cancelled.')
-          process.exit(0)
-        }
-        return value as Bundle[]
-      })
+    : []
 
   // --- Project structure prompts ---
 
@@ -802,7 +796,14 @@ async function main(): Promise<void> {
     family,
     bundles,
     packageManager,
-    backend: family === 'rust' ? rustFramework : hasBackendOptions(family) ? backend : 'none',
+    backend:
+      family === 'rust'
+        ? rustFramework
+        : family === 'backend'
+          ? 'express-bun'
+          : hasBackendOptions(family)
+            ? backend
+            : 'none',
     database: hasRustDatabaseOptions(family)
       ? rustDatabase
       : hasDatabaseOptions(family)
@@ -870,8 +871,8 @@ async function main(): Promise<void> {
     }
     step.stop('Project generated successfully.')
 
-    // Record to history
-    recordHistory({
+    // History is a convenience; creation must still succeed in read-only homes and CI.
+    tryRecordHistory({
       timestamp: new Date().toISOString(),
       projectName,
       destinationDir,
@@ -903,9 +904,11 @@ async function main(): Promise<void> {
     const devCmd =
       options.family === 'rust'
         ? 'cargo run'
-        : options.family === 'backend'
-          ? `${options.packageManager === 'npm' ? 'npm' : options.packageManager} run dev --filter=server`
-          : 'bun dev'
+        : options.backend === 'rust-axum' || options.backend === 'rust-actix'
+          ? `${options.packageManager === 'npm' ? 'npm' : options.packageManager} run dev:web\n  ${options.packageManager === 'npm' ? 'npm' : options.packageManager} run dev:api`
+          : options.family === 'backend'
+            ? `${options.packageManager === 'npm' ? 'npm' : options.packageManager} run dev`
+            : `${options.packageManager === 'npm' ? 'npm' : options.packageManager} run dev`
     outro(
       `${pc.green('Project ready.')}\n\n` +
         `${pc.bold('Next steps')}\n` +

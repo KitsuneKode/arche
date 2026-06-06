@@ -40,6 +40,56 @@ jobs:
 `.trimEnd()
 }
 
+function renderStandaloneCi(config: ProjectConfig): string {
+  const lintStep =
+    config.family === 'backend' || config.family === 'convex'
+      ? `      - name: Lint
+        run: bun run lint
+
+`
+      : ''
+  const typecheckStep =
+    config.family === 'backend' || config.family === 'convex'
+      ? `      - name: Typecheck
+        run: bun run check-types
+
+`
+      : ''
+  const buildStep =
+    config.family === 'worker' || config.family === 'mobile'
+      ? ''
+      : `      - name: Build
+        run: bun run build
+`
+
+  return (
+    `name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+${lintStep}${typecheckStep}${buildStep}`.trimEnd() + '\n'
+  )
+}
+
 export function renderGithubActionsWorkflow(config: ProjectConfig): string {
   if (config.family === 'rust') {
     return renderRustCi(config)
@@ -47,6 +97,10 @@ export function renderGithubActionsWorkflow(config: ProjectConfig): string {
 
   if (config.family === 'convex') {
     return `${renderConvexCi()}\n`
+  }
+
+  if (config.family !== 'fullstack' && config.family !== 'polyglot' && config.family !== 'solana') {
+    return renderStandaloneCi(config)
   }
 
   const testStep =

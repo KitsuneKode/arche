@@ -75,8 +75,8 @@ export const VectorDatabaseSchema = z
 export type VectorDatabaseType = z.infer<typeof VectorDatabaseSchema>
 
 export const ORMSchema = z
-  .enum(['prisma', 'drizzle', 'mongoose', 'none'])
-  .describe('Object-relational mapper')
+  .enum(['prisma', 'drizzle', 'none'])
+  .describe('Object-relational mapper (Prisma or Drizzle)')
 export type ORMType = z.infer<typeof ORMSchema>
 
 // =============================================================================
@@ -320,15 +320,24 @@ export function checkCompatibility(config: Partial<ProjectConfig>): {
   }
 
   if (config.database === 'mongodb' && config.orm === 'drizzle') {
-    errors.push('Drizzle does not support MongoDB. Use Mongoose or Prisma.')
-  }
-
-  if (config.orm === 'mongoose') {
-    errors.push('Mongoose ORM is not supported yet. Use Prisma or Drizzle with MongoDB.')
+    errors.push('Drizzle does not support MongoDB. Use Prisma.')
   }
 
   if (config.backend === 'fastify-node') {
     errors.push('Fastify backend is not supported yet. Use express-bun or hono-bun.')
+  }
+
+  if (config.family === 'fullstack' && config.backend === 'none') {
+    errors.push('Fullstack requires a backend. Use the next family for a frontend-only app.')
+  }
+
+  if (
+    config.family === 'fullstack' &&
+    (config.backend === 'go-fiber' || config.backend === 'python-fastapi')
+  ) {
+    errors.push(
+      'Go and Python service backends are not stable fullstack outputs yet. Use polyglot or a dedicated backend service.',
+    )
   }
 
   if (config.vectorDatabase === 'pgvector' && config.database !== 'postgres') {
@@ -345,7 +354,7 @@ export function checkCompatibility(config: Partial<ProjectConfig>): {
 
   if (config.database === 'mongodb' && config.orm === 'prisma') {
     warnings.push(
-      'MongoDB with Prisma has limitations. Consider Mongoose for full MongoDB support.',
+      'MongoDB with Prisma has limitations. Review Prisma MongoDB provider docs before production use.',
     )
   }
 
@@ -430,7 +439,7 @@ export function checkCompatibility(config: Partial<ProjectConfig>): {
   }
 
   // Backend + family validation
-  const backendFamilies: Family[] = ['fullstack']
+  const backendFamilies: Family[] = ['fullstack', 'backend']
   if (config.family && !backendFamilies.includes(config.family)) {
     const rustFrameworkOk = config.family === 'rust' && isRustFrameworkBackend(config.backend)
     if (config.backend && config.backend !== 'none' && !rustFrameworkOk) {

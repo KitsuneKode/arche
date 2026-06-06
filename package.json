@@ -33,6 +33,7 @@
     "repo:doctor:strict": "bun toolings/scripts/repo-doctor.ts --strict",
     "repo:doctor:ci": "bun toolings/scripts/repo-doctor.ts --strict",
     "verify:generated": "bun toolings/scripts/verify-generated-project.ts",
+    "verify:generated:fullstack": "bun toolings/scripts/verify-generated-project.ts --preset=typescript-fullstack --pm=bun --run=install,typecheck,build",
     "template:clean:dry": "bun toolings/scripts/template-cleanup.ts --dry-run",
     "template:clean": "bun toolings/scripts/template-cleanup.ts --yes",
     "commit:check": "commitlint --last --verbose",

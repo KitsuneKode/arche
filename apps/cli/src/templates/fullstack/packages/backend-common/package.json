@@ -1,0 +1,46 @@
+{
+  "name": "@arche-template/backend-common",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./env": "./src/env.ts",
+    "./redis": "./src/redis/index.ts",
+    "./redis/bull": "./src/redis/bull-connection.ts",
+    "./logger": "./src/utils/logger.ts",
+    "./config": "./src/utils/config.ts",
+    "./validate-env": "./src/utils/validate-env.ts",
+    "./redis-enabled": "./src/utils/redis-enabled.ts",
+    "./performance": "./src/utils/performance.ts",
+    "./graceful-shutdown": "./src/utils/graceful-shutdown.ts",
+    "./config-schema": "./src/utils/config-schema.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "lint": "oxlint -c ../../.oxlintrc.json",
+    "lint:fix": "oxlint --fix",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@arche-template/common": "workspace:*",
+    "date-fns": "^4.2.1",
+    "ioredis": "^5.6.1",
+    "redis": "^5.12.0",
+    "winston": "^3.19.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@arche-template/typescript-config": "workspace:*",
+    "@types/bun": "1.3.14",
+    "@types/winston": "^2.4.4"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

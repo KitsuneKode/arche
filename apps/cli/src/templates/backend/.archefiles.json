@@ -1,12 +1,4 @@
 {
   "version": "0.2.0",
-  "include": [
-    ".env.example",
-    ".oxlintrc.json",
-    "AGENTS.md",
-    "package.json",
-    "tsconfig.json",
-    "src/app.ts",
-    "src/server.ts"
-  ]
+  "include": [".env.example", ".oxlintrc.json", "AGENTS.md", "package.json", "tsconfig.json", "src"]
 }

@@ -12,11 +12,7 @@ import {
 } from 'node:fs/promises'
 import { dirname, join, resolve, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import {
-  renderGeneratedAgentsMd,
-  renderInternalDocsIndex,
-  renderPlansIndex,
-} from '../render/docs/agent-context'
+import { renderInternalDocsIndex, renderPlansIndex } from '../render/docs/agent-context'
 import { renderTurboJson } from '../render/turbo/render-turbo-json'
 import { applyJavaScriptPackageManagerFoundation } from '../render/workspace/foundation'
 import type { Family, ProjectConfig, CleanupTarget } from '../types/schemas'
@@ -43,6 +39,7 @@ import {
   applyDatabaseTransform,
   applyOrmTransform,
   buildGeneratedArchitectureMd,
+  buildRootAgentsMd,
   buildReadme,
   buildShowcaseMdx,
   writeSkillConfigs,
@@ -70,7 +67,13 @@ const EXCLUDED_SEGMENTS = new Set([
   '.git',
   '.turbo',
   '.vercel',
+  '.source',
   'node_modules',
+  'dist',
+  'build',
+  'out',
+  'coverage',
+  'target',
   '.claude',
   '.cursor',
   '.vscode',
@@ -78,6 +81,9 @@ const EXCLUDED_SEGMENTS = new Set([
   '.codebuddy',
   'logs',
 ])
+
+/** Path segments that must never appear in scaffold output (manifest copy included). */
+const SECRET_OR_LOCAL_ARTIFACT_SEGMENTS = new Set(['.vercel', 'logs'])
 
 // Files that should not appear in scaffolded output
 const EXCLUDED_FILES = new Set([
@@ -105,20 +111,26 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // Detect if running from bundled dist or source
-// Source: apps/cli/src/lib/scaffold.ts (4 levels to root)
-// Bundled: apps/cli/dist/index.js (3 levels to root)
+// Source: apps/cli/src/lib/scaffold.ts
+// Bundled: apps/cli/dist/index.js with templates published at apps/cli/src/templates
 const isBundled = __dirname.includes('/dist') || !__dirname.includes('/src/')
-const ROOT_DIR = resolve(__dirname, isBundled ? '../../..' : '../../../..')
-const TOOLINGS_DIR = join(ROOT_DIR, 'toolings', 'scripts')
+const PACKAGE_DIR = resolve(__dirname, isBundled ? '..' : '../..')
 
-/** Map family to template source directory. Falls back to ROOT_DIR. */
+/** Map family to a package-owned template source directory. */
 function resolveTemplateSource(family: Family): string {
-  const localTemplatesDir = resolve(__dirname, '../templates')
-  const familyDir = join(localTemplatesDir, family)
-  if (existsSync(familyDir)) {
-    return familyDir
+  const candidates = [
+    resolve(__dirname, '../templates', family),
+    join(PACKAGE_DIR, 'src', 'templates', family),
+  ]
+
+  for (const familyDir of candidates) {
+    if (existsSync(familyDir)) return familyDir
   }
-  return ROOT_DIR
+
+  throw new Error(
+    `Missing scaffold template for family "${family}". ` +
+      `The published package must include src/templates/${family}.`,
+  )
 }
 
 /** Monorepo families have the full apps/packages/ structure */
@@ -181,16 +193,28 @@ async function ensureDestinationAvailable(
   }
 }
 
-function shouldCopyPath(relativePath: string): boolean {
+function isSecretEnvFile(fileName: string): boolean {
+  return fileName.startsWith('.env') && !fileName.endsWith('.example')
+}
+
+function shouldCopyPath(relativePath: string, extraExclude?: string[]): boolean {
   if (!relativePath) return true
 
   const segments = relativePath.split('/').filter(Boolean)
   if (segments[0] === 'apps' && segments[1] === 'cli') return false
   if (segments.some((segment) => EXCLUDED_SEGMENTS.has(segment))) return false
+  if (segments.some((segment) => SECRET_OR_LOCAL_ARTIFACT_SEGMENTS.has(segment))) return false
   if (EXCLUDED_FILES.has(relativePath)) return false
+  if (
+    extraExclude?.some(
+      (pattern) => relativePath === pattern || relativePath.startsWith(`${pattern}/`),
+    )
+  ) {
+    return false
+  }
 
   const fileName = segments.at(-1) ?? ''
-  if (fileName.startsWith('.env') && !fileName.endsWith('.example')) return false
+  if (isSecretEnvFile(fileName)) return false
 
   return true
 }
@@ -198,6 +222,7 @@ function shouldCopyPath(relativePath: string): boolean {
 interface ArcheFilesManifest {
   version: string
   include: string[]
+  exclude?: string[]
 }
 
 async function loadManifest(sourceDir: string): Promise<ArcheFilesManifest | null> {
@@ -210,19 +235,37 @@ async function loadManifest(sourceDir: string): Promise<ArcheFilesManifest | nul
   }
 }
 
+function manifestRelativePath(includeRoot: string, pathInsideInclude: string): string {
+  if (!pathInsideInclude) return includeRoot
+  return `${includeRoot}/${pathInsideInclude}`
+}
+
 async function copyWithManifest(
   destinationDir: string,
   sourceDir: string,
   manifest: ArcheFilesManifest,
 ): Promise<void> {
+  const extraExclude = manifest.exclude ?? []
+
   for (const relativePath of manifest.include) {
     const srcPath = join(sourceDir, relativePath)
     const destPath = join(destinationDir, relativePath)
     try {
       const srcStat = await stat(srcPath)
       if (srcStat.isDirectory()) {
-        await cp(srcPath, destPath, { recursive: true })
+        await cp(srcPath, destPath, {
+          recursive: true,
+          filter: (sourcePath) => {
+            const pathInsideInclude =
+              sourcePath === srcPath ? '' : sourcePath.slice(srcPath.length + 1)
+            return shouldCopyPath(
+              manifestRelativePath(relativePath, pathInsideInclude),
+              extraExclude,
+            )
+          },
+        })
       } else {
+        if (!shouldCopyPath(relativePath, extraExclude)) continue
         await mkdir(dirname(destPath), { recursive: true })
         await cp(srcPath, destPath)
       }
@@ -230,6 +273,53 @@ async function copyWithManifest(
       // Skip files that don't exist in the source
     }
   }
+}
+
+/** Defense-in-depth: strip local deploy artifacts and secret env files after template copy. */
+async function sanitizeScaffoldArtifacts(destinationDir: string): Promise<string[]> {
+  const removed: string[] = []
+
+  async function removePath(relativePath: string): Promise<void> {
+    const fullPath = join(destinationDir, relativePath)
+    if (!(await pathExists(fullPath))) return
+    await rm(fullPath, { recursive: true, force: true })
+    removed.push(relativePath)
+  }
+
+  async function walk(dir: string, relativeDir = ''): Promise<void> {
+    let entries: string[]
+    try {
+      entries = await readdir(dir)
+    } catch {
+      return
+    }
+
+    for (const entry of entries) {
+      const relativePath = relativeDir ? `${relativeDir}/${entry}` : entry
+      if (SECRET_OR_LOCAL_ARTIFACT_SEGMENTS.has(entry)) {
+        await removePath(relativePath)
+        continue
+      }
+      if (isSecretEnvFile(entry)) {
+        await removePath(relativePath)
+        continue
+      }
+
+      const fullPath = join(dir, entry)
+      let info
+      try {
+        info = await stat(fullPath)
+      } catch {
+        continue
+      }
+      if (info.isDirectory()) {
+        await walk(fullPath, relativePath)
+      }
+    }
+  }
+
+  await walk(destinationDir)
+  return removed
 }
 
 async function copyTemplate(destinationDir: string, sourceDir: string): Promise<void> {
@@ -240,7 +330,7 @@ async function copyTemplate(destinationDir: string, sourceDir: string): Promise<
     return
   }
 
-  // Fall back to exclusion-based copy (for fullstack which uses ROOT_DIR)
+  // Fallback for local development templates without a manifest.
   await cp(sourceDir, destinationDir, {
     recursive: true,
     filter: (sourcePath) => {
@@ -250,8 +340,84 @@ async function copyTemplate(destinationDir: string, sourceDir: string): Promise<
   })
 }
 
+async function removeGeneratedArtifacts(destinationDir: string): Promise<string[]> {
+  const removed: string[] = []
+  const generatedSegments = new Set([
+    '.next',
+    '.source',
+    '.turbo',
+    'dist',
+    'build',
+    'out',
+    'coverage',
+    'target',
+  ])
+
+  async function walk(dir: string, relativeDir = ''): Promise<void> {
+    let entries: string[]
+    try {
+      entries = await readdir(dir)
+    } catch {
+      return
+    }
+
+    for (const entry of entries) {
+      const relativePath = relativeDir ? `${relativeDir}/${entry}` : entry
+      const fullPath = join(dir, entry)
+      if (generatedSegments.has(entry)) {
+        await rm(fullPath, { recursive: true, force: true })
+        removed.push(relativePath)
+        continue
+      }
+
+      let info
+      try {
+        info = await stat(fullPath)
+      } catch {
+        continue
+      }
+      if (info.isDirectory()) {
+        await walk(fullPath, relativePath)
+      }
+    }
+  }
+
+  await walk(destinationDir)
+  return removed
+}
+
 // Scripts that reference the CLI workspace and should not appear in scaffolded output
-const CLI_SCRIPTS = new Set(['dev:cli', 'build:cli'])
+const TEMPLATE_MAINTAINER_SCRIPTS = new Set([
+  'dev:cli',
+  'build:cli',
+  'brand:export-og',
+  'brand:export',
+  'pkg:check',
+  'changeset',
+  'changeset:status',
+  'version:packages',
+  'release',
+  'release:publish',
+  'secret-scan',
+  'secret-scan:staged',
+  'verify:generated',
+  'template:clean:dry',
+  'template:clean',
+  'commit:check',
+  'rename-scope',
+  'rename-scope:dry',
+  'rename-scope:verbose',
+  'prepare',
+  'lint-staged',
+])
+
+const TEMPLATE_MAINTAINER_DEV_DEPS = new Set([
+  '@changesets/cli',
+  '@commitlint/cli',
+  '@commitlint/config-conventional',
+  'husky',
+  'lint-staged',
+])
 
 async function updateRootPackageJson(
   destinationDir: string,
@@ -271,8 +437,15 @@ async function updateRootPackageJson(
   // Strip CLI-only scripts that reference the excluded CLI workspace
   if (packageJson.scripts && typeof packageJson.scripts === 'object') {
     const scripts = packageJson.scripts as Record<string, unknown>
-    for (const key of CLI_SCRIPTS) {
+    for (const key of TEMPLATE_MAINTAINER_SCRIPTS) {
       delete scripts[key]
+    }
+  }
+
+  if (packageJson.devDependencies && typeof packageJson.devDependencies === 'object') {
+    const devDeps = packageJson.devDependencies as Record<string, unknown>
+    for (const key of TEMPLATE_MAINTAINER_DEV_DEPS) {
+      delete devDeps[key]
     }
   }
 
@@ -284,6 +457,278 @@ async function updateRootPackageJson(
   }
 
   await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n')
+}
+
+async function patchJsonFile(
+  filePath: string,
+  patch: (value: Record<string, unknown>) => void,
+): Promise<void> {
+  try {
+    const json = JSON.parse(await readFile(filePath, 'utf8')) as Record<string, unknown>
+    patch(json)
+    await writeFile(filePath, JSON.stringify(json, null, 2) + '\n')
+  } catch {
+    // File is absent in some families.
+  }
+}
+
+function removeKeys(record: unknown, keys: string[]): void {
+  if (!record || typeof record !== 'object') return
+  const target = record as Record<string, unknown>
+  for (const key of keys) delete target[key]
+}
+
+function removeWorkspacePackages(record: unknown, packageNames: string[]): void {
+  if (!record || typeof record !== 'object') return
+  const target = record as Record<string, unknown>
+  for (const key of Object.keys(target)) {
+    if (packageNames.some((packageName) => key.endsWith(`/${packageName}`))) {
+      delete target[key]
+    }
+  }
+}
+
+function removeWorkspacePathAliases(record: unknown, packageNames: string[]): void {
+  if (!record || typeof record !== 'object') return
+  const target = record as Record<string, unknown>
+  for (const key of Object.keys(target)) {
+    const normalized = key.replace(/\/\*$/, '')
+    if (packageNames.some((packageName) => normalized.endsWith(`/${packageName}`))) {
+      delete target[key]
+    }
+  }
+}
+
+async function replaceWorkspaceScope(destinationDir: string, packageName: string): Promise<void> {
+  const oldScope = '@arche-template'
+  const newScope = `@${packageName}`
+  const textFilePattern =
+    /\.(css|js|json|jsx|md|mdx|mjs|prisma|ts|tsx|yaml|yml)$|(^|\/)(Dockerfile|AGENTS\.md|README\.md|CLAUDE\.md)$/
+
+  async function walk(dir: string): Promise<void> {
+    let entries: string[]
+    try {
+      entries = await readdir(dir)
+    } catch {
+      return
+    }
+
+    for (const entry of entries) {
+      if (entry === 'node_modules' || entry === '.git') continue
+      const fullPath = join(dir, entry)
+      const info = await stat(fullPath)
+      if (info.isDirectory()) {
+        await walk(fullPath)
+        continue
+      }
+
+      const relativePath = relative(destinationDir, fullPath)
+      if (!textFilePattern.test(relativePath)) continue
+
+      const original = await readFile(fullPath, 'utf8')
+      if (!original.includes(oldScope)) continue
+      await writeFile(fullPath, original.replaceAll(oldScope, newScope))
+    }
+  }
+
+  await walk(destinationDir)
+}
+
+function renderServiceApiWebPage(): string {
+  return `'use client'
+
+import { useEffect, useState } from 'react'
+
+const services = [
+  ['Web', 'Next.js app router', 'http://localhost:3000'],
+  ['API', 'Service-owned REST boundary', 'http://localhost:3001/health'],
+  ['Contracts', 'DTOs and OpenAPI-ready routes', 'services/api'],
+  ['Runtime', 'Backend chosen for this project', 'services/api'],
+] as const
+
+type ApiState =
+  | { status: 'checking'; message: string }
+  | { status: 'online'; message: string }
+  | { status: 'offline'; message: string }
+
+function ApiStatus() {
+  const [apiState, setApiState] = useState<ApiState>({
+    status: 'checking',
+    message: 'Checking API health...',
+  })
+
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+    const controller = new AbortController()
+
+    fetch(\`\${apiUrl.replace(/\\/$/, '')}/health\`, {
+      signal: controller.signal,
+      headers: { accept: 'application/json' },
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(\`HTTP \${response.status}\`)
+        const payload = (await response.json().catch(() => null)) as { status?: string } | null
+        setApiState({
+          status: 'online',
+          message: payload?.status ? \`API says \${payload.status}\` : 'API health route is online',
+        })
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return
+        setApiState({
+          status: 'offline',
+          message: error instanceof Error ? error.message : 'API is not reachable yet',
+        })
+      })
+
+    return () => controller.abort()
+  }, [])
+
+  return (
+    <section className="status" aria-label="Live API status">
+      <div>
+        <span className={apiState.status === 'online' ? 'dot online' : 'dot'} />
+        <p className="eyebrow">Live API check</p>
+        <h2>{apiState.message}</h2>
+      </div>
+      <code>NEXT_PUBLIC_API_URL=http://localhost:3001</code>
+    </section>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <main className="shell">
+      <section className="hero">
+        <p className="eyebrow">Generated by Arche</p>
+        <h1>Your service-backed fullstack base is ready.</h1>
+        <p className="lede">
+          This scaffold starts with a Next.js web app and a service-owned API boundary. Keep the
+          API contract explicit, add shared TypeScript packages only when they remove real
+          duplication, and let the backend runtime own its domain.
+        </p>
+        <div className="actions" aria-label="Local commands">
+          <code>bun dev</code>
+          <code>cd services/api</code>
+        </div>
+      </section>
+
+      <ApiStatus />
+
+      <section className="grid" aria-label="Generated services">
+        {services.map(([name, detail, target]) => (
+          <article key={name} className="card">
+            <span>{name}</span>
+            <h2>{detail}</h2>
+            <p>{target}</p>
+          </article>
+        ))}
+      </section>
+    </main>
+  )
+}
+`
+}
+
+async function pruneServiceApiFullstack(destinationDir: string): Promise<string[]> {
+  const removed: string[] = []
+  const removePath = async (relativePath: string) => {
+    await rm(join(destinationDir, relativePath), { recursive: true, force: true })
+    removed.push(relativePath)
+  }
+
+  for (const relativePath of [
+    'apps/web/trpc',
+    'packages/auth',
+    'packages/store',
+    'packages/trpc',
+    'packages/backend-common',
+    'packages/common',
+  ]) {
+    await removePath(relativePath)
+  }
+
+  await patchJsonFile(join(destinationDir, 'package.json'), (pkg) => {
+    removeKeys(pkg.dependencies, ['compression', 'express-rate-limit'])
+    removeKeys(pkg.devDependencies, ['@types/compression'])
+    removeKeys(pkg.scripts, [
+      'db:seed',
+      'db:studio',
+      'db:generate',
+      'db:migrate',
+      'dev:server',
+      'dev:worker',
+      'postinstall',
+      'test:deploy',
+      'test:deploy:all',
+    ])
+  })
+
+  await patchJsonFile(join(destinationDir, 'apps/web/package.json'), (pkg) => {
+    removeWorkspacePackages(pkg.dependencies, ['auth', 'store', 'trpc'])
+    removeKeys(pkg.dependencies, [
+      '@arche-template/auth',
+      '@arche-template/store',
+      '@arche-template/trpc',
+      '@tanstack/react-query',
+      '@trpc/client',
+      '@trpc/server',
+      '@trpc/tanstack-react-query',
+      'superjson',
+    ])
+  })
+
+  await patchJsonFile(join(destinationDir, 'apps/web/tsconfig.json'), (tsconfig) => {
+    const compilerOptions = tsconfig.compilerOptions as Record<string, unknown> | undefined
+    const paths = compilerOptions?.paths as Record<string, unknown> | undefined
+    removeWorkspacePathAliases(paths, ['auth', 'store', 'trpc'])
+    removeKeys(paths, [
+      '@arche-template/store/*',
+      '@arche-template/auth/*',
+      '@arche-template/trpc/*',
+    ])
+  })
+
+  await writeFile(join(destinationDir, 'apps/web/app/page.tsx'), renderServiceApiWebPage())
+
+  return removed
+}
+
+async function applyGeneratedCleanup(
+  destinationDir: string,
+  cleanupTargets: CleanupTarget[],
+): Promise<string[]> {
+  const removed: string[] = []
+  const targets = new Set(cleanupTargets)
+
+  async function removePath(relativePath: string): Promise<void> {
+    if (!(await pathExists(join(destinationDir, relativePath)))) return
+    await rm(join(destinationDir, relativePath), { recursive: true, force: true })
+    removed.push(relativePath)
+  }
+
+  if (targets.has('worker')) {
+    await removePath('apps/worker')
+    await patchJsonFile(join(destinationDir, 'package.json'), (pkg) => {
+      removeKeys(pkg.scripts, ['dev:worker'])
+    })
+  }
+
+  if (targets.has('seed')) {
+    await patchJsonFile(join(destinationDir, 'package.json'), (pkg) => {
+      removeKeys(pkg.scripts, ['db:seed'])
+    })
+  }
+
+  if (targets.has('tests')) {
+    await removePath('tests')
+  }
+
+  if (targets.has('showcase')) {
+    await removePath('SHOWCASE.mdx')
+  }
+
+  return removed
 }
 
 async function writeGeneratedFile(
@@ -381,6 +826,8 @@ export async function scaffoldProject(
   const templateSource = resolveTemplateSource(family)
   await ensureDestinationAvailable(destinationDir, templateSource)
   await copyTemplate(destinationDir, templateSource)
+  const sanitizedArtifacts = await sanitizeScaffoldArtifacts(destinationDir)
+  const removedArtifacts = await removeGeneratedArtifacts(destinationDir)
   await updateRootPackageJson(destinationDir, packageName, options)
 
   let rustGeneratedFiles: string[] = []
@@ -402,26 +849,15 @@ export async function scaffoldProject(
     await applyOrmTransform(destinationDir, options)
   }
 
-  if (familySupportsRenameScope(family)) {
-    runCommand(['bun', join(TOOLINGS_DIR, 'rename-scope.ts'), '--quiet'], {
-      cwd: destinationDir,
-      silent: true,
-    })
-  }
-
-  // Run template-cleanup only for monorepo families that carry showcase/seed/worker
   const cleanupTargets = buildCleanupTargets(options)
-  if (familySupportsTemplateCleanup(family) && cleanupTargets.length > 0) {
-    runCommand(
-      [
-        'bun',
-        join(TOOLINGS_DIR, 'template-cleanup.ts'),
-        `--remove=${cleanupTargets.join(',')}`,
-        '--yes',
-      ],
-      { cwd: destinationDir, silent: true },
-    )
-  }
+  const cleanupFiles = familySupportsTemplateCleanup(family)
+    ? await applyGeneratedCleanup(destinationDir, cleanupTargets)
+    : []
+
+  const prunedFiles =
+    family === 'fullstack' && backendUsesServiceApi(options.backend)
+      ? await pruneServiceApiFullstack(destinationDir)
+      : []
 
   // Write arche.json for reproducibility
   await writeGeneratedFile(destinationDir, 'arche.json', buildArcheConfig(options))
@@ -444,10 +880,10 @@ export async function scaffoldProject(
   const turboFiles: string[] = []
   if (isMonorepoFamily(family) || family === 'solana') {
     const includeDbTasks =
-      family === 'fullstack' ||
+      (family === 'fullstack' && !backendUsesServiceApi(options.backend)) ||
       family === 'polyglot' ||
       (family === 'backend' && options.database !== 'none')
-    const includeMdxGenerate = family === 'fullstack'
+    const includeMdxGenerate = false
     const extraBuildOutputs = family === 'polyglot' ? ['target/**'] : undefined
     await writeGeneratedFile(
       destinationDir,
@@ -462,6 +898,10 @@ export async function scaffoldProject(
     ...bundleFiles,
     ...rustGeneratedFiles,
     ...solanaGeneratedFiles,
+    ...sanitizedArtifacts.map((file) => `${file} (removed)`),
+    ...removedArtifacts.map((file) => `${file} (removed)`),
+    ...cleanupFiles.map((file) => `${file} (removed)`),
+    ...prunedFiles.map((file) => `${file} (removed)`),
     ...workspaceFiles,
     ...turboFiles,
   ]
@@ -478,6 +918,14 @@ export async function scaffoldProject(
     generatedFiles.push(`${serverDir}/.env.example`)
     await writeGeneratedFile(destinationDir, `${serverDir}/.env`, serverEnvContent)
     generatedFiles.push(`${serverDir}/.env`)
+  }
+
+  if (monorepo && backendUsesServiceApi(options.backend)) {
+    const serverEnvContent = buildServerEnv(options)
+    await writeGeneratedFile(destinationDir, 'services/api/.env.example', serverEnvContent)
+    generatedFiles.push('services/api/.env.example')
+    await writeGeneratedFile(destinationDir, 'services/api/.env', serverEnvContent)
+    generatedFiles.push('services/api/.env')
   }
 
   // Web env: only for monorepo families
@@ -521,7 +969,7 @@ export async function scaffoldProject(
   await writeGeneratedFile(
     destinationDir,
     'AGENTS.md',
-    renderGeneratedAgentsMd({ projectName: packageName }),
+    buildRootAgentsMd({ ...options, projectName: packageName }),
   )
   generatedFiles.push('AGENTS.md')
   await writeGeneratedClaudeSymlink(destinationDir)
@@ -562,6 +1010,10 @@ export async function scaffoldProject(
   if (includeDeploymentGuide) {
     await writeGeneratedFile(destinationDir, 'docs/deployment.md', renderDeploymentGuide(options))
     generatedFiles.push('docs/deployment.md')
+  }
+
+  if (familySupportsRenameScope(family)) {
+    await replaceWorkspaceScope(destinationDir, packageName)
   }
 
   if (options.initializeGit) {

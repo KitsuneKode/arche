@@ -9,6 +9,7 @@ const TEMPLATES_DIR = join(import.meta.dir, '../src/templates')
 const PRODUCTION_FILES = ['.env.example', '.oxlintrc.json', 'AGENTS.md']
 
 const FAMILY_DIRS: Record<string, string[]> = {
+  fullstack: ['package.json', '.archefiles.json', '.oxlintrc.json'],
   next: ['package.json', 'tsconfig.json', 'next.config.js', ...PRODUCTION_FILES],
   backend: ['package.json', 'tsconfig.json', ...PRODUCTION_FILES],
   convex: ['package.json', 'tsconfig.json', ...PRODUCTION_FILES],
@@ -21,7 +22,7 @@ const FAMILY_DIRS: Record<string, string[]> = {
   worker: ['package.json', 'tsconfig.json', ...PRODUCTION_FILES],
 }
 
-const families = FamilySchema.options.filter((f) => f !== 'fullstack')
+const families = FamilySchema.options
 
 describe('template stubs', () => {
   for (const family of families) {
@@ -62,10 +63,6 @@ describe('template stubs', () => {
       }
     })
   }
-
-  it('fullstack has no template stub (falls back to ROOT_DIR)', () => {
-    expect(existsSync(join(TEMPLATES_DIR, 'fullstack'))).toBe(false)
-  })
 })
 
 describe('template stub file integrity', () => {
@@ -73,6 +70,18 @@ describe('template stub file integrity', () => {
     expect(existsSync(join(TEMPLATES_DIR, 'next', 'app', 'layout.tsx'))).toBe(true)
     expect(existsSync(join(TEMPLATES_DIR, 'next', 'app', 'page.tsx'))).toBe(true)
     expect(existsSync(join(TEMPLATES_DIR, 'next', 'public', '.gitkeep'))).toBe(true)
+  })
+
+  it('fullstack has an explicit package-owned template', () => {
+    expect(existsSync(join(TEMPLATES_DIR, 'fullstack', 'apps', 'web', 'app', 'page.tsx'))).toBe(
+      true,
+    )
+    expect(existsSync(join(TEMPLATES_DIR, 'fullstack', 'apps', 'server', 'src', 'app.ts'))).toBe(
+      true,
+    )
+    expect(existsSync(join(TEMPLATES_DIR, 'fullstack', 'packages', 'store', 'package.json'))).toBe(
+      true,
+    )
   })
 
   it('backend has src directory with app.ts and server.ts', () => {

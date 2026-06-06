@@ -1,13 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import {
-  renderGeneratedAgentsMd,
-  renderInternalDocsIndex,
-  renderPlansIndex,
-} from '../render/docs/agent-context'
+import { renderInternalDocsIndex, renderPlansIndex } from '../render/docs/agent-context'
 import type { ProjectConfig } from '../types/schemas'
 import { validateConfig } from './create'
-import { buildGeneratedArchitectureMd } from './generators/agent-docs'
+import { buildGeneratedArchitectureMd, buildRootAgentsMd } from './generators/agent-docs'
 import { renderGithubActionsWorkflow } from './generators/ci'
 import { renderDockerCompose, renderDockerComposeProd } from './generators/docker'
 import { buildServerEnv } from './generators/env'
@@ -132,11 +128,7 @@ async function addEnvFiles(baseDir: string, config: ProjectConfig): Promise<stri
 
 async function addAgentDocs(baseDir: string, config: ProjectConfig): Promise<string[]> {
   const files: string[] = []
-  writeGeneratedFile(
-    baseDir,
-    'AGENTS.md',
-    renderGeneratedAgentsMd({ projectName: config.projectName }),
-  )
+  writeGeneratedFile(baseDir, 'AGENTS.md', buildRootAgentsMd(config))
   files.push('AGENTS.md')
   writeGeneratedClaudeSymlink(baseDir)
   files.push('CLAUDE.md')

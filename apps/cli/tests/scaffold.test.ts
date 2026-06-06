@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { renderGithubActionsWorkflow } from '../src/lib/generators/ci'
 import { renderDeploymentGuide } from '../src/lib/generators/deployment'
-import { renderDockerCompose } from '../src/lib/generators/docker'
+import { renderDockerCompose, renderDockerComposeProd } from '../src/lib/generators/docker'
 import { buildServerEnv, buildWebEnv } from '../src/lib/generators/env'
 import { buildReproducibleCommand } from '../src/lib/reproducible'
 import { buildCleanupTargets } from '../src/lib/scaffold'
@@ -285,6 +285,24 @@ describe('renderDockerCompose', () => {
     const output = renderDockerCompose(makeConfig({ database: 'none', backend: 'none' }))
     expect(output).toContain('No Docker services needed')
   })
+
+  it('production compose includes services referenced by depends_on', () => {
+    const output = renderDockerComposeProd(makeConfig({ database: 'postgres' }))
+    expect(output).toContain('  postgres:')
+    expect(output).toContain('  redis:')
+    expect(output).toContain('      - postgres')
+    expect(output).toContain('      - redis')
+  })
+
+  it('production compose routes service API backends to services/api', () => {
+    const output = renderDockerComposeProd(
+      makeConfig({ backend: 'rust-axum', database: 'postgres', orm: 'none' }),
+    )
+    expect(output).toContain('  api:')
+    expect(output).toContain('dockerfile: services/api/Dockerfile')
+    expect(output).toContain('env_file: ./services/api/.env')
+    expect(output).not.toContain('apps/server/Dockerfile')
+  })
 })
 
 describe('renderGithubActionsWorkflow', () => {
@@ -305,6 +323,15 @@ describe('renderGithubActionsWorkflow', () => {
     expect(output).toContain('Lint')
     expect(output).toContain('Typecheck')
     expect(output).toContain('bun install --frozen-lockfile')
+  })
+
+  it('uses standalone CI for backend family', () => {
+    const output = renderGithubActionsWorkflow(makeConfig({ family: 'backend' }))
+    expect(output).toContain('bun run build')
+    expect(output).toContain('bun run lint')
+    expect(output).toContain('bun run check-types')
+    expect(output).not.toContain('repo:doctor')
+    expect(output).not.toContain('tests/src')
   })
 })
 

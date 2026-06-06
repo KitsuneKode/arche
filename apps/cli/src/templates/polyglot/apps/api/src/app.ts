@@ -1,8 +1,8 @@
 import cors from 'cors'
-import express from 'express'
-import { healthRoutes } from '@/modules/health/health.routes'
+import express, { type Express } from 'express'
+import { healthRoutes } from './modules/health/health.routes.js'
 
-const app = express()
+const app: Express = express()
 
 app.use(express.json())
 app.use(

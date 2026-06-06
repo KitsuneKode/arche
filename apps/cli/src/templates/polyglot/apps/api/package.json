@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
-    "lint": "oxlint",
+    "start": "bun dist/server.js",
+    "lint": "oxlint -c ../../.oxlintrc.json",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {

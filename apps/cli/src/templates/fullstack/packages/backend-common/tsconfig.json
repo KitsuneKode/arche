@@ -1,0 +1,3 @@
+{
+  "extends": "@arche-template/typescript-config/backend.json"
+}

@@ -314,6 +314,45 @@ pub async fn health() -> Json<Value> {
 `
 }
 
+function rustServiceDockerfile(): string {
+  return `# syntax=docker/dockerfile:1
+FROM rust:1-bookworm AS builder
+WORKDIR /app
+COPY Cargo.toml ./
+COPY services/api/Cargo.toml services/api/Cargo.toml
+COPY services/api/src services/api/src
+RUN cargo build --release
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=builder /app/target/release/*-api /app/server
+ENV PORT=3001
+EXPOSE 3001
+CMD ["./server"]
+`
+}
+
+async function patchRootPackageForServiceApi(destinationDir: string): Promise<void> {
+  const packageJsonPath = join(destinationDir, 'package.json')
+  try {
+    const raw = await readFile(packageJsonPath, 'utf8')
+    const pkg = JSON.parse(raw) as { scripts?: Record<string, string> }
+    const scripts = pkg.scripts ?? {}
+
+    delete scripts['dev:server']
+    delete scripts['dev:worker']
+    scripts['dev:api'] = 'cargo run --manifest-path services/api/Cargo.toml'
+    scripts['build:api'] = 'cargo build --manifest-path services/api/Cargo.toml --release'
+    scripts['docker:build'] = 'docker build -f services/api/Dockerfile .'
+
+    pkg.scripts = scripts
+    await writeFile(packageJsonPath, JSON.stringify(pkg, null, 2) + '\n')
+  } catch {
+    // Standalone service families may not have a JavaScript root package.
+  }
+}
+
 // =============================================================================
 // Rust / Actix Web
 // =============================================================================
@@ -629,6 +668,8 @@ export async function applyBackendTransform(
 
     await writeFile_(join(destinationDir, 'Cargo.toml'), rustCargoWorkspaceToml())
     await writeFile_(join(apiDir, '.env.example'), buildServerEnv(config))
+    await writeFile_(join(apiDir, 'Dockerfile'), rustServiceDockerfile())
+    await patchRootPackageForServiceApi(destinationDir)
 
     return
   }

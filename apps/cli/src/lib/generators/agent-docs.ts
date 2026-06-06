@@ -20,20 +20,18 @@ function keyDirs(config: ProjectConfig): string[] {
       dirs.push('`services/api` — Service-owned backend')
     } else {
       dirs.push('`apps/server` — API server')
+      dirs.push('`packages/auth` — Better Auth configuration')
+      dirs.push('`packages/store` — Database schema and client')
+      dirs.push('`packages/trpc` — tRPC routers and context')
+      dirs.push('`packages/common` — Shared TypeScript helpers')
     }
     if (includeWorker) dirs.push('`apps/worker` — Background job processing')
-    dirs.push('`packages/auth` — Better Auth configuration')
-    dirs.push('`packages/store` — Database schema and client')
-    dirs.push('`packages/trpc` — tRPC routers and context')
-    dirs.push('`packages/ui` — Shared UI components')
   } else if (family === 'next') {
     dirs.push('`app` — Next.js App Router pages')
     dirs.push('`components` — React components')
     if (config.presets.includes('auth')) dirs.push('`lib/auth` — Auth configuration')
   } else if (family === 'backend') {
     dirs.push('`src` — API source')
-    dirs.push('`prisma` — Database schema')
-    dirs.push('`packages/auth` — Auth configuration')
   } else if (family === 'convex') {
     dirs.push('`app` — Next.js App Router pages')
     dirs.push('`convex` — Convex functions and schema')
@@ -112,7 +110,7 @@ function placementGuide(config: ProjectConfig): string[] {
   ]
 }
 
-function commandsForFamily(family: string, pm: string): string[] {
+function commandsForFamily(config: ProjectConfig, pm: string): string[] {
   const run = pm === 'bun' ? 'bun run' : pm === 'pnpm' ? 'pnpm' : 'npm run'
 
   const cmds: string[] = [
@@ -122,12 +120,12 @@ function commandsForFamily(family: string, pm: string): string[] {
     `- \`${run} check-types\` — Type check all packages`,
   ]
 
-  if (family === 'fullstack' || family === 'backend') {
+  if (config.family === 'fullstack' && !usesServiceApi(config) && config.database !== 'none') {
     cmds.push(`- \`${run} db:generate\` — Generate database client`)
     cmds.push(`- \`${run} db:migrate\` — Run database migrations`)
   }
 
-  if (family === 'rust') {
+  if (config.family === 'rust') {
     return [
       '- `cargo run` — Start API',
       '- `cargo test` — Tests',
@@ -137,7 +135,7 @@ function commandsForFamily(family: string, pm: string): string[] {
     ]
   }
 
-  if (family === 'solana') {
+  if (config.family === 'solana') {
     return [
       `- \`${pm} install\` — Install JavaScript workspace dependencies`,
       `- \`${run} build\` — Build generated apps/packages`,
@@ -151,15 +149,13 @@ function commandsForFamily(family: string, pm: string): string[] {
   return cmds
 }
 
-function agentPrompt(family: string): string[] {
+function agentPrompt(config: ProjectConfig): string[] {
   const prompts: string[] = [
     'Before making changes, read the relevant files listed under Key Directories.',
     'Update the relevant .docs topic and this AGENTS.md when adding new endpoints, packages, or auth flows.',
-    'Run `bun run repo:doctor` after structural changes to verify consistency.',
-    'Update SHOWCASE.mdx when adding significant features.',
   ]
 
-  if (family === 'rust') {
+  if (config.family === 'rust') {
     prompts.push(
       'New features: add `src/modules/<name>/` with routes → handler → service → repository; keep handlers thin.',
     )
@@ -167,16 +163,28 @@ function agentPrompt(family: string): string[] {
     prompts.push('PATCH DTOs use `Option` fields; reject empty patches in the service layer.')
   }
 
-  if (family === 'fullstack') {
+  if (config.family === 'fullstack') {
+    prompts.push('Run `bun run lint`, `bun run check-types`, and `bun run build` before handoff.')
     prompts.push(
-      'When adding a new tRPC procedure: create the router, add to _app.ts, update trpc.md rule.',
+      'Update SHOWCASE.mdx when showcase content exists and significant UX changes land.',
     )
-    prompts.push(
-      'When modifying the Prisma schema: run db:generate and db:migrate, update the store rule.',
-    )
+    if (usesServiceApi(config)) {
+      prompts.push(
+        'When adding service API routes: keep handlers thin, validate DTOs at the boundary, and update the web health/status integration when the contract changes.',
+      )
+    } else {
+      prompts.push(
+        'When adding a new tRPC procedure: create the feature router and compose it in `apps/server/src/modules/trpc/app.router.ts`.',
+      )
+      if (config.database !== 'none') {
+        prompts.push(
+          'When modifying the Prisma schema: run db:generate and db:migrate, then update the store docs.',
+        )
+      }
+    }
   }
 
-  if (family === 'solana') {
+  if (config.family === 'solana') {
     prompts.push('Run `anchor build` after program changes when Anchor is available locally.')
     prompts.push('Keep wallet adapter setup in apps; keep program/client constants in packages.')
   }
@@ -187,8 +195,8 @@ function agentPrompt(family: string): string[] {
 export function buildRootAgentsMd(config: ProjectConfig): string {
   const name = sanitizeProjectName(config.projectName)
   const dirs = keyDirs(config)
-  const cmds = commandsForFamily(config.family, config.packageManager ?? 'bun')
-  const prompts = agentPrompt(config.family)
+  const cmds = commandsForFamily(config, config.packageManager ?? 'bun')
+  const prompts = agentPrompt(config)
   const placements = placementGuide(config)
   const pm = config.packageManager ?? 'bun'
 
@@ -214,6 +222,14 @@ ${pm} install
 ${pm} dev
 \`\`\`
 
+## Loading order
+
+1. Use docs/README.md for public commands and user-facing docs.
+2. Use .docs/README.md for internal architecture and capability context.
+3. Load one task-specific .docs topic, not the whole tree.
+4. Load one matching .plans/active file only for approved in-flight work.
+5. Never treat .plans/archive as current behavior.
+
 ## Stack
 
 - **Family**: ${config.family}
@@ -235,7 +251,7 @@ ${cmds.join('\n')}
 
 {/* These instructions are for AI agents modifying this project. */}
 
-- Use this file and the nearest workspace \`AGENTS.md\` — do not add \`.cursor/rules/\` or \`.claude/rules/\`.
+- Use this file and the nearest workspace \`AGENTS.md\` — do not add \`.cursor/rules/\`, \`.claude/rules/\`, or duplicate instruction directories.
 
 ${prompts.map((p) => `- ${p}`).join('\n')}
 
@@ -264,7 +280,6 @@ export function buildGeneratedArchitectureMd(config: ProjectConfig): string {
 - **Backend**: ${config.backend} in \`services/api\`
 - **Database**: ${config.database}${config.orm !== 'none' ? ` via ${config.orm}` : ''}
 - **Auth boundary**: Keep auth/session verification explicit at the service boundary
-- **UI**: Shared component library at \`packages/ui\`
 - **JavaScript workspace**: Turborepo with Bun/pnpm package-manager support
 - **Rust workspace**: Cargo workspace at \`Cargo.toml\` with \`services/api\`
 
@@ -273,8 +288,8 @@ export function buildGeneratedArchitectureMd(config: ProjectConfig): string {
 - Rust API startup: \`services/api/src/main.rs\`
 - Rust API config: \`services/api/src/config.rs\`
 - Rust API routes: \`services/api/src/routes.rs\`
-- Frontend providers: \`apps/web/components/providers.tsx\`
-- Frontend API client boundary: keep fetch/client calls isolated from UI components
+- Frontend shell: \`apps/web/app/layout.tsx\` and \`apps/web/app/page.tsx\`
+- Frontend API status integration: \`apps/web/app/page.tsx\` reads \`NEXT_PUBLIC_API_URL\`
 
 ## Environment Variables
 
@@ -299,7 +314,7 @@ See \`services/api/.env.example\` and \`apps/web/.env.example\` for required var
 - **Database**: ${config.database} via ${config.orm}
 - **Auth**: Better Auth with session-based authentication
 - **API Layer**: tRPC for end-to-end type safety
-- **UI**: Shared component library at \`packages/ui\`
+- **Shared types**: \`packages/common\` for cross-workspace helpers
 - **Monorepo**: Turborepo with Bun as package manager
 
 ## Key Entry Points
@@ -308,8 +323,8 @@ See \`services/api/.env.example\` and \`apps/web/.env.example\` for required var
 - tRPC context and procedures: \`apps/server/src/modules/trpc/trpc.ts\`
 - Database schema: \`packages/store/prisma/schema.prisma\`${config.orm === 'drizzle' ? '\n- Database schema: `packages/store/src/schema.ts`' : ''}
 - Auth configuration: \`packages/auth/src/index.ts\`
-- Frontend providers: \`apps/web/components/providers.tsx\`
-- tRPC client setup: \`apps/web/trpc/client.tsx\`
+- Frontend shell: \`apps/web/app/layout.tsx\` and \`apps/web/app/page.tsx\`
+- tRPC client setup: \`apps/web/trpc/\` wires the UI to \`packages/trpc\`
 
 ## Environment Variables
 

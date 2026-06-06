@@ -6,6 +6,7 @@
   },
   "rules": {
     "no-console": "off",
+    "import/no-unassigned-import": "off",
     "typescript/no-unused-vars": ["error", { "args": "none", "varsIgnorePattern": "^_" }],
     "import/default": "error"
   }

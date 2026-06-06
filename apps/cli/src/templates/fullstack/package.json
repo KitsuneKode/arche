@@ -1,0 +1,47 @@
+{
+  "name": "@acme/fullstack",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "toolings/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "check-types": "turbo run check-types",
+    "clean": "find . -name node_modules -o -name .next -o -name .turbo -o -name dist -type d -prune | xargs rm -rf",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "db:seed": "turbo run db:seed",
+    "db:studio": "turbo run db:studio",
+    "dev": "turbo run dev",
+    "dev:server": "turbo run dev --filter=@arche-template/server",
+    "dev:web": "turbo run dev --filter=@arche-template/web",
+    "dev:worker": "turbo run dev --filter=@arche-template/worker",
+    "docker:build": "docker build -f apps/server/Dockerfile .",
+    "docker:run": "docker run --rm -p 8080:8080 -e ENABLE_REDIS=false",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.11",
+    "@t3-oss/env-nextjs": "^0.13.11",
+    "compression": "^1.7.5",
+    "express-rate-limit": "^8.5.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@arche-template/typescript-config": "workspace:*",
+    "@types/compression": "^1.7.5",
+    "oxfmt": "^0.50.0",
+    "oxlint": "^1.65.0",
+    "turbo": "^2.9.14",
+    "typescript": "6.0.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

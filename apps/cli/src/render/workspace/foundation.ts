@@ -12,6 +12,12 @@ const DEFAULT_TOOLCHAIN = {
   pnpm: '10.12.1',
 } as const
 
+/** Align fresh installs with the dogfood lockfile (BullMQ + Better Auth). ORMs: Prisma/Drizzle only. */
+const SCAFFOLD_DEPENDENCY_OVERRIDES: Record<string, string> = {
+  ioredis: '5.10.1',
+  'better-auth': '1.6.11',
+}
+
 type JsonPackage = {
   packageManager?: string
   workspaces?: string[] | { packages: string[]; catalog?: Record<string, string> }
@@ -20,6 +26,8 @@ type JsonPackage = {
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
   peerDependencies?: Record<string, string>
+  overrides?: Record<string, string>
+  pnpm?: { overrides?: Record<string, string> }
 }
 
 function normalizeTurboScripts(scripts: Record<string, string> | undefined): void {
@@ -37,10 +45,14 @@ function normalizeTurboScripts(scripts: Record<string, string> | undefined): voi
   }
 }
 
-function applyCatalogReferences(pkg: JsonPackage): void {
-  for (const group of [pkg.dependencies, pkg.devDependencies, pkg.peerDependencies]) {
+function dependencyGroups(pkg: JsonPackage): Array<Record<string, string> | undefined> {
+  return [pkg.dependencies, pkg.devDependencies, pkg.peerDependencies]
+}
+
+function applyCatalogReferences(pkg: JsonPackage, catalog: Record<string, string>): void {
+  for (const group of dependencyGroups(pkg)) {
     if (!group) continue
-    for (const dependency of Object.keys(DEFAULT_WORKSPACE_CATALOG)) {
+    for (const dependency of Object.keys(catalog)) {
       if (group[dependency] && !group[dependency].startsWith('workspace:')) {
         group[dependency] = 'catalog:'
       }
@@ -48,20 +60,50 @@ function applyCatalogReferences(pkg: JsonPackage): void {
   }
 }
 
-async function updatePackageJsonFiles(directory: string): Promise<void> {
+async function collectUsedCatalogDependencies(
+  directory: string,
+  used = new Set<string>(),
+): Promise<Set<string>> {
   for (const entry of await readdir(directory)) {
     if (entry === 'node_modules' || entry === '.git') continue
     const filePath = join(directory, entry)
     const info = await stat(filePath)
 
     if (info.isDirectory()) {
-      await updatePackageJsonFiles(filePath)
+      await collectUsedCatalogDependencies(filePath, used)
       continue
     }
     if (entry !== 'package.json') continue
 
     const pkg = JSON.parse(await readFile(filePath, 'utf8')) as JsonPackage
-    applyCatalogReferences(pkg)
+    for (const group of dependencyGroups(pkg)) {
+      if (!group) continue
+      for (const dependency of Object.keys(group)) {
+        if (DEFAULT_WORKSPACE_CATALOG[dependency]) used.add(dependency)
+      }
+    }
+  }
+
+  return used
+}
+
+async function updatePackageJsonFiles(
+  directory: string,
+  catalog: Record<string, string>,
+): Promise<void> {
+  for (const entry of await readdir(directory)) {
+    if (entry === 'node_modules' || entry === '.git') continue
+    const filePath = join(directory, entry)
+    const info = await stat(filePath)
+
+    if (info.isDirectory()) {
+      await updatePackageJsonFiles(filePath, catalog)
+      continue
+    }
+    if (entry !== 'package.json') continue
+
+    const pkg = JSON.parse(await readFile(filePath, 'utf8')) as JsonPackage
+    applyCatalogReferences(pkg, catalog)
     await writeFile(filePath, JSON.stringify(pkg, null, 2) + '\n')
   }
 }
@@ -117,9 +159,15 @@ export async function applyJavaScriptPackageManagerFoundation(
   }
 
   const packages = await workspacePackages(destinationDir, root)
+  const usedDependencyNames = await collectUsedCatalogDependencies(destinationDir)
+  const catalog = Object.fromEntries(
+    Object.entries(DEFAULT_WORKSPACE_CATALOG).filter(([dependency]) =>
+      usedDependencyNames.has(dependency),
+    ),
+  )
 
   if (packageManager === 'bun') {
-    root.workspaces = { packages, catalog: DEFAULT_WORKSPACE_CATALOG }
+    root.workspaces = Object.keys(catalog).length > 0 ? { packages, catalog } : { packages }
     root.packageManager = `bun@${DEFAULT_TOOLCHAIN.bun}`
   } else {
     delete root.workspaces
@@ -129,14 +177,21 @@ export async function applyJavaScriptPackageManagerFoundation(
     root.packageManager = `pnpm@${DEFAULT_TOOLCHAIN.pnpm}`
     await writeFile(
       join(destinationDir, 'pnpm-workspace.yaml'),
-      renderPnpmWorkspaceYaml({ packages, catalog: DEFAULT_WORKSPACE_CATALOG }),
+      renderPnpmWorkspaceYaml({ packages, catalog }),
     )
     generatedFiles.push('pnpm-workspace.yaml')
   }
 
-  applyCatalogReferences(root)
+  applyCatalogReferences(root, catalog)
+  root.overrides = { ...root.overrides, ...SCAFFOLD_DEPENDENCY_OVERRIDES }
+  if (packageManager === 'pnpm') {
+    root.pnpm = {
+      ...root.pnpm,
+      overrides: { ...root.pnpm?.overrides, ...SCAFFOLD_DEPENDENCY_OVERRIDES },
+    }
+  }
   await writeFile(packageJsonPath, JSON.stringify(root, null, 2) + '\n')
-  await updatePackageJsonFiles(destinationDir)
+  await updatePackageJsonFiles(destinationDir, catalog)
 
   return generatedFiles
 }

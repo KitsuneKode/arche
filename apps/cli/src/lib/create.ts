@@ -91,7 +91,7 @@ export function getSchema(): Record<string, unknown> {
       },
       orm: {
         type: 'string',
-        enum: ['prisma', 'drizzle', 'mongoose', 'none'],
+        enum: ['prisma', 'drizzle', 'none'],
         description: 'Object-relational mapper',
         default: 'prisma',
       },

@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
+    "check-types": "tsc --noEmit",
+    "lint": "oxlint",
     "start": "node dist/server.js"
   },
   "dependencies": {
@@ -15,7 +17,10 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@types/compression": "^1",
+    "@types/cors": "^2",
     "@types/express": "^5",
+    "oxlint": "^1.65.0",
     "tsx": "^4",
     "typescript": "^5"
   }

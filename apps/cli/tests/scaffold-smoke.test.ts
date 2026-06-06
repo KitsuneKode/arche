@@ -113,6 +113,7 @@ describe('scaffold smoke matrix', () => {
 
         if (entry.family === 'fullstack') {
           const rootPackage = readFileSync(join(destinationDir, 'package.json'), 'utf8')
+          const rootPackageJson = JSON.parse(rootPackage)
           const serverPackage = readFileSync(
             join(destinationDir, 'apps/server/package.json'),
             'utf8',
@@ -124,6 +125,11 @@ describe('scaffold smoke matrix', () => {
           const expectedScope = `@${entry.family}-${entry.pm}`
 
           expect(rootPackage).not.toContain('@arche-template/')
+          expect(rootPackageJson.scripts.prepare).toBeUndefined()
+          expect(rootPackageJson.scripts['pkg:check']).toBeUndefined()
+          expect(rootPackageJson.scripts.release).toBeUndefined()
+          expect(rootPackageJson.devDependencies.husky).toBeUndefined()
+          expect(rootPackageJson.devDependencies['@changesets/cli']).toBeUndefined()
           expect(serverPackage).toContain(`"name": "${expectedScope}/server"`)
           expect(serverDockerfile).toContain(`turbo@2.9.14 prune ${expectedScope}/server --docker`)
           expect(serverDockerfile).not.toContain('@arche-template/')
@@ -141,6 +147,10 @@ describe('scaffold smoke matrix', () => {
           expect(existsSync(join(destinationDir, '.plans/README.md'))).toBe(true)
           expect(existsSync(join(destinationDir, '.cursor/rules'))).toBe(false)
           expect(existsSync(join(destinationDir, '.claude/rules'))).toBe(false)
+          expect(existsSync(join(destinationDir, 'out'))).toBe(false)
+          expect(existsSync(join(destinationDir, 'apps/web/.next'))).toBe(false)
+          expect(existsSync(join(destinationDir, 'apps/web/.source'))).toBe(false)
+          expect(existsSync(join(destinationDir, 'apps/server/dist'))).toBe(false)
         }
 
         if (entry.family === 'next') {
@@ -151,7 +161,11 @@ describe('scaffold smoke matrix', () => {
         if (entry.family === 'backend') {
           expect(existsSync(join(destinationDir, 'src/app.ts'))).toBe(true)
           expect(existsSync(join(destinationDir, 'src/server.ts'))).toBe(true)
+          expect(existsSync(join(destinationDir, 'src/common/env.ts'))).toBe(true)
+          expect(existsSync(join(destinationDir, 'src/modules/health/health.routes.ts'))).toBe(true)
           expect(existsSync(join(destinationDir, 'package.json'))).toBe(true)
+          const backendArche = JSON.parse(readFileSync(join(destinationDir, 'arche.json'), 'utf8'))
+          expect(backendArche.choices.backend).toBe('express-bun')
         }
       } finally {
         rmSync(tmpRoot, { recursive: true, force: true })

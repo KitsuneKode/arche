@@ -1,12 +1,12 @@
 import compression from 'compression'
 import cors from 'cors'
 import express from 'express'
-import { env } from '@/common/env'
-import { errorHandler } from '@/common/middleware/error-handler'
-import { securityHeaders } from '@/common/middleware/security-headers'
-import { tracingMiddleware } from '@/common/middleware/tracing'
-import { healthRoutes } from '@/modules/health/health.routes'
-import { rootRoutes } from '@/modules/root/root.routes'
+import { env } from './common/env.js'
+import { errorHandler } from './common/middleware/error-handler.js'
+import { securityHeaders } from './common/middleware/security-headers.js'
+import { tracingMiddleware } from './common/middleware/tracing.js'
+import { healthRoutes } from './modules/health/health.routes.js'
+import { rootRoutes } from './modules/root/root.routes.js'
 
 const app = express()
 

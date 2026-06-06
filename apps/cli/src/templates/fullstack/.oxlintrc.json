@@ -1,0 +1,14 @@
+{
+  "plugins": ["typescript", "import"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "rules": {
+    "no-underscore-dangle": "off",
+    "no-console": "off",
+    "import/no-unassigned-import": "off",
+    "typescript/no-unused-vars": ["error", { "args": "none", "varsIgnorePattern": "^_" }],
+    "import/default": "error"
+  }
+}

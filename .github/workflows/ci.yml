@@ -90,5 +90,8 @@ jobs:
       - name: CLI package check
         run: bun run pkg:check
 
+      - name: Verify scaffolded fullstack installs and builds
+        run: bun run verify:generated:fullstack
+
       - name: Repo doctor
         run: bun run repo:doctor:strict

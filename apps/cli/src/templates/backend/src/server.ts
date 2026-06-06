@@ -1,5 +1,5 @@
-import { env } from '@/common/env'
 import { app } from './app.js'
+import { env } from './common/env.js'
 
 const port = env.PORT
 

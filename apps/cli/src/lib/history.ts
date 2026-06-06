@@ -13,20 +13,27 @@ export interface HistoryEntry {
   reproducible: string
 }
 
-const HISTORY_DIR = join(homedir(), '.arche')
-const HISTORY_FILE = join(HISTORY_DIR, 'history.json')
+function historyDir(): string {
+  return process.env.ARCHE_HISTORY_DIR || join(homedir(), '.arche')
+}
+
+function historyFile(): string {
+  return join(historyDir(), 'history.json')
+}
 
 function ensureHistoryDir(): void {
-  if (!existsSync(HISTORY_DIR)) {
-    mkdirSync(HISTORY_DIR, { recursive: true })
+  const dir = historyDir()
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true })
   }
 }
 
 function readHistory(): HistoryEntry[] {
   ensureHistoryDir()
-  if (!existsSync(HISTORY_FILE)) return []
+  const file = historyFile()
+  if (!existsSync(file)) return []
   try {
-    const raw = readFileSync(HISTORY_FILE, 'utf8')
+    const raw = readFileSync(file, 'utf8')
     return JSON.parse(raw) as HistoryEntry[]
   } catch {
     return []
@@ -35,7 +42,7 @@ function readHistory(): HistoryEntry[] {
 
 function writeHistory(entries: HistoryEntry[]): void {
   ensureHistoryDir()
-  writeFileSync(HISTORY_FILE, JSON.stringify(entries, null, 2) + '\n')
+  writeFileSync(historyFile(), JSON.stringify(entries, null, 2) + '\n')
 }
 
 /** Record a scaffold in the local history store */
@@ -44,6 +51,16 @@ export function recordHistory(entry: HistoryEntry): void {
   entries.unshift(entry)
   // Keep last 50 entries
   writeHistory(entries.slice(0, 50))
+}
+
+/** Best-effort history recording for the scaffold success path. */
+export function tryRecordHistory(entry: HistoryEntry): boolean {
+  try {
+    recordHistory(entry)
+    return true
+  } catch {
+    return false
+  }
 }
 
 /** Get recent scaffold history */
