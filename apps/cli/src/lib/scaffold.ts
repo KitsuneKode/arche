@@ -61,10 +61,13 @@ export interface ScaffoldResult {
   packageName: string
   cleanupTargets: CleanupTarget[]
   generatedFiles: string[]
+  installResult: 'skipped' | 'succeeded' | 'failed'
+  installError?: string
 }
 
 const EXCLUDED_SEGMENTS = new Set([
   '.git',
+  '.bun-tmp',
   '.turbo',
   '.vercel',
   '.source',
@@ -737,6 +740,7 @@ async function applyGeneratedCleanup(
 }
 
 async function removeAutoInstallArtifacts(destinationDir: string): Promise<void> {
+  await rm(join(destinationDir, '.bun-tmp'), { recursive: true, force: true })
   await rm(join(destinationDir, '.turbo'), { recursive: true, force: true })
 }
 
@@ -1029,9 +1033,18 @@ export async function scaffoldProject(
     tryCommand(['git', 'init', '-b', 'main'], { cwd: destinationDir })
   }
 
+  let installResult: ScaffoldResult['installResult'] = 'skipped'
+  let installError: string | undefined
   if (options.installDependencies && !dryRun && family !== 'rust') {
-    runCommand(pmInstallParts(pm), { cwd: destinationDir })
-    await removeAutoInstallArtifacts(destinationDir)
+    try {
+      runCommand(pmInstallParts(pm), { cwd: destinationDir, silent: true })
+      installResult = 'succeeded'
+    } catch (error) {
+      installResult = 'failed'
+      installError = error instanceof Error ? error.message : String(error)
+    } finally {
+      await removeAutoInstallArtifacts(destinationDir)
+    }
   }
 
   return {
@@ -1039,5 +1052,7 @@ export async function scaffoldProject(
     packageName,
     cleanupTargets: familySupportsTemplateCleanup(family) ? cleanupTargets : [],
     generatedFiles,
+    installResult,
+    installError,
   }
 }

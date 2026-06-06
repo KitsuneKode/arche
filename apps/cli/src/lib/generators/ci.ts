@@ -8,7 +8,54 @@ import type { ProjectConfig } from '../../types/schemas'
 
 import { renderRustCi } from './rust'
 
-function renderConvexCi(): string {
+function renderPackageManagerSteps(config: ProjectConfig): string {
+  switch (config.packageManager) {
+    case 'pnpm':
+      return `      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install
+`
+    case 'npm':
+      return `      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+`
+    case 'bun':
+      return `      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+`
+  }
+}
+
+function runScript(config: ProjectConfig, script: string): string {
+  return config.packageManager === 'npm'
+    ? `npm run ${script}`
+    : `${config.packageManager} run ${script}`
+}
+
+function runTest(config: ProjectConfig): string {
+  return config.packageManager === 'npm' ? 'npm test --' : `${config.packageManager} test`
+}
+
+function renderConvexCi(config: ProjectConfig): string {
   return `name: CI
 
 on:
@@ -24,19 +71,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+${renderPackageManagerSteps(config)}
 
       - name: Lint
-        run: bun run lint
+        run: ${runScript(config, 'lint')}
 
       - name: Typecheck
-        run: bun run check-types
+        run: ${runScript(config, 'check-types')}
 `.trimEnd()
 }
 
@@ -44,22 +85,19 @@ function renderStandaloneCi(config: ProjectConfig): string {
   const lintStep =
     config.family === 'backend' || config.family === 'convex'
       ? `      - name: Lint
-        run: bun run lint
+        run: ${runScript(config, 'lint')}
 
 `
       : ''
-  const typecheckStep =
-    config.family === 'backend' || config.family === 'convex'
-      ? `      - name: Typecheck
-        run: bun run check-types
+  const typecheckStep = `      - name: Typecheck
+        run: ${runScript(config, 'check-types')}
 
 `
-      : ''
   const buildStep =
-    config.family === 'worker' || config.family === 'mobile'
+    config.family === 'mobile'
       ? ''
       : `      - name: Build
-        run: bun run build
+        run: ${runScript(config, 'build')}
 `
 
   return (
@@ -78,13 +116,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+${renderPackageManagerSteps(config)}
 
 ${lintStep}${typecheckStep}${buildStep}`.trimEnd() + '\n'
   )
@@ -96,7 +128,7 @@ export function renderGithubActionsWorkflow(config: ProjectConfig): string {
   }
 
   if (config.family === 'convex') {
-    return `${renderConvexCi()}\n`
+    return `${renderConvexCi(config)}\n`
   }
 
   if (config.family !== 'fullstack' && config.family !== 'polyglot' && config.family !== 'solana') {
@@ -106,7 +138,7 @@ export function renderGithubActionsWorkflow(config: ProjectConfig): string {
   const testStep =
     config.testing !== 'none'
       ? `      - name: Run tests
-        run: bun test tests/src
+        run: ${runTest(config)} tests/src
 `
       : ''
 
@@ -126,22 +158,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+${renderPackageManagerSteps(config)}
 
       - name: Lint
-        run: bun run lint
+        run: ${runScript(config, 'lint')}
 
       - name: Typecheck
-        run: bun run check-types
+        run: ${runScript(config, 'check-types')}
 
       - name: Repo doctor
-        run: bun run repo:doctor:strict
+        run: ${runScript(config, 'repo:doctor:strict')}
 
 ${testStep}`.trimEnd() + '\n'
   )

@@ -53,6 +53,30 @@ const SUBCOMMANDS = new Set([
   'create',
 ])
 
+function defaultIncludeDockerForFamily(family: Family): boolean {
+  return (
+    family === 'fullstack' || family === 'backend' || family === 'rust' || family === 'polyglot'
+  )
+}
+
+function defaultDeploymentForFamily(family: Family): ProjectConfig['deployment'] {
+  switch (family) {
+    case 'fullstack':
+    case 'backend':
+    case 'next':
+    case 'rust':
+    case 'polyglot':
+      return 'vercel-railway'
+    case 'convex':
+    case 'solana':
+    case 'worker':
+    case 'lib':
+    case 'cli':
+    case 'mobile':
+      return 'none'
+  }
+}
+
 /** Support `arche create my-app` and legacy `arche my-app` / `create-arche my-app`. */
 function normalizeArgv(argv: string[]): string[] {
   if (argv[0] === 'create') {
@@ -103,12 +127,12 @@ ${pc.bold('Options:')}
   --no-showcase      Strip showcase content
   --worker           Keep background worker workspace (default: no)
   --no-worker        Remove worker workspace
-  --docker           Generate docker-compose.yml (default: yes)
+  --docker           Generate docker-compose.yml (default: stack-aware)
   --no-docker        Skip Docker file generation
   --ci               Generate GitHub Actions workflow (default: yes)
   --no-ci            Skip CI generation
   --tests=<mode>     Testing setup: bun, none (default: bun)
-  --deployment=<m>   Deployment guide: vercel-railway, none (default: vercel-railway)
+  --deployment=<m>   Deployment guide: vercel-railway, none (default: stack-aware)
   --dry-run           Preview without writing files
   --backend=<b>      Backend: express-bun, hono-bun, rust-axum, rust-actix, go-fiber, python-fastapi, none
   --database=<d>     Database: postgres, sqlite, mongodb, none (default: postgres)
@@ -700,7 +724,7 @@ async function main(): Promise<void> {
       })
 
   const includeDocker = args.yes
-    ? (args.includeDocker ?? presetDefaults.includeDocker ?? true)
+    ? (args.includeDocker ?? presetDefaults.includeDocker ?? defaultIncludeDockerForFamily(family))
     : await promptIfNeeded(args.includeDocker, async () => {
         const dockerHint =
           database === 'postgres'
@@ -734,7 +758,7 @@ async function main(): Promise<void> {
       })
 
   const deployment = args.yes
-    ? (args.deployment ?? presetDefaults.deployment ?? 'vercel-railway')
+    ? (args.deployment ?? presetDefaults.deployment ?? defaultDeploymentForFamily(family))
     : await promptIfNeeded(args.deployment, async () => {
         const value = await select({
           message: 'Deployment guide',
@@ -860,16 +884,23 @@ async function main(): Promise<void> {
   )
 
   const step = spinner()
-  step.start('Generating project...')
+  const useGenerationSpinner = !options.installDependencies
+  if (useGenerationSpinner) {
+    step.start('Generating project...')
+  }
 
   try {
     const result = await scaffoldProject(options, args.dryRun)
     if (args.dryRun) {
-      step.stop('Dry-run complete — no files written.')
+      if (useGenerationSpinner) {
+        step.stop('Dry-run complete — no files written.')
+      }
       note(JSON.stringify({ plannedFiles: result.generatedFiles }, null, 2), 'Dry-run plan')
       process.exit(0)
     }
-    step.stop('Project generated successfully.')
+    if (useGenerationSpinner) {
+      step.stop('Project generated successfully.')
+    }
 
     // History is a convenience; creation must still succeed in read-only homes and CI.
     tryRecordHistory({
@@ -887,11 +918,16 @@ async function main(): Promise<void> {
       [
         `Path: ${result.destinationDir}`,
         `Scope: @${result.packageName}`,
+        `Install: ${result.installResult}`,
         `Cleanup targets: ${result.cleanupTargets.join(', ') || 'none'}`,
         `Generated files: ${result.generatedFiles.join(', ') || 'none'}`,
       ].join('\n'),
       'Result',
     )
+
+    if (result.installResult === 'failed') {
+      note(result.installError ?? 'Dependency installation failed.', 'Install warning')
+    }
 
     const cdPath = relative(process.cwd(), result.destinationDir) || '.'
     const installHint =
@@ -913,13 +949,19 @@ async function main(): Promise<void> {
       `${pc.green('Project ready.')}\n\n` +
         `${pc.bold('Next steps')}\n` +
         `  cd ${cdPath}\n` +
-        `${options.installDependencies ? '' : `  ${installHint}\n`}` +
+        `${
+          options.installDependencies && result.installResult !== 'failed'
+            ? ''
+            : `  ${installHint}\n`
+        }` +
         `  ${devCmd}\n\n` +
         `${pc.dim('Reproduce this scaffold:')}\n` +
         `  ${repro}`,
     )
   } catch (error) {
-    step.stop('Project generation failed.')
+    if (useGenerationSpinner) {
+      step.stop('Project generation failed.')
+    }
     cancel(error instanceof Error ? error.message : String(error))
     process.exit(1)
   }

@@ -6,6 +6,7 @@
     "AGENTS.md",
     "App.tsx",
     "app.json",
+    "index.js",
     "package.json",
     "tsconfig.json"
   ]

@@ -120,6 +120,16 @@ const EXPECTED_FILES: Record<Preset, string[]> = {
   experiments: [],
 }
 
+const COMMAND_TIMEOUT_MS: Record<GeneratedProjectCommand, number> = {
+  install: 180_000,
+  lint: 120_000,
+  typecheck: 180_000,
+  test: 180_000,
+  build: 300_000,
+  'cargo-check': 300_000,
+  'anchor-build': 300_000,
+}
+
 function configForCase(destinationDir: string, testCase: GeneratedProjectCase): ProjectConfig {
   const defaults = projectDefaultsForPreset(testCase.preset)
 
@@ -176,6 +186,61 @@ function hasTool(binary: string): boolean {
   return spawnSync('which', [binary], { encoding: 'utf8' }).status === 0
 }
 
+function readPackageScripts(cwd: string): Record<string, string> | undefined {
+  const packageJsonPath = join(cwd, 'package.json')
+  if (!existsSync(packageJsonPath)) return undefined
+
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
+    scripts?: Record<string, string>
+  }
+
+  return packageJson.scripts ?? {}
+}
+
+function commandApplicability(
+  cwd: string,
+  command: GeneratedProjectCommand,
+): { applicable: true } | { applicable: false; reason: string } {
+  if (command === 'cargo-check') {
+    return existsSync(join(cwd, 'Cargo.toml'))
+      ? { applicable: true }
+      : { applicable: false, reason: 'Skipped because Cargo.toml is not present.' }
+  }
+
+  if (command === 'anchor-build') {
+    return existsSync(join(cwd, 'Anchor.toml'))
+      ? { applicable: true }
+      : { applicable: false, reason: 'Skipped because Anchor.toml is not present.' }
+  }
+
+  const scripts = readPackageScripts(cwd)
+  if (!scripts) {
+    return {
+      applicable: false,
+      reason: 'Skipped because package.json is not present.',
+    }
+  }
+
+  if (command === 'install') return { applicable: true }
+
+  const scriptNameByCommand: Partial<Record<GeneratedProjectCommand, string>> = {
+    lint: 'lint',
+    typecheck: 'check-types',
+    test: 'test',
+    build: 'build',
+  }
+  const scriptName = scriptNameByCommand[command]
+
+  if (scriptName && !scripts[scriptName]) {
+    return {
+      applicable: false,
+      reason: `Skipped because package.json has no "${scriptName}" script.`,
+    }
+  }
+
+  return { applicable: true }
+}
+
 function runCommand(
   cwd: string,
   command: GeneratedProjectCommand,
@@ -184,6 +249,16 @@ function runCommand(
 ): GeneratedProjectCommandResult {
   const argv = commandArgv(command, packageManager)
   const binary = argv[0] ?? command
+  const applicability = commandApplicability(cwd, command)
+
+  if (!applicability.applicable) {
+    return {
+      command,
+      argv,
+      status: 'skipped',
+      output: applicability.reason,
+    }
+  }
 
   if (skipMissingTools && !hasTool(binary)) {
     return {
@@ -198,14 +273,18 @@ function runCommand(
     cwd,
     encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 10,
+    timeout: COMMAND_TIMEOUT_MS[command],
   })
   const output = [result.stdout, result.stderr].filter(Boolean).join('\n').trim()
 
   return {
     command,
     argv,
-    status: result.status === 0 ? 'passed' : 'failed',
-    output,
+    status: result.status === 0 && !result.error ? 'passed' : 'failed',
+    output:
+      result.error?.name === 'TimeoutError'
+        ? `${output}\nCommand timed out after ${COMMAND_TIMEOUT_MS[command]}ms.`.trim()
+        : output,
   }
 }
 

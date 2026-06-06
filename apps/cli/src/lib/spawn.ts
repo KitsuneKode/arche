@@ -16,7 +16,6 @@ export function runCommand(command: string[], options: RunCommandOptions): void 
   if (!cmd) {
     throw new Error('Command cannot be empty')
   }
-
   const result: SpawnSyncReturns<Buffer> = spawnSync(cmd, args, {
     cwd: options.cwd,
     stdio: options.silent ? 'pipe' : 'inherit',
@@ -46,7 +45,6 @@ export function runCommandWithOutput(
   if (!cmd) {
     throw new Error('Command cannot be empty')
   }
-
   const result = spawnSync(cmd, args, {
     cwd: options.cwd,
     stdio: 'pipe',

@@ -16,7 +16,7 @@ const FAMILY_DIRS: Record<string, string[]> = {
   rust: ['Cargo.toml'],
   polyglot: ['package.json', 'README.md'],
   cli: ['package.json', 'tsconfig.json', ...PRODUCTION_FILES],
-  mobile: ['package.json', 'tsconfig.json', 'app.json', 'App.tsx', ...PRODUCTION_FILES],
+  mobile: ['package.json', 'tsconfig.json', 'app.json', 'App.tsx', 'index.js', ...PRODUCTION_FILES],
   solana: ['Cargo.toml', 'Anchor.toml'],
   lib: ['package.json', 'tsconfig.json', ...PRODUCTION_FILES],
   worker: ['package.json', 'tsconfig.json', ...PRODUCTION_FILES],
@@ -66,9 +66,32 @@ describe('template stubs', () => {
 })
 
 describe('template stub file integrity', () => {
+  it('standalone JavaScript templates expose generated quality gates', () => {
+    const expectedScriptsByFamily: Record<string, string[]> = {
+      backend: ['build', 'check-types'],
+      cli: ['build', 'check-types'],
+      convex: ['build', 'check-types'],
+      lib: ['build', 'check-types'],
+      mobile: ['check-types'],
+      next: ['build', 'check-types'],
+      polyglot: ['build', 'check-types'],
+      worker: ['build', 'check-types'],
+    }
+
+    for (const [family, scripts] of Object.entries(expectedScriptsByFamily)) {
+      const raw = readFileSync(join(TEMPLATES_DIR, family, 'package.json'), 'utf8')
+      const pkg = JSON.parse(raw) as { scripts?: Record<string, string> }
+
+      for (const script of scripts) {
+        expect(pkg.scripts?.[script]).toBeTruthy()
+      }
+    }
+  })
+
   it('next has app directory with layout and page', () => {
     expect(existsSync(join(TEMPLATES_DIR, 'next', 'app', 'layout.tsx'))).toBe(true)
     expect(existsSync(join(TEMPLATES_DIR, 'next', 'app', 'page.tsx'))).toBe(true)
+    expect(existsSync(join(TEMPLATES_DIR, 'next', 'next-env.d.ts'))).toBe(true)
     expect(existsSync(join(TEMPLATES_DIR, 'next', 'public', '.gitkeep'))).toBe(true)
   })
 
@@ -131,5 +154,6 @@ describe('template stub file integrity', () => {
 
   it('mobile has App.tsx at root', () => {
     expect(existsSync(join(TEMPLATES_DIR, 'mobile', 'App.tsx'))).toBe(true)
+    expect(existsSync(join(TEMPLATES_DIR, 'mobile', 'index.js'))).toBe(true)
   })
 })

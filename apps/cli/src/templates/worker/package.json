@@ -2,10 +2,13 @@
   "name": "@acme/worker",
   "private": true,
   "scripts": {
+    "build": "tsc --noEmit",
+    "check-types": "tsc --noEmit",
     "start": "bun run src/index.ts",
     "dev": "bun run --watch src/index.ts"
   },
   "devDependencies": {
-    "@types/bun": "^1"
+    "@types/bun": "^1",
+    "typescript": "^5"
   }
 }

@@ -7,6 +7,7 @@
     "app/layout.tsx",
     "app/page.tsx",
     "next.config.js",
+    "next-env.d.ts",
     "package.json",
     "tsconfig.json"
   ]

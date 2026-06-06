@@ -1,9 +1,10 @@
 {
   "name": "@acme/mobile",
   "private": true,
-  "main": "expo-router/entry",
+  "main": "index.js",
   "scripts": {
     "start": "expo start",
+    "check-types": "tsc --noEmit",
     "ios": "expo start --ios",
     "android": "expo start --android"
   },

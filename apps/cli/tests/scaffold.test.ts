@@ -322,7 +322,30 @@ describe('renderGithubActionsWorkflow', () => {
     const output = renderGithubActionsWorkflow(makeConfig({ testing: 'none' }))
     expect(output).toContain('Lint')
     expect(output).toContain('Typecheck')
-    expect(output).toContain('bun install --frozen-lockfile')
+    expect(output).toContain('oven-sh/setup-bun')
+    expect(output).toContain('bun install')
+  })
+
+  it('uses pnpm CI when pnpm is selected', () => {
+    const output = renderGithubActionsWorkflow(
+      makeConfig({ packageManager: 'pnpm', testing: 'none' }),
+    )
+    expect(output).toContain('pnpm/action-setup')
+    expect(output).toContain('pnpm install')
+    expect(output).toContain('pnpm run lint')
+    expect(output).toContain('pnpm run check-types')
+    expect(output).not.toContain('oven-sh/setup-bun')
+  })
+
+  it('uses npm CI when npm is selected', () => {
+    const output = renderGithubActionsWorkflow(
+      makeConfig({ packageManager: 'npm', testing: 'none' }),
+    )
+    expect(output).toContain('actions/setup-node')
+    expect(output).toContain('npm install')
+    expect(output).toContain('npm run lint')
+    expect(output).toContain('npm run check-types')
+    expect(output).not.toContain('oven-sh/setup-bun')
   })
 
   it('uses standalone CI for backend family', () => {

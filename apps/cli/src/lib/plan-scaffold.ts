@@ -84,5 +84,6 @@ export function planScaffold(options: ProjectConfig): ScaffoldResult {
     packageName: sanitizeProjectName(options.projectName),
     cleanupTargets: familySupportsTemplateCleanup(family) ? buildCleanupTargets(options) : [],
     generatedFiles,
+    installResult: 'skipped',
   }
 }

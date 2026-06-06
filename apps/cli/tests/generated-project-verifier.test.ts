@@ -40,4 +40,34 @@ describe('generated project verifier', () => {
     expect(result.missingFiles).toEqual([])
     expect(result.commands).toEqual([])
   }, 60000)
+
+  it('skips JavaScript package commands for pure Rust presets', async () => {
+    const result = await verifyGeneratedProject({
+      preset: 'rust-api',
+      packageManager: 'bun',
+      commands: ['install', 'typecheck', 'build', 'cargo-check'],
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.commands.map((command) => [command.command, command.status])).toEqual([
+      ['install', 'skipped'],
+      ['typecheck', 'skipped'],
+      ['build', 'skipped'],
+      ['cargo-check', 'passed'],
+    ])
+  }, 120000)
+
+  it('skips Anchor builds for presets without Anchor metadata', async () => {
+    const result = await verifyGeneratedProject({
+      preset: 'typescript-fullstack',
+      packageManager: 'bun',
+      commands: ['anchor-build'],
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.commands[0]).toMatchObject({
+      command: 'anchor-build',
+      status: 'skipped',
+    })
+  }, 60000)
 })

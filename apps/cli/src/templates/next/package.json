@@ -4,11 +4,17 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "check-types": "tsc --noEmit",
     "start": "next start"
   },
   "dependencies": {
     "next": "^16",
     "react": "^19",
     "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
   }
 }
