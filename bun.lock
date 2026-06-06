@@ -27,10 +27,9 @@
       },
     },
     "apps/cli": {
-      "name": "@arche/create",
-      "version": "0.2.1",
+      "name": "@kitsunekode/arche",
+      "version": "0.1.0",
       "bin": {
-        "@arche/create": "dist/index.js",
         "arche": "dist/index.js",
         "create-arche": "dist/index.js",
       },
@@ -307,8 +306,6 @@
     "@arche-template/web": ["@arche-template/web@workspace:apps/web"],
 
     "@arche-template/worker": ["@arche-template/worker@workspace:apps/worker"],
-
-    "@arche/create": ["@arche/create@workspace:apps/cli"],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.0", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.28.5", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw=="],
 
@@ -665,6 +662,8 @@
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
+
+    "@kitsunekode/arche": ["@kitsunekode/arche@workspace:apps/cli"],
 
     "@kurkle/color": ["@kurkle/color@0.3.4", "", {}, "sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w=="],
 
