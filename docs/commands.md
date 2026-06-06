@@ -14,7 +14,7 @@
 - `bun run dev:cli -- my-app --yes --dir=../projects` - Scaffold from source.
 - `bun run dev:cli -- completion bash` - Print Bash completion.
 - `bun run dev:cli -- completion zsh` - Print Zsh completion.
-- `bun run build:cli` - Build `@arche/create`.
+- `bun run build:cli` - Build `@kitsunekode/arche`.
 - `bun run pkg:check` - Typecheck, lint, test, build, and npm-pack dry-run the CLI package.
 - `bun run --cwd apps/cli pack:dry-run` - Build the CLI and inspect the npm package contents without publishing.
 - `bun test apps/cli/tests` - Run CLI tests.
@@ -82,7 +82,7 @@ are set and deployment protection allows access.
 ## Commit validation
 
 - `bun run commit:check` - Validate the most recent commit message.
-- `bun run changeset` - Create a Changesets release note for `@arche/create`.
+- `bun run changeset` - Create a Changesets release note for `@kitsunekode/arche`.
 - `bun run changeset:status` - Check pending changesets.
 - `bun run version:packages` - Apply Changesets version updates.
 - `bun run release` - Guarded publish entrypoint; skips npm unless trusted publishing is enabled.

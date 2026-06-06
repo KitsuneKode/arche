@@ -1,6 +1,6 @@
 # Publishing Arche
 
-Arche publishes from `apps/cli` as `@arche/create`.
+Arche publishes from `apps/cli` as `@kitsunekode/arche`.
 
 Live publishing is guarded. The release workflow can create Changesets version
 PRs, but `bun run release` skips npm publish unless
@@ -50,7 +50,7 @@ Before enabling live publish:
    `bun run verify:generated -- --preset=rust-api,rust-fullstack --run=cargo-check`
    and
    `bun run verify:generated -- --preset=solana-program,solana-web,solana-mobile,solana-product --run=anchor-build`.
-4. Configure `@arche/create` on npm as a trusted publisher for this GitHub
+4. Configure `@kitsunekode/arche` on npm as a trusted publisher for this GitHub
    repository and the exact publish workflow filename (`release.yml`).
 5. Set the repository variable `NPM_TRUSTED_PUBLISHING_ENABLED=true`.
 6. Keep `permissions.id-token: write` and no `NPM_TOKEN`.

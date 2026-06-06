@@ -67,7 +67,7 @@ describe('rust scaffold output', () => {
 
       const readme = readFileSync(join(destinationDir, 'README.md'), 'utf8')
       expect(readme).toContain('cargo run')
-      expect(readme).toContain('@arche/create')
+      expect(readme).toContain('@kitsunekode/arche')
 
       const agents = readFileSync(join(destinationDir, 'AGENTS.md'), 'utf8')
       expect(agents).toContain('.docs/README.md')

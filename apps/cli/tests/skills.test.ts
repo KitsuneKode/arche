@@ -76,7 +76,7 @@ describe('writeSkillConfigs', () => {
       const skillsPath = join(tmpDir, '.opencode/skills.json')
       expect(existsSync(skillsPath)).toBe(true)
       const content = JSON.parse(readFileSync(skillsPath, 'utf8'))
-      expect(content.version).toBe('0.2.0')
+      expect(content.version).toBe('0.1.0')
       expect(Array.isArray(content.skills)).toBe(true)
       expect(content.skills.length).toBeGreaterThan(0)
       expect(content.skills[0]).toHaveProperty('source')

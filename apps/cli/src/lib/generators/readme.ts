@@ -36,7 +36,7 @@ export function buildReadme(config: ProjectConfig): string {
 
   return `# ${name}
 
-Scaffolded with [@arche/create](https://github.com/KitsuneKode/arche) (\`${preset}\`).
+Scaffolded with [@kitsunekode/arche](https://github.com/KitsuneKode/arche) (\`${preset}\`).
 
 ## Quick start
 

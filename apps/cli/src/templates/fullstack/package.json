@@ -7,8 +7,8 @@
     "toolings/*"
   ],
   "scripts": {
-    "build": "turbo run build",
-    "check-types": "turbo run check-types",
+    "build": "bun run db:generate && turbo run build",
+    "check-types": "bun run db:generate && turbo run check-types",
     "clean": "find . -name node_modules -o -name .next -o -name .turbo -o -name dist -type d -prune | xargs rm -rf",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
@@ -24,6 +24,7 @@
     "format:check": "oxfmt --check",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
+    "postinstall": "bun run db:generate",
     "test": "bun test"
   },
   "dependencies": {

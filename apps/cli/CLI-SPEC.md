@@ -2,7 +2,7 @@
 
 ## Context
 
-The Arche CLI (`apps/cli`, `@arche/create`, `npx arche create`) bootstraps projects from this monorepo. This spec describes portfolio integration with [kitsunekode.in](https://kitsunekode.in).
+The Arche CLI (`apps/cli`, `@kitsunekode/arche`, `npx @kitsunekode/arche create`) bootstraps projects from this monorepo. This spec describes portfolio integration with [kitsunekode.in](https://kitsunekode.in).
 
 ## Portfolio-ready output
 
@@ -17,7 +17,7 @@ See [docs/portfolio-sync.md](../../docs/portfolio-sync.md).
 ## CLI flow
 
 ```
-$ npx arche create my-project fullstack
+$ npx @kitsunekode/arche create my-project fullstack
 
 ? Include showcase landing routes and demo content? (y/N)
 ? Include the background worker workspace? (y/N)

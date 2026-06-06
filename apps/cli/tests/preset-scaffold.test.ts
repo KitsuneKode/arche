@@ -67,6 +67,8 @@ describe('preset scaffold output', () => {
       const rootPackage = JSON.parse(readFileSync(join(destinationDir, 'package.json'), 'utf8'))
       expect(rootPackage.packageManager).toStartWith('bun@')
       expect(rootPackage.workspaces.packages).toContain('services/*')
+      expect(rootPackage.scripts.build).toBe('turbo run build')
+      expect(rootPackage.scripts['check-types']).toBe('turbo run check-types')
       expect(rootPackage.scripts.postinstall).toBeUndefined()
       expect(rootPackage.scripts['db:generate']).toBeUndefined()
       expect(rootPackage.scripts.prepare).toBeUndefined()

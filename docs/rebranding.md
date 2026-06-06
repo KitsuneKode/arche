@@ -7,7 +7,7 @@ Use this when aligning display branding without breaking workspace package names
 | Item        | Value                                                                |
 | ----------- | -------------------------------------------------------------------- |
 | Product     | **Arche** — "The beginning of every project"                         |
-| CLI         | `npx arche create` / `@arche/create`                                 |
+| CLI         | `npx @kitsunekode/arche create` / `@kitsunekode/arche`               |
 | Site        | [arche.kitsunelabs.xyz](https://arche.kitsunelabs.xyz)               |
 | Portfolio   | [kitsunekode.in](https://kitsunekode.in)                             |
 | GitHub repo | [github.com/KitsuneKode/arche](https://github.com/KitsuneKode/arche) |
@@ -34,7 +34,7 @@ cli, scaffolding, turborepo, bun, pnpm, nextjs, rust, solana, better-auth, trpc,
 
 - [x] README title and tagline
 - [x] `apps/web` metadata (`app/layout.tsx`), landing copy, navbar
-- [x] CLI help (`apps/cli/src/index.ts`), `package.json` description for `@arche/create`
+- [x] CLI help (`apps/cli/src/index.ts`), `package.json` description for `@kitsunekode/arche`
 - [x] Deployment hub and three-path guides
 - [x] `apps/server` root JSON title (`Arche API`)
 - [x] Generated scaffold README / deployment text via CLI generators
@@ -42,19 +42,19 @@ cli, scaffolding, turborepo, bun, pnpm, nextjs, rust, solana, better-auth, trpc,
 
 ## Source of truth
 
-| Item                     | Value               | Reason                                                                                              |
-| ------------------------ | ------------------- | --------------------------------------------------------------------------------------------------- |
-| Root `package.json` name | `arche-template`    | Canonical source-template package name. Generated projects replace it with the chosen project slug. |
-| Internal workspace scope | `@arche-template/*` | Source template packages. Generated projects are renamed by the CLI to `@<project-name>/*`.         |
-| Public CLI package       | `@arche/create`     | User-facing npm package. Keep this separate from source template workspaces.                        |
-| GitHub repo target       | `kitsunekode/arche` | Recommended canonical repo name for docs, package metadata, and site links.                         |
+| Item                     | Value                | Reason                                                                                              |
+| ------------------------ | -------------------- | --------------------------------------------------------------------------------------------------- |
+| Root `package.json` name | `arche-template`     | Canonical source-template package name. Generated projects replace it with the chosen project slug. |
+| Internal workspace scope | `@arche-template/*`  | Source template packages. Generated projects are renamed by the CLI to `@<project-name>/*`.         |
+| Public CLI package       | `@kitsunekode/arche` | User-facing npm package. Keep this separate from source template workspaces.                        |
+| GitHub repo target       | `kitsunekode/arche`  | Recommended canonical repo name for docs, package metadata, and site links.                         |
 
 ## Package-scope rule
 
-Keep **`@arche-template/*`** inside this source repo. Keep `@arche/create`
+Keep **`@arche-template/*`** inside this source repo. Keep `@kitsunekode/arche`
 reserved for the published CLI. This makes the difference clear:
 
-- `@arche/create` - user-facing npm package.
+- `@kitsunekode/arche` - user-facing npm package.
 - `@arche-template/web`, `@arche-template/server`, etc. - source template
   workspaces inside this repo.
 - `@my-app/web`, `@my-app/server`, etc. - generated project workspaces after

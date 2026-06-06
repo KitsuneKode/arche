@@ -1,6 +1,6 @@
 # CLI Development Guide
 
-This document is for developers working on the `@arche/create` CLI itself, not for
+This document is for developers working on the `@kitsunekode/arche` CLI itself, not for
 users bootstrapping projects with the CLI.
 
 ## Overview
@@ -39,7 +39,7 @@ Prompts cover database (postgres | sqlite | none), optional `posts` example modu
 See `src/lib/generators/rust.ts` and `.archefiles.json`.
 
 ```bash
-npx arche create my-api rust --yes --dir=/tmp/projects
+npx @kitsunekode/arche create my-api rust --yes --dir=/tmp/projects
 cd /tmp/projects/my-api && cargo run
 ```
 
@@ -73,11 +73,11 @@ bun run link    # Builds and links globally
 
 # Test from anywhere
 cd /tmp
-npx arche create test-project --dir=/tmp/projects
+npx @kitsunekode/arche create test-project --dir=/tmp/projects
 
 # Aliases
-npx create-arche test-project --dir=/tmp/projects
-npx @arche/create test-project --dir=/tmp/projects
+create-arche test-project --dir=/tmp/projects
+npx @kitsunekode/arche create test-project --dir=/tmp/projects
 ```
 
 To unlink:

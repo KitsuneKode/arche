@@ -50,6 +50,7 @@ describe('convex-product preset output', () => {
       expect(existsSync(join(destinationDir, 'convex/schema.ts'))).toBe(true)
       expect(existsSync(join(destinationDir, 'convex/posts.ts'))).toBe(true)
       expect(existsSync(join(destinationDir, 'convex/auth.ts'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'convex/_generated/server.ts'))).toBe(true)
       expect(existsSync(join(destinationDir, 'app/providers.tsx'))).toBe(true)
       expect(existsSync(join(destinationDir, 'convex.json'))).toBe(true)
       expect(existsSync(join(destinationDir, 'apps/server'))).toBe(false)

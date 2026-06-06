@@ -1,5 +1,5 @@
 {
-  "name": "@arche/create",
+  "name": "@kitsunekode/arche",
   "version": "0.1.0",
   "description": "Arche — scaffold personal project vaults, TypeScript monorepos, Rust services, and Solana app foundations",
   "keywords": [
@@ -32,7 +32,6 @@
     "directory": "apps/cli"
   },
   "bin": {
-    "@arche/create": "dist/index.js",
     "arche": "dist/index.js",
     "create-arche": "dist/index.js"
   },

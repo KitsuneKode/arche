@@ -4,15 +4,15 @@ GitHub Actions workflow: [`.github/workflows/ci.yml`](../.github/workflows/ci.ym
 
 Runs on `push` to `main`, `prod`, and `develop`, and on pull requests. One job installs once, then runs the verification ladder.
 
-| Step         | Command                                                                    | Purpose                        |
-| ------------ | -------------------------------------------------------------------------- | ------------------------------ |
-| Format       | `bun run format:check`                                                     | Oxfmt repo formatting          |
-| Lint + types | `bunx turbo run lint check-types` (+ `--affected` on PRs / `develop`)      | Turbo lint and TypeScript      |
-| Tests        | `bun test`                                                                 | CLI, tooling, and unit tests   |
-| Build        | `bunx turbo run build` (+ `--affected` on PRs / `develop`)                 | Build packages                 |
-| Smoke        | `bunx turbo run build --filter=@arche-template/web --filter=@arche/create` | Always build web + CLI         |
-| Package      | `bun run pkg:check`                                                        | CLI pack dry-run               |
-| Repo doctor  | `bun run repo:doctor:strict`                                               | Doc/path drift (warnings fail) |
+| Step         | Command                                                                         | Purpose                        |
+| ------------ | ------------------------------------------------------------------------------- | ------------------------------ |
+| Format       | `bun run format:check`                                                          | Oxfmt repo formatting          |
+| Lint + types | `bunx turbo run lint check-types` (+ `--affected` on PRs / `develop`)           | Turbo lint and TypeScript      |
+| Tests        | `bun test`                                                                      | CLI, tooling, and unit tests   |
+| Build        | `bunx turbo run build` (+ `--affected` on PRs / `develop`)                      | Build packages                 |
+| Smoke        | `bunx turbo run build --filter=@arche-template/web --filter=@kitsunekode/arche` | Always build web + CLI         |
+| Package      | `bun run pkg:check`                                                             | CLI pack dry-run               |
+| Repo doctor  | `bun run repo:doctor:strict`                                                    | Doc/path drift (warnings fail) |
 
 Turbo uses `TURBO_SCM_BASE` (PR base SHA, previous push SHA, or `git rev-parse HEAD^1`) for `--affected`. On **push to `main` or `prod`**, lint/types/build run on the **full workspace** (no `--affected`).
 

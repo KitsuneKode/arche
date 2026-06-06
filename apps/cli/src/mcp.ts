@@ -189,8 +189,8 @@ async function handleToolsCall(
         jsonrpc: '2.0',
         id,
         result: {
-          tool: '@arche/create',
-          version: '0.2.0',
+          tool: '@kitsunekode/arche',
+          version: '0.1.0',
           family: family || 'all',
           guidance: [
             'Use arche_plan_project first to validate config before creating.',
@@ -249,7 +249,7 @@ export function startMcpServer(): void {
     result: {
       protocolVersion: '2024-11-05',
       capabilities: { tools: {} },
-      serverInfo: { name: '@arche/create', version: '0.2.0' },
+      serverInfo: { name: '@kitsunekode/arche', version: '0.1.0' },
     },
   })
 

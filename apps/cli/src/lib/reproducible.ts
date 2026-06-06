@@ -28,7 +28,7 @@ export function buildReproducibleCommand(
     | 'example'
   >,
 ): string {
-  const parts = ['npx', 'arche', 'create', config.projectName, config.family, '--yes']
+  const parts = ['npx', '@kitsunekode/arche', 'create', config.projectName, config.family, '--yes']
 
   if (config.packageManager && config.packageManager !== 'bun') {
     parts.push(`--pm=${config.packageManager}`)

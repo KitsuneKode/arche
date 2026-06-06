@@ -57,7 +57,7 @@ describe('resolveDestinationDir', () => {
 describe('buildReproducibleCommand', () => {
   it('uses arche create with family positional', () => {
     const cmd = buildReproducibleCommand(makeConfig())
-    expect(cmd).toContain('npx arche create test-app fullstack --yes')
+    expect(cmd).toContain('npx @kitsunekode/arche create test-app fullstack --yes')
   })
 })
 

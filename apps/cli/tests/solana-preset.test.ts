@@ -94,9 +94,16 @@ describe('solana preset output', () => {
       expect(existsSync(join(destinationDir, 'apps/mobile/App.tsx'))).toBe(true)
 
       const webPage = readFileSync(join(destinationDir, 'apps/web/app/page.tsx'), 'utf8')
+      expect(webPage).toStartWith("'use client'")
       expect(webPage).toContain('@solana/wallet-adapter-react')
       expect(webPage).toContain('@solana-product/solana-client')
       expect(webPage).not.toContain('@arche-template/')
+
+      const mobilePackage = JSON.parse(
+        readFileSync(join(destinationDir, 'apps/mobile/package.json'), 'utf8'),
+      )
+      expect(mobilePackage.main).toBe('index.js')
+      expect(existsSync(join(destinationDir, 'apps/mobile/index.js'))).toBe(true)
 
       const mobileApp = readFileSync(join(destinationDir, 'apps/mobile/App.tsx'), 'utf8')
       expect(mobileApp).toContain('Solana Mobile Wallet Adapter')
@@ -154,6 +161,7 @@ describe('solana preset output', () => {
 
       expect(existsSync(join(destinationDir, 'programs/core/src/lib.rs'))).toBe(true)
       expect(existsSync(join(destinationDir, 'apps/mobile/App.tsx'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'apps/mobile/index.js'))).toBe(true)
       expect(existsSync(join(destinationDir, 'apps/web'))).toBe(false)
     } finally {
       rmSync(tmpRoot, { recursive: true, force: true })

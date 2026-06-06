@@ -1,4 +1,4 @@
-# Bootstrap CLI (`@arche/create`)
+# Bootstrap CLI (`@kitsunekode/arche`)
 
 ## Purpose
 

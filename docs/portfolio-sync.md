@@ -19,7 +19,7 @@ tags: ['fullstack', 'express-bun', 'postgres', 'prisma']
 featured: false
 created: 2026-05-19
 updated: 2026-05-19
-generator: '@arche/create@0.2.0'
+generator: '@kitsunekode/arche@0.1.0'
 portfolio: https://kitsunekode.in
 ---
 ```
@@ -35,7 +35,7 @@ portfolio: https://kitsunekode.in
 Scaffolded projects include `arche.json` with a reproducible command:
 
 ```sh
-npx arche create my-app fullstack --yes ...
+npx @kitsunekode/arche create my-app fullstack --yes ...
 ```
 
 Schema URL: `https://kitsunekode.in/schemas/arche.json`

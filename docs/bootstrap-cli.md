@@ -1,6 +1,6 @@
 # Arche CLI
 
-The bootstrap CLI lives in `apps/cli` and publishes as `@arche/create` with
+The bootstrap CLI lives in `apps/cli` and publishes as `@kitsunekode/arche` with
 the `arche` and `create-arche` binaries.
 
 ## Run it
@@ -8,9 +8,9 @@ the `arche` and `create-arche` binaries.
 Published route, after release:
 
 ```sh
-npx arche create my-app
-bunx arche create my-app
-npx create-arche my-app
+npx @kitsunekode/arche create my-app
+bunx @kitsunekode/arche create my-app
+create-arche my-app
 ```
 
 Development route from this repository:

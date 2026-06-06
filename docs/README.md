@@ -40,7 +40,7 @@ current implementation sources.
 
 ## Workspace map
 
-- `apps/cli` - `@arche/create` scaffold CLI.
+- `apps/cli` - `@kitsunekode/arche` scaffold CLI.
 - `apps/web` - Next.js documentation/marketing app plus hidden design lab.
 - `apps/server` - TypeScript API template source.
 - `apps/worker` - optional worker template source.

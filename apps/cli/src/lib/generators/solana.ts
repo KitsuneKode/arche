@@ -271,7 +271,9 @@ function webPackageJson(config: ProjectConfig): string {
 
 function webPageTsx(config: ProjectConfig): string {
   const scope = workspaceScope(config.projectName)
-  return `import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
+  return `'use client'
+
+import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
 import { getCoreProgramConfig } from '${scope}/solana-client'
 
 export default function Page() {
@@ -320,6 +322,7 @@ function mobilePackageJson(config: ProjectConfig): string {
       version: '0.1.0',
       private: true,
       type: 'module',
+      main: 'index.js',
       scripts: {
         dev: 'expo start',
         build: 'expo export',
@@ -360,6 +363,14 @@ export default function App() {
     </View>
   )
 }
+`
+}
+
+function mobileIndexJs(): string {
+  return `import { registerRootComponent } from 'expo'
+import App from './App'
+
+registerRootComponent(App)
 `
 }
 
@@ -426,6 +437,7 @@ export async function applySolanaScaffoldTransform(
       ['apps/mobile/package.json', mobilePackageJson(config)],
       ['apps/mobile/tsconfig.json', mobileTsconfigJson()],
       ['apps/mobile/app.json', appJson(config)],
+      ['apps/mobile/index.js', mobileIndexJs()],
       ['apps/mobile/App.tsx', mobileAppTsx(config)],
     )
   }

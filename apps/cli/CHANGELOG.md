@@ -2,7 +2,7 @@
 
 ## 0.1.0
 
-First public release of `@arche/create`.
+First public release of `@kitsunekode/arche`.
 
 ### Added
 

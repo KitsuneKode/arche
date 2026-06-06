@@ -101,7 +101,7 @@ describe('server env', () => {
 describe('family-aware readme', () => {
   it('includes scaffold metadata for fullstack family', () => {
     const readme = buildReadme(baseConfig())
-    expect(readme).toContain('@arche/create')
+    expect(readme).toContain('@kitsunekode/arche')
     expect(readme).toContain('`fullstack`')
     expect(readme).toContain('bun dev')
     expect(readme).toContain('AGENTS.md')

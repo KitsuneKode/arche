@@ -8,6 +8,7 @@
     "app/page.tsx",
     "app/providers.tsx",
     "convex.json",
+    "convex/_generated/server.ts",
     "convex/auth.config.ts",
     "convex/auth.ts",
     "convex/posts.ts",

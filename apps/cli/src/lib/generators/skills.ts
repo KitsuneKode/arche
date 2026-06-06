@@ -96,7 +96,7 @@ export function writeSkillConfigs(destinationDir: string, config: ProjectConfig)
       join(configDir, 'skills.json'),
       JSON.stringify(
         {
-          version: '0.2.0',
+          version: '0.1.0',
           skills: opencodeSkills.map((s) => ({
             source: s.source,
             name: s.skill,

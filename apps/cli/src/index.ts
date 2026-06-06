@@ -39,8 +39,8 @@ import {
   PresetSchema,
 } from './types/schemas'
 
-const PKG_NAME = '@arche/create'
-const PKG_VERSION = '0.2.0'
+const PKG_NAME = '@kitsunekode/arche'
+const PKG_VERSION = '0.1.0'
 const SITE_URL = 'https://arche.kitsunelabs.xyz'
 
 const SUBCOMMANDS = new Set([
@@ -70,9 +70,9 @@ function printHelp(): void {
 ${pc.cyan('arche')} / ${pc.cyan(PKG_NAME)} v${PKG_VERSION}
 
 ${pc.bold('Usage:')}
-  npx arche create [project-name] [family] [options]
-  bunx arche create [project-name] [family] [options]
-  npx create-arche [project-name] [family] [options]
+  npx @kitsunekode/arche create [project-name] [family] [options]
+  bunx @kitsunekode/arche create [project-name] [family] [options]
+  create-arche [project-name] [family] [options]
 
 ${pc.bold('Families:')}
   fullstack    Full-stack TypeScript monorepo (default)
@@ -126,13 +126,13 @@ ${pc.bold('Subcommands:')}
 
 ${pc.bold('Examples:')}
   ${pc.dim('# Interactive mode')}
-  npx arche create my-app
+  npx @kitsunekode/arche create my-app
 
   ${pc.dim('# Scaffold outside the template repo')}
-  npx arche create my-app --yes --dir=/tmp/projects
+  npx @kitsunekode/arche create my-app --yes --dir=/tmp/projects
 
   ${pc.dim('# Non-interactive with JSON')}
-  npx arche create-json '{"projectName":"my-app","destinationDir":"/tmp/my-app","family":"fullstack"}'
+  npx @kitsunekode/arche create-json '{"projectName":"my-app","destinationDir":"/tmp/my-app","family":"fullstack"}'
 
   ${pc.dim('# Validate without writing')}
   npx ${PKG_NAME} validate '{"projectName":"my-app","database":"mongodb","orm":"prisma"}'
@@ -141,7 +141,7 @@ ${pc.bold('Examples:')}
   npx ${PKG_NAME} my-app --yes --dry-run
 
   ${pc.dim('# Specify family')}
-  npx arche create my-app backend --bundle=product --yes
+  npx @kitsunekode/arche create my-app backend --bundle=product --yes
 
   ${pc.dim('# Skip Docker and CI')}
   npx ${PKG_NAME} my-app --no-docker --no-ci

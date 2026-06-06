@@ -25,7 +25,7 @@
 
 ---
 
-Arche is KitsuneKode’s preset-led way to start real projects without re-wiring the boring parts: workspace shape, package-manager catalogs, agent context, deployment notes, and a reproducible `arche.json`. It began as a full-stack TypeScript template and is now a vault plus `@arche/create` CLI.
+Arche is KitsuneKode’s preset-led way to start real projects without re-wiring the boring parts: workspace shape, package-manager catalogs, agent context, deployment notes, and a reproducible `arche.json`. It began as a full-stack TypeScript template and is now a vault plus `@kitsunekode/arche` CLI.
 
 **Honest status:** foundations are implemented; preset promotion to “stable” waits on the [verification matrix](.docs/product/verification-matrix.md). No preset is marketed as production-ready until that matrix passes.
 
@@ -34,9 +34,9 @@ Arche is KitsuneKode’s preset-led way to start real projects without re-wiring
 Published route (after npm release):
 
 ```sh
-npx arche create my-app
+npx @kitsunekode/arche create my-app
 # or
-bunx arche create my-app
+bunx @kitsunekode/arche create my-app
 ```
 
 From this repository while developing:
@@ -97,7 +97,7 @@ bun run dev:cli -- my-app --yes --dry-run --dir=../projects
 ```mermaid
 flowchart TB
   subgraph apps [apps]
-    cli[cli — @arche/create]
+    cli[cli — @kitsunekode/arche]
     web[web — docs + design lab]
     server[server — API template]
     worker[worker — optional jobs]
@@ -114,7 +114,7 @@ flowchart TB
 
 ```text
 apps/
-  cli/       @arche/create CLI
+  cli/       @kitsunekode/arche CLI
   web/       documentation / marketing + design lab
   server/    TypeScript API template source
   worker/    optional worker template

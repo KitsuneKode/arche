@@ -5,6 +5,7 @@
     "dev": "convex dev --run 'next dev'",
     "dev:web": "next dev",
     "dev:convex": "convex dev",
+    "convex:codegen": "convex codegen",
     "build": "next build",
     "start": "next start",
     "lint": "oxlint",

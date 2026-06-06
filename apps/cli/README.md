@@ -1,4 +1,4 @@
-# @arche/create
+# @kitsunekode/arche
 
 Arche bootstrap CLI — scaffold production-ready monorepos from this template.
 
@@ -7,10 +7,10 @@ Arche bootstrap CLI — scaffold production-ready monorepos from this template.
 ## Usage
 
 ```sh
-npx arche create my-app
-npx arche create my-app fullstack --yes --dir=/tmp/projects
+npx @kitsunekode/arche create my-app
+npx @kitsunekode/arche create my-app fullstack --yes --dir=/tmp/projects
 bunx create-arche my-app          # alias
-npx @arche/create my-app          # scoped alias
+npx @kitsunekode/arche create my-app          # scoped alias
 ```
 
 ## Subcommands
@@ -34,7 +34,7 @@ Backend / database / ORM transforms apply to **fullstack** only.
 **Rust family** — standalone Axum API with layered modules (`handler` → `service` → `repository`):
 
 ```sh
-npx arche create my-api rust --yes --dir=/tmp/projects
+npx @kitsunekode/arche create my-api rust --yes --dir=/tmp/projects
 cd /tmp/projects/my-api && cargo run
 ```
 

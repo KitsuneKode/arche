@@ -62,7 +62,7 @@ describe('MCP Server', () => {
     expect(result.protocolVersion).toBe('2024-11-05')
     expect(result.serverInfo).toBeDefined()
     const serverInfo = result.serverInfo as Record<string, unknown>
-    expect(serverInfo.name).toBe('@arche/create')
+    expect(serverInfo.name).toBe('@kitsunekode/arche')
   })
 
   it('responds to tools/list', async () => {
@@ -127,7 +127,7 @@ describe('MCP Server', () => {
     const result = guidanceResp.result as Record<string, unknown>
     expect(result.guidance).toBeDefined()
     expect(Array.isArray(result.guidance)).toBe(true)
-    expect(result.tool).toBe('@arche/create')
+    expect(result.tool).toBe('@kitsunekode/arche')
   })
 
   it('responds to arche_get_guidance with family', async () => {

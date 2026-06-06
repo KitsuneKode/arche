@@ -35,7 +35,7 @@ tags: [${tags.map((t) => `"${t}"`).join(', ')}]
 featured: false
 created: ${created}
 updated: ${created}
-generator: '@arche/create@0.2.0'
+generator: '@kitsunekode/arche@0.1.0'
 portfolio: https://kitsunekode.in
 ---
 
@@ -76,6 +76,6 @@ ${jsonLdBlock(name, '', created)}
 
 ---
 
-*Scaffolded with [Arche](https://arche.kitsunelabs.xyz) (\`npx arche create\`). Update \`updated\` in frontmatter when you edit this file.*
+*Scaffolded with [Arche](https://arche.kitsunelabs.xyz) (\`npx @kitsunekode/arche create\`). Update \`updated\` in frontmatter when you edit this file.*
 `
 }

@@ -82,11 +82,11 @@ const devCliCommands: CommandRow[] = [
 
 const publishedCliCommands: CommandRow[] = [
   {
-    cmd: 'npx @arche/create my-app --preset=typescript-fullstack --yes',
-    desc: 'Published CLI when release track is available (verify before teaching).',
+    cmd: 'npx @kitsunekode/arche create my-app --preset=typescript-fullstack --yes',
+    desc: 'Published CLI with the default TypeScript fullstack preset.',
   },
   {
-    cmd: 'npx arche create my-app convex',
+    cmd: 'npx @kitsunekode/arche create my-app convex',
     desc: 'Family positional form (convex template).',
   },
 ]
@@ -126,7 +126,7 @@ export function DevArcheCliCommandTable() {
   return (
     <CommandTableSection
       title="Develop from this repo"
-      subtitle="Use dev:cli until the published @arche/create release is explicitly trusted."
+      subtitle="Use dev:cli until the published @kitsunekode/arche release is explicitly trusted."
       commands={devCliCommands}
     />
   )

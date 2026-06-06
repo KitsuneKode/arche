@@ -3,7 +3,7 @@ title: CLI overview
 description: How to run the Arche scaffold CLI today, and how it relates to the published package.
 ---
 
-The CLI lives in `apps/cli`, publishes as **`@arche/create`**, and exposes binaries `arche` and `create-arche`. Publication is **guarded**—use the development command until release gates clear.
+The CLI lives in `apps/cli`, publishes as **`@kitsunekode/arche`**, and exposes binaries `arche` and `create-arche`.
 
 ## Run today (source checkout)
 
@@ -17,11 +17,11 @@ Common non-interactive example:
 bun run dev:cli -- my-app --yes --preset=typescript-fullstack --dir=../projects
 ```
 
-| Route                     | Command                     |
-| ------------------------- | --------------------------- |
-| Published (after release) | `npx arche create my-app`   |
-| Published (alternate)     | `bunx arche create my-app`  |
-| Development               | `bun run dev:cli -- my-app` |
+| Route                 | Command                                 |
+| --------------------- | --------------------------------------- |
+| Published npm package | `npx @kitsunekode/arche create my-app`  |
+| Published via Bun     | `bunx @kitsunekode/arche create my-app` |
+| Source checkout       | `bun run dev:cli -- my-app`             |
 
 ## What the CLI does
 

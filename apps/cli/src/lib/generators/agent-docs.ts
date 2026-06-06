@@ -204,7 +204,7 @@ export function buildRootAgentsMd(config: ProjectConfig): string {
 navigation:
   entry: AGENTS.md
   version: generated
-  generator: '@arche/create@0.2.0'
+  generator: '@kitsunekode/arche@0.1.0'
   stack:
     family: ${config.family}
     backend: ${config.backend}
@@ -272,7 +272,7 @@ export function buildGeneratedArchitectureMd(config: ProjectConfig): string {
 
   const descriptions: Record<string, string> = {
     fullstack: serviceApi
-      ? `A full-stack monorepo scaffolded with @arche/create.
+      ? `A full-stack monorepo scaffolded with @kitsunekode/arche.
 
 ## Architecture
 
@@ -305,7 +305,7 @@ See \`services/api/.env.example\` and \`apps/web/.env.example\` for required var
 - Response shaping belongs in mappers.
 - Use PATCH for partial updates. Use PUT only for full replacement.
 - Do not return raw database objects directly; map them into response DTOs.`
-      : `A full-stack TypeScript monorepo scaffolded with @arche/create.
+      : `A full-stack TypeScript monorepo scaffolded with @kitsunekode/arche.
 
 ## Architecture
 
@@ -340,7 +340,7 @@ See \`apps/server/.env.example\` and \`apps/web/.env.example\` for required vari
 - Response shaping belongs in mappers.
 - Use PATCH for partial updates. Use PUT only for full replacement.
 - Do not return raw database objects directly; map them into response DTOs.`,
-    next: `A standalone Next.js application scaffolded with @arche/create.
+    next: `A standalone Next.js application scaffolded with @kitsunekode/arche.
 
 ## Architecture
 
@@ -355,7 +355,7 @@ ${config.presets.includes('auth') ? '- Auth config: `lib/auth`\n' : ''}
 ## Environment Variables
 
 See \`.env.example\` at the project root.`,
-    backend: `An API service scaffolded with @arche/create.
+    backend: `An API service scaffolded with @kitsunekode/arche.
 
 ## Architecture
 
@@ -373,7 +373,7 @@ See \`.env.example\` at the project root.`,
 ## Environment Variables
 
 See \`.env.example\` for required variables.`,
-    rust: `A Rust API service scaffolded with @arche/create.
+    rust: `A Rust API service scaffolded with @kitsunekode/arche.
 
 ## Architecture
 
@@ -413,7 +413,7 @@ ${config.example === 'posts' ? '- `src/modules/posts` — example CRUD module\n'
 ## Environment
 
 See \`.env.example\` (\`PORT\`, \`DATABASE_URL\`, \`RUST_LOG\`).`,
-    convex: `A Next.js + Convex application scaffolded with @arche/create.
+    convex: `A Next.js + Convex application scaffolded with @kitsunekode/arche.
 
 ## Architecture
 
@@ -427,7 +427,7 @@ See \`.env.example\` (\`PORT\`, \`DATABASE_URL\`, \`RUST_LOG\`).`,
 - Convex functions: \`convex/\`
 - Convex schema: \`convex/schema.ts\`
 - App pages: \`app/\``,
-    solana: `A Solana project scaffolded with @arche/create.
+    solana: `A Solana project scaffolded with @kitsunekode/arche.
 
 ## Architecture
 
@@ -449,7 +449,8 @@ ${config.preset === 'solana-web' || config.preset === 'solana-product' ? '- **We
 - \`anchor test\` — Run Anchor tests when local validator tooling is available`,
   }
 
-  const description = descriptions[family] ?? `A ${family} project scaffolded with @arche/create.`
+  const description =
+    descriptions[family] ?? `A ${family} project scaffolded with @kitsunekode/arche.`
 
   return `# ${name} — Context
 

@@ -649,6 +649,11 @@ async function pruneServiceApiFullstack(destinationDir: string): Promise<string[
   }
 
   await patchJsonFile(join(destinationDir, 'package.json'), (pkg) => {
+    const scripts = pkg.scripts as Record<string, unknown> | undefined
+    if (scripts) {
+      scripts.build = 'turbo run build'
+      scripts['check-types'] = 'turbo run check-types'
+    }
     removeKeys(pkg.dependencies, ['compression', 'express-rate-limit'])
     removeKeys(pkg.devDependencies, ['@types/compression'])
     removeKeys(pkg.scripts, [
@@ -731,6 +736,10 @@ async function applyGeneratedCleanup(
   return removed
 }
 
+async function removeAutoInstallArtifacts(destinationDir: string): Promise<void> {
+  await rm(join(destinationDir, '.turbo'), { recursive: true, force: true })
+}
+
 async function writeGeneratedFile(
   destinationDir: string,
   relativePath: string,
@@ -750,7 +759,7 @@ async function writeGeneratedClaudeSymlink(destinationDir: string): Promise<void
 function buildArcheConfig(options: ProjectConfig): string {
   const config = {
     $schema: 'https://kitsunekode.in/schemas/arche.json',
-    version: '0.2.0',
+    version: '0.1.0',
     createdAt: new Date().toISOString(),
     family: options.family,
     preset: options.preset,
@@ -1022,6 +1031,7 @@ export async function scaffoldProject(
 
   if (options.installDependencies && !dryRun && family !== 'rust') {
     runCommand(pmInstallParts(pm), { cwd: destinationDir })
+    await removeAutoInstallArtifacts(destinationDir)
   }
 
   return {
