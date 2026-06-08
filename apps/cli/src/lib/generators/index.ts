@@ -22,7 +22,12 @@ export {
   renderRustEnvExample,
   renderRustWorkspaceCargoToml,
 } from './rust'
-export { renderServiceApiWebLayout, renderServiceApiWebPage } from './scaffold-home'
+export {
+  renderServiceApiWebLayout,
+  renderServiceApiWebPage,
+  renderServiceApiWebProviders,
+  renderServiceApiWebQueryClient,
+} from './scaffold-home'
 export { applySolanaScaffoldTransform } from './solana'
 export { applyDatabaseTransform } from './database'
 export { applyOrmTransform } from './orm'

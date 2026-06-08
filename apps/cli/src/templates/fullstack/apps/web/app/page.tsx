@@ -1,7 +1,11 @@
-'use client'
+import type { Metadata } from 'next'
+import { HydrateClient, prefetch, trpc } from '@/trpc/server'
+import { TrpcStatus } from './trpc-status'
 
-import { useQuery } from '@tanstack/react-query'
-import { useTRPC } from '@/trpc/client'
+export const metadata: Metadata = {
+  title: 'Arche Scaffold',
+  description: 'Fullstack scaffold homepage with live tRPC status.',
+}
 
 const services = [
   ['Web', 'Next.js app router', 'http://localhost:3000'],
@@ -10,30 +14,9 @@ const services = [
   ['Auth', 'Better Auth boundary', 'packages/auth'],
 ] as const
 
-function TrpcStatus() {
-  const trpc = useTRPC()
-  const hello = useQuery(trpc.hello.queryOptions({ name: 'Arche' }))
+export default async function HomePage() {
+  await prefetch(trpc.hello!.queryOptions({ name: 'Arche' }))
 
-  const status = hello.isPending ? 'checking' : hello.isError ? 'offline' : 'online'
-  const message = hello.isPending
-    ? 'Checking tRPC contract...'
-    : hello.isError
-      ? hello.error.message
-      : hello.data
-
-  return (
-    <section className="status" aria-label="Live API status">
-      <div>
-        <span className={status === 'online' ? 'dot online' : 'dot'} />
-        <p className="eyebrow">Live tRPC check</p>
-        <h2>{message}</h2>
-      </div>
-      <code>NEXT_PUBLIC_API_URL=http://localhost:3001</code>
-    </section>
-  )
-}
-
-export default function HomePage() {
   return (
     <main className="shell">
       <section className="hero">
@@ -49,7 +32,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <TrpcStatus />
+      <HydrateClient>
+        <TrpcStatus />
+      </HydrateClient>
 
       <section className="grid" aria-label="Generated services">
         {services.map(([name, detail, target]) => (

@@ -506,6 +506,26 @@ async function detectServerDir(destinationDir: string): Promise<string> {
   return 'apps/server'
 }
 
+async function patchFullstackHomepageCopy(
+  destinationDir: string,
+  backend: ProjectConfig['backend'],
+): Promise<void> {
+  if (backend !== 'hono-bun') return
+
+  const pagePath = join(destinationDir, 'apps/web/app/page.tsx')
+  try {
+    const content = await readFile(pagePath, 'utf8')
+    const patched = content
+      .replace('an Express API', 'a Hono API')
+      .replaceAll('Express + tRPC', 'Hono + tRPC')
+    if (patched !== content) {
+      await writeFile(pagePath, patched)
+    }
+  } catch {
+    // Web app not present (backend-only family)
+  }
+}
+
 /**
  * Apply backend-specific transformations to the scaffolded project.
  * Called after template copy and cleanup, before env/docker/ci generation.
@@ -555,6 +575,7 @@ export async function applyBackendTransform(
       // tRPC package not present — standalone or polyglot without tRPC
     }
 
+    await patchFullstackHomepageCopy(destinationDir, config.backend)
     return
   }
 

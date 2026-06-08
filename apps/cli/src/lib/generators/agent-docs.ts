@@ -324,7 +324,7 @@ See \`services/api/.env.example\` and \`apps/web/.env.example\` for required var
 - Database schema: \`packages/store/prisma/schema.prisma\`${config.orm === 'drizzle' ? '\n- Database schema: `packages/store/src/schema.ts`' : ''}
 - Auth configuration: \`packages/auth/src/index.ts\`
 - Frontend shell: \`apps/web/app/layout.tsx\` and \`apps/web/app/page.tsx\`
-- tRPC client setup: \`apps/web/trpc/\` wires the UI to \`packages/trpc\`
+- tRPC client: \`apps/web/trpc/client.tsx\`; RSC prefetch + hydration: \`apps/web/trpc/server.tsx\` (HTTP); in-process RSC data uses \`createCaller\` from \`@arche-template/server/trpc\` in a dedicated server-only module
 
 ## Environment Variables
 

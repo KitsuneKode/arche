@@ -18,7 +18,6 @@ function configFromPreset(destinationDir: string): ProjectConfig {
     orm: 'prisma',
     backend: 'express-bun',
     runtime: 'bun',
-    addons: [],
     example: 'none',
     testing: 'bun',
     deployment: 'vercel-railway',
@@ -54,7 +53,8 @@ describe('preset scaffold output', () => {
       expect(existsSync(join(destinationDir, 'services/api/.env.example'))).toBe(true)
       expect(existsSync(join(destinationDir, 'services/api/.env'))).toBe(true)
       expect(existsSync(join(destinationDir, 'services/api/Dockerfile'))).toBe(true)
-      expect(existsSync(join(destinationDir, 'apps/web/trpc'))).toBe(false)
+      expect(existsSync(join(destinationDir, 'apps/web/trpc/query-client.ts'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'apps/web/app/providers.tsx'))).toBe(true)
       expect(existsSync(join(destinationDir, 'packages/auth'))).toBe(false)
       expect(existsSync(join(destinationDir, 'packages/store'))).toBe(false)
       expect(existsSync(join(destinationDir, 'packages/trpc'))).toBe(false)
@@ -96,6 +96,7 @@ describe('preset scaffold output', () => {
       expect(Object.keys(webPackage.dependencies).some((key) => key.endsWith('/server'))).toBe(
         false,
       )
+      expect(webPackage.dependencies['@tanstack/react-query']).toBeDefined()
       expect(existsSync(join(destinationDir, 'apps/web/env.ts'))).toBe(false)
 
       expect(existsSync(join(destinationDir, 'services/api/src/app.rs'))).toBe(true)
@@ -109,6 +110,8 @@ describe('preset scaffold output', () => {
       const webPage = readFileSync(join(destinationDir, 'apps/web/app/page.tsx'), 'utf8')
       expect(webPage).toContain('/posts?limit=5')
       expect(webPage).toContain('PostsPreview')
+      expect(webPage).toContain('useQuery')
+      expect(webPage).not.toContain('useEffect')
 
       const webLayout = readFileSync(join(destinationDir, 'apps/web/app/layout.tsx'), 'utf8')
       expect(webLayout).not.toContain('TRPCReactProvider')

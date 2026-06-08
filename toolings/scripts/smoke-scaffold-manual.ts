@@ -139,7 +139,6 @@ async function scaffoldPreset(preset: Preset, root: string): Promise<string> {
       orm: 'prisma',
       backend: 'express-bun',
       runtime: 'bun',
-      addons: [],
       example: 'none',
       testing: 'bun',
       deployment: 'vercel-railway',
@@ -176,8 +175,12 @@ async function smokeTypescriptFullstack(dir: string, failures: string[]): Promis
   if (!typecheck.ok) failures.push(`typescript-fullstack: check-types failed\n${typecheck.output}`)
 
   const page = readFileSync(join(dir, 'apps/web/app/page.tsx'), 'utf8')
-  if (!page.includes('useTRPC') || !page.includes('trpc.hello')) {
-    failures.push('typescript-fullstack: web page missing live tRPC demo')
+  const trpcStatus = readFileSync(join(dir, 'apps/web/app/trpc-status.tsx'), 'utf8')
+  if (!page.includes('trpc.hello') || !page.includes('TrpcStatus')) {
+    failures.push('typescript-fullstack: web page missing RSC prefetch + TrpcStatus demo')
+  }
+  if (!trpcStatus.includes('useQuery')) {
+    failures.push('typescript-fullstack: trpc-status missing useQuery destructure')
   }
 }
 
@@ -190,6 +193,12 @@ async function smokeRustFullstack(dir: string, failures: string[]): Promise<void
 
   const webPage = readFileSync(join(dir, 'apps/web/app/page.tsx'), 'utf8')
   if (!webPage.includes('/posts')) failures.push('rust-fullstack: web page missing posts probe')
+  if (webPage.includes('useEffect')) {
+    failures.push('rust-fullstack: web page should use useQuery instead of useEffect fetch')
+  }
+  if (!webPage.includes('useQuery')) {
+    failures.push('rust-fullstack: web page missing useQuery probes')
+  }
 
   await probeRustApi(dir, failures, 'rust-fullstack', {
     manifestPath: 'services/api/Cargo.toml',

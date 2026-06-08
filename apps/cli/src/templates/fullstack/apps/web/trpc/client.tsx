@@ -9,7 +9,7 @@ import { SuperJSON } from 'superjson'
 import config from '@/env'
 import { makeQueryClient } from './query-client'
 
-export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>()
+export const { TRPCProvider, useTRPC } = createTRPCContext<AppRouter>()
 
 let browserQueryClient: QueryClient
 

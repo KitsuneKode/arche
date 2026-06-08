@@ -47,6 +47,8 @@ import {
   renderRustEnvExample,
   renderServiceApiWebLayout,
   renderServiceApiWebPage,
+  renderServiceApiWebProviders,
+  renderServiceApiWebQueryClient,
 } from './generators'
 import { planScaffold } from './plan-scaffold'
 import { adaptScripts, pmInstallParts } from './pm'
@@ -587,7 +589,6 @@ async function pruneServiceApiFullstack(destinationDir: string): Promise<string[
       '@arche-template/trpc',
       '@arche-template/common',
       '@arche-template/server',
-      '@tanstack/react-query',
       '@trpc/client',
       '@trpc/server',
       '@trpc/tanstack-react-query',
@@ -613,8 +614,18 @@ async function pruneServiceApiFullstack(destinationDir: string): Promise<string[
 
   await rm(join(destinationDir, 'apps/web/env.ts'), { force: true })
 
+  await mkdir(join(destinationDir, 'apps/web/trpc'), { recursive: true })
+  await writeFile(
+    join(destinationDir, 'apps/web/trpc/query-client.ts'),
+    renderServiceApiWebQueryClient(),
+  )
+  await writeFile(
+    join(destinationDir, 'apps/web/app/providers.tsx'),
+    renderServiceApiWebProviders(),
+  )
   await writeFile(join(destinationDir, 'apps/web/app/layout.tsx'), renderServiceApiWebLayout())
   await writeFile(join(destinationDir, 'apps/web/app/page.tsx'), renderServiceApiWebPage())
+  await rm(join(destinationDir, 'apps/web/app/trpc-status.tsx'), { force: true })
 
   return removed
 }

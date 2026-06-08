@@ -1,7 +1,37 @@
 /** Premium minimalist homepage for service-API fullstack scaffolds (rust-fullstack, polyglot swaps). */
 
+export function renderServiceApiWebQueryClient(): string {
+  return `import { QueryClient } from '@tanstack/react-query'
+
+export function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 30 * 1000,
+      },
+    },
+  })
+}
+`
+}
+
+export function renderServiceApiWebProviders(): string {
+  return `'use client'
+
+import { QueryClientProvider } from '@tanstack/react-query'
+import { useState } from 'react'
+import { makeQueryClient } from '@/trpc/query-client'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(() => makeQueryClient())
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+}
+`
+}
+
 export function renderServiceApiWebLayout(): string {
   return `import type { Metadata } from 'next'
+import { Providers } from './providers'
 import './styles.css'
 
 export const metadata: Metadata = {
@@ -12,7 +42,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   )
 }
@@ -22,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 export function renderServiceApiWebPage(): string {
   return `'use client'
 
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 const services = [
   ['Web', 'Next.js app router', 'http://localhost:3000'],
@@ -31,61 +63,41 @@ const services = [
   ['Runtime', 'Service-owned backend', 'services/api'],
 ] as const
 
-type ApiState =
-  | { status: 'checking'; message: string }
-  | { status: 'online'; message: string }
-  | { status: 'offline'; message: string }
-
 type PostPreview = { id: string; title: string }
-
-type PostsState =
-  | { status: 'checking' }
-  | { status: 'online'; total: number; items: PostPreview[] }
-  | { status: 'offline'; message: string }
-  | { status: 'empty' }
 
 function apiBase(): string {
   return (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001').replace(/\\/$/, '')
 }
 
 function ApiStatus() {
-  const [apiState, setApiState] = useState<ApiState>({
-    status: 'checking',
-    message: 'Checking API health...',
+  const { data, isPending, isError, error } = useQuery({
+    queryKey: ['health'],
+    queryFn: async ({ signal }) => {
+      const response = await fetch(\`\${apiBase()}/health\`, {
+        signal,
+        headers: { accept: 'application/json' },
+      })
+      if (!response.ok) throw new Error(\`HTTP \${response.status}\`)
+      const payload = (await response.json().catch(() => null)) as { status?: string } | null
+      return payload?.status ? \`API says \${payload.status}\` : 'API health route is online'
+    },
   })
 
-  useEffect(() => {
-    const controller = new AbortController()
-
-    fetch(\`\${apiBase()}/health\`, {
-      signal: controller.signal,
-      headers: { accept: 'application/json' },
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(\`HTTP \${response.status}\`)
-        const payload = (await response.json().catch(() => null)) as { status?: string } | null
-        setApiState({
-          status: 'online',
-          message: payload?.status ? \`API says \${payload.status}\` : 'API health route is online',
-        })
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return
-        setApiState({
-          status: 'offline',
-          message: error instanceof Error ? error.message : 'API is not reachable yet',
-        })
-      })
-
-    return () => controller.abort()
-  }, [])
+  const status = isPending ? 'checking' : isError ? 'offline' : 'online'
+  const message = isPending
+    ? 'Checking API health...'
+    : isError
+      ? error instanceof Error
+        ? error.message
+        : 'API is not reachable yet'
+      : data
 
   return (
     <section className="status" aria-label="Live API status">
       <div>
-        <span className={apiState.status === 'online' ? 'dot online' : 'dot'} />
+        <span className={status === 'online' ? 'dot online' : 'dot'} />
         <p className="eyebrow">Live API check</p>
-        <h2>{apiState.message}</h2>
+        <h2>{message}</h2>
       </div>
       <code>NEXT_PUBLIC_API_URL=http://localhost:3001</code>
     </section>
@@ -93,60 +105,46 @@ function ApiStatus() {
 }
 
 function PostsPreview() {
-  const [postsState, setPostsState] = useState<PostsState>({ status: 'checking' })
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    fetch(\`\${apiBase()}/posts?limit=5\`, {
-      signal: controller.signal,
-      headers: { accept: 'application/json' },
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(\`HTTP \${response.status}\`)
-        const payload = (await response.json()) as {
-          items?: Array<{ id?: string; title?: string }>
-          total?: number
-        }
-        const items = (payload.items ?? [])
-          .filter((item) => item.id && item.title)
-          .map((item) => ({ id: item.id as string, title: item.title as string }))
-        const total = typeof payload.total === 'number' ? payload.total : items.length
-        if (total === 0) {
-          setPostsState({ status: 'empty' })
-          return
-        }
-        setPostsState({ status: 'online', total, items })
+  const { data, isPending, isError, error } = useQuery({
+    queryKey: ['posts', { limit: 5 }],
+    queryFn: async ({ signal }) => {
+      const response = await fetch(\`\${apiBase()}/posts?limit=5\`, {
+        signal,
+        headers: { accept: 'application/json' },
       })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return
-        setPostsState({
-          status: 'offline',
-          message: error instanceof Error ? error.message : 'Posts route is not reachable yet',
-        })
-      })
-
-    return () => controller.abort()
-  }, [])
+      if (!response.ok) throw new Error(\`HTTP \${response.status}\`)
+      const payload = (await response.json()) as {
+        items?: Array<{ id?: string; title?: string }>
+        total?: number
+      }
+      const items = (payload.items ?? [])
+        .filter((item) => item.id && item.title)
+        .map((item) => ({ id: item.id as string, title: item.title as string }))
+      const total = typeof payload.total === 'number' ? payload.total : items.length
+      return { total, items }
+    },
+  })
 
   return (
     <section className="posts" aria-label="Posts from API">
       <p className="eyebrow">Live data</p>
       <h2>Recent posts</h2>
-      {postsState.status === 'checking' ? (
+      {isPending ? (
         <p className="muted">Loading posts from the API…</p>
-      ) : postsState.status === 'offline' ? (
-        <p className="muted">{postsState.message}</p>
-      ) : postsState.status === 'empty' ? (
+      ) : isError ? (
+        <p className="muted">
+          {error instanceof Error ? error.message : 'Posts route is not reachable yet'}
+        </p>
+      ) : data.total === 0 ? (
         <p className="muted">
           No posts yet. Seed the database or POST to <code>/posts</code> with{' '}
           <code>Authorization: Bearer demo</code>.
         </p>
       ) : (
         <>
-          <p className="muted">{postsState.total} post(s) in the database.</p>
+          <p className="muted">{data.total} post(s) in the database.</p>
           <ul className="post-list">
-            {postsState.items.map((post) => (
+            {data.items.map((post: PostPreview) => (
               <li key={post.id}>
                 <span>{post.title}</span>
                 <code>{post.id.slice(0, 8)}…</code>
