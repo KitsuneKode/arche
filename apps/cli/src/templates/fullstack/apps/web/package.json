@@ -12,11 +12,19 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@arche-template/auth": "workspace:*",
+    "@arche-template/common": "workspace:*",
+    "@arche-template/server": "workspace:*",
+    "@arche-template/store": "workspace:*",
     "@arche-template/trpc": "workspace:*",
+    "@tanstack/react-query": "^5.100.10",
     "@trpc/client": "^11.17.0",
+    "@trpc/tanstack-react-query": "^11.17.0",
+    "client-only": "^0.0.1",
     "next": "^16.2.6",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "server-only": "^0.0.1",
     "superjson": "^2.2.6",
     "zod": "^4.1.11"
   },

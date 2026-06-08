@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { queryHello } from '@/trpc/client'
+import { useQuery } from '@tanstack/react-query'
+import { useTRPC } from '@/trpc/client'
 
 const services = [
   ['Web', 'Next.js app router', 'http://localhost:3000'],
@@ -10,43 +10,23 @@ const services = [
   ['Auth', 'Better Auth boundary', 'packages/auth'],
 ] as const
 
-type ApiState =
-  | { status: 'checking'; message: string }
-  | { status: 'online'; message: string }
-  | { status: 'offline'; message: string }
-
 function TrpcStatus() {
-  const [apiState, setApiState] = useState<ApiState>({
-    status: 'checking',
-    message: 'Checking tRPC contract...',
-  })
+  const trpc = useTRPC()
+  const hello = useQuery(trpc.hello.queryOptions({ name: 'Arche' }))
 
-  useEffect(() => {
-    let cancelled = false
-
-    queryHello('Arche')
-      .then((message) => {
-        if (!cancelled) setApiState({ status: 'online', message })
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return
-        setApiState({
-          status: 'offline',
-          message: error instanceof Error ? error.message : 'API is not reachable yet',
-        })
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const status = hello.isPending ? 'checking' : hello.isError ? 'offline' : 'online'
+  const message = hello.isPending
+    ? 'Checking tRPC contract...'
+    : hello.isError
+      ? hello.error.message
+      : hello.data
 
   return (
     <section className="status" aria-label="Live API status">
       <div>
-        <span className={apiState.status === 'online' ? 'dot online' : 'dot'} />
+        <span className={status === 'online' ? 'dot online' : 'dot'} />
         <p className="eyebrow">Live tRPC check</p>
-        <h2>{apiState.message}</h2>
+        <h2>{message}</h2>
       </div>
       <code>NEXT_PUBLIC_API_URL=http://localhost:3001</code>
     </section>

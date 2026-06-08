@@ -6,6 +6,7 @@
     "AGENTS.md",
     "app/layout.tsx",
     "app/page.tsx",
+    "app/styles.css",
     "next.config.js",
     "next-env.d.ts",
     "package.json",

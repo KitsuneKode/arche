@@ -7,18 +7,19 @@ import { Queue } from 'bullmq'
 const QUEUE_NAMES = ['email', 'webhook', 'cleanup'] as const
 
 let serverAdapter: ExpressAdapter | null = null
+let cachedQueues: Queue[] | null = null
 
 export function getAdminQueueAdapter(): ExpressAdapter {
   if (serverAdapter) return serverAdapter
 
   const connection = getBullConnection()
-  const queues = QUEUE_NAMES.map((name) => new Queue(name, { connection }))
+  cachedQueues = QUEUE_NAMES.map((name) => new Queue(name, { connection }))
 
   serverAdapter = new ExpressAdapter()
   serverAdapter.setBasePath('/admin/queues')
 
   createBullBoard({
-    queues: queues.map((q) => new BullMQAdapter(q)),
+    queues: cachedQueues.map((q) => new BullMQAdapter(q)),
     serverAdapter,
   })
 

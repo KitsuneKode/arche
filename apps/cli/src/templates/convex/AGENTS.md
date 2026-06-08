@@ -5,14 +5,14 @@
 - App routes: `app/`
 - Convex backend: `convex/`
 - Auth config: `convex/auth.ts`, `convex/auth.config.ts`
-- Schema & seed: `convex/schema.ts`, `convex/seed.ts`
+- Schema: `convex/schema.ts`
 
 ## Commands
 
 ```bash
 bun run dev       # start Next.js + Convex dev
 bun run lint      # oxlint
-bun run typecheck # tsc --noEmit
+bun run check-types # tsc --noEmit (run `bun run convex:codegen` after `convex dev` links a deployment)
 ```
 
 ## Conventions

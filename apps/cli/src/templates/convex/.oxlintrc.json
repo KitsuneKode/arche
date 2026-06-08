@@ -1,5 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/refs/heads/main/crates/oxc_linter/src/snapshots/oxlintrc.schema.json",
+  "ignorePatterns": ["next-env.d.ts", ".next/**", "dist/**", "convex/_generated/**"],
   "plugins": ["typescript", "import", "react", "react-hooks"],
   "categories": {
     "correctness": "error",
@@ -7,7 +8,9 @@
   },
   "rules": {
     "no-console": "off",
+    "import/no-unassigned-import": "off",
     "typescript/no-unused-vars": ["error", { "args": "none", "varsIgnorePattern": "^_" }],
+    "eslint/no-underscore-dangle": ["error", { "allow": ["_id"] }],
     "import/default": "error",
     "react/jsx-no-target-blank": "error",
     "react-in-jsx-scope": "off",
