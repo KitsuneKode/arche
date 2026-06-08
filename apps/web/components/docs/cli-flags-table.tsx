@@ -9,7 +9,7 @@ const FLAGS = [
   },
   { flag: '--backend=<name>', desc: 'Backend override on fullstack-capable routes.' },
   {
-    flag: '--database=postgres|sqlite|mongodb|none',
+    flag: '--database=postgres|sqlite|none',
     desc: 'Database selection for supported routes.',
   },
   { flag: '--orm=prisma|drizzle|none', desc: 'ORM selection for supported routes.' },

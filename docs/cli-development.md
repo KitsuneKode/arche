@@ -101,7 +101,7 @@ apps/cli/
 │   │   └── generators/
 │   │       ├── index.ts      # Barrel export
 │   │       ├── backend.ts    # Backend transforms (Express, Hono)
-│   │       ├── database.ts   # Database transforms (SQLite, MongoDB)
+│   │       ├── database.ts   # Database transforms (SQLite, Postgres)
 │   │       ├── orm.ts        # ORM transforms (Prisma, Drizzle)
 │   │       ├── docker.ts     # Config-aware Docker Compose
 │   │       ├── env.ts        # Config-aware .env files

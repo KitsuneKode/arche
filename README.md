@@ -82,13 +82,14 @@ bun run dev:cli -- my-app --yes --dry-run --dir=../projects
 
 | Preset                 | Status              | Output today                          |
 | ---------------------- | ------------------- | ------------------------------------- |
-| `typescript-fullstack` | Requires validation | Next.js + TypeScript API monorepo     |
-| `rust-api`             | Requires validation | Axum API, module-first layout         |
-| `rust-fullstack`       | Requires validation | Next.js web + `services/api` Rust API |
-| `solana-program`       | Requires validation | Planned Anchor `programs/core`        |
-| `solana-web`           | Requires validation | Planned web dApp + client             |
-| `solana-mobile`        | Requires validation | Planned mobile dApp                   |
-| `solana-product`       | Requires validation | Planned web + mobile + program        |
+| `typescript-fullstack` | Stable              | Next.js + TypeScript API monorepo     |
+| `rust-api`             | Stable              | Axum API, module-first layout         |
+| `rust-fullstack`       | Stable              | Next.js web + `services/api` Rust API |
+| `convex-product`       | Stable              | Next.js + Convex backend              |
+| `solana-program`       | Stable              | Anchor 0.32 program + TS client       |
+| `solana-web`           | Stable              | Web dApp + wallet adapters            |
+| `solana-mobile`        | Stable              | Expo + mobile wallet boundary         |
+| `solana-product`       | Stable              | Web + mobile + program monorepo       |
 | `customize`            | Requires validation | Explicit composition                  |
 | `experiments`          | Experimental        | Opt-in unstable routes                |
 

@@ -29,7 +29,7 @@ bun run dev:cli -- my-app --dir=../projects
 
 The prompt starts with a preset-led "Starting point" menu. Stable routes will
 appear first once their verification matrix is complete. Until then, target
-presets remain `Requires validation`.
+graduated presets are labeled `Stable` in the registry; `customize` remains `Requires validation`.
 
 ## Preset examples
 
@@ -52,43 +52,43 @@ bun run dev:cli -- my-app --yes --dry-run --dir=../projects
 
 ## Supported preset IDs
 
-| Preset                 | Current status      | Notes                                |
-| ---------------------- | ------------------- | ------------------------------------ |
-| `typescript-fullstack` | Requires validation | TypeScript monorepo foundation       |
-| `rust-api`             | Requires validation | Axum API scaffold                    |
-| `rust-fullstack`       | Requires validation | Web app plus `services/api`          |
-| `convex-product`       | Requires validation | Next.js + Convex (no Express/Prisma) |
-| `solana-program`       | Requires validation | Planned `programs/core` route        |
-| `solana-web`           | Requires validation | Planned web dApp route               |
-| `solana-mobile`        | Requires validation | Planned mobile dApp route            |
-| `solana-product`       | Requires validation | Planned web + mobile + program route |
-| `customize`            | Requires validation | Capability composition path          |
-| `experiments`          | Experimental        | Explicit opt-in unstable route       |
+| Preset                 | Current status      | Notes                                      |
+| ---------------------- | ------------------- | ------------------------------------------ |
+| `typescript-fullstack` | Stable              | TypeScript monorepo (Bun + pnpm verified)  |
+| `rust-api`             | Stable              | Module-first Axum API + SQLx + cargo-check |
+| `rust-fullstack`       | Stable              | Next.js + `services/api` live REST demo    |
+| `convex-product`       | Stable              | Next.js + Convex offline typecheck         |
+| `solana-program`       | Stable              | Anchor 0.32 program + anchor build         |
+| `solana-web`           | Stable              | Program + Next.js wallet adapter dApp      |
+| `solana-mobile`        | Stable              | Program + Expo mobile boundary             |
+| `solana-product`       | Stable              | Web + mobile + program monorepo            |
+| `customize`            | Requires validation | Capability composition path                |
+| `experiments`          | Experimental        | Explicit opt-in unstable route             |
 
 ## Common flags
 
-| Flag                                           | Description                                                        |
-| ---------------------------------------------- | ------------------------------------------------------------------ |
-| `--yes`                                        | Use non-interactive defaults                                       |
-| `--dir=<path>`                                 | Output parent directory or exact project path                      |
-| `--family=<name>`                              | Legacy family selection                                            |
-| `--preset=<id>`                                | Preset starting point                                              |
-| `--pm=bun\|pnpm\|npm`                          | Package manager: Bun default, pnpm first-class, npm experimental   |
-| `--backend=<name>`                             | Backend override for fullstack only (ignored for `convex-product`) |
-| `--database=<postgres\|sqlite\|mongodb\|none>` | Database selection                                                 |
-| `--orm=<prisma\|drizzle\|none>`                | ORM selection                                                      |
-| `--showcase` / `--no-showcase`                 | Keep or remove showcase content                                    |
-| `--worker` / `--no-worker`                     | Keep or remove worker workspace                                    |
-| `--docker` / `--no-docker`                     | Generate or skip Docker files                                      |
-| `--ci` / `--no-ci`                             | Generate or skip GitHub Actions CI                                 |
-| `--deployment=<mode>`                          | Deployment docs mode                                               |
-| `--dry-run`                                    | Preview planned files                                              |
+| Flag                                  | Description                                                        |
+| ------------------------------------- | ------------------------------------------------------------------ |
+| `--yes`                               | Use non-interactive defaults                                       |
+| `--dir=<path>`                        | Output parent directory or exact project path                      |
+| `--family=<name>`                     | Legacy family selection                                            |
+| `--preset=<id>`                       | Preset starting point                                              |
+| `--pm=bun\|pnpm\|npm`                 | Package manager: Bun default, pnpm first-class, npm experimental   |
+| `--backend=<name>`                    | Backend override for fullstack only (ignored for `convex-product`) |
+| `--database=<postgres\|sqlite\|none>` | Database selection                                                 |
+| `--orm=<prisma\|drizzle\|none>`       | ORM selection                                                      |
+| `--showcase` / `--no-showcase`        | Keep or remove showcase content                                    |
+| `--worker` / `--no-worker`            | Keep or remove worker workspace                                    |
+| `--docker` / `--no-docker`            | Generate or skip Docker files                                      |
+| `--ci` / `--no-ci`                    | Generate or skip GitHub Actions CI                                 |
+| `--deployment=<mode>`                 | Deployment docs mode                                               |
+| `--dry-run`                           | Preview planned files                                              |
 
 ## Subcommands
 
 ```sh
 arche create-json '{"projectName":"my-app","destinationDir":"/tmp/my-app","family":"fullstack"}'
-arche validate '{"projectName":"my-app","database":"mongodb","orm":"prisma"}'
+arche validate '{"projectName":"my-app","database":"sqlite","orm":"prisma"}'
 arche add agent-docs ./my-app
 arche history
 arche mcp

@@ -20,14 +20,14 @@ The generated-output harness lives in
 
 | Preset                 | Structure | Bun | pnpm | Install | Lint | Typecheck | Test | Build | Docs/agent | Rust gates | Solana gates | Convex | Deploy |
 | ---------------------- | --------- | --- | ---- | ------- | ---- | --------- | ---- | ----- | ---------- | ---------- | ------------ | ------ | ------ |
-| `typescript-fullstack` | yes       | yes | yes  | no      | no   | no        | no   | no    | yes        | n/a        | n/a          | n/a    | no     |
-| `rust-api`             | yes       | yes | no   | no      | no   | no        | no   | no    | yes        | no         | n/a          | n/a    | no     |
-| `rust-fullstack`       | yes       | yes | no   | no      | no   | no        | no   | no    | yes        | no         | n/a          | n/a    | no     |
-| `convex-product`       | yes       | yes | no   | no      | no   | no        | no   | no    | yes        | n/a        | n/a          | yes    | no     |
-| `solana-program`       | yes       | yes | no   | no      | no   | no        | no   | no    | no         | n/a        | yes          | n/a    | no     |
-| `solana-web`           | yes       | yes | no   | no      | no   | no        | no   | no    | no         | n/a        | yes          | n/a    | no     |
-| `solana-mobile`        | yes       | yes | no   | no      | no   | no        | no   | no    | no         | n/a        | yes          | n/a    | no     |
-| `solana-product`       | yes       | yes | no   | no      | no   | no        | no   | no    | no         | n/a        | yes          | n/a    | no     |
+| `typescript-fullstack` | yes       | yes | yes  | yes     | yes  | yes       | no   | yes   | yes        | n/a        | n/a          | n/a    | no     |
+| `rust-api`             | yes       | yes | no   | yes     | n/a  | yes       | no   | n/a   | yes        | yes        | n/a          | n/a    | no     |
+| `rust-fullstack`       | yes       | yes | no   | yes     | yes  | yes       | no   | yes   | yes        | yes        | n/a          | n/a    | no     |
+| `convex-product`       | yes       | yes | no   | yes     | yes  | yes       | no   | yes   | yes        | n/a        | n/a          | yes    | no     |
+| `solana-program`       | yes       | yes | no   | yes     | n/a  | yes       | no   | n/a   | yes        | n/a        | yes          | n/a    | no     |
+| `solana-web`           | yes       | yes | no   | yes     | yes  | yes       | no   | yes   | yes        | n/a        | yes          | n/a    | no     |
+| `solana-mobile`        | yes       | yes | no   | yes     | n/a  | yes       | no   | n/a   | yes        | n/a        | yes          | n/a    | no     |
+| `solana-product`       | yes       | yes | no   | yes     | yes  | yes       | no   | yes   | yes        | n/a        | yes          | n/a    | no     |
 | `customize`            | no        | no  | no   | no      | no   | no        | no   | no    | no         | n/a        | n/a          | n/a    | no     |
 | `experiments`          | no        | no  | no   | no      | no   | no        | no   | no    | no         | n/a        | n/a          | n/a    | no     |
 
@@ -52,11 +52,21 @@ The generated-output harness lives in
 - Curated generated-project structure verification harness:
   `apps/cli/tests/generated-project-verifier.test.ts` and
   `bun run verify:generated`.
+- Fullstack combo matrix (default, hono, drizzle, sqlite, rust-axum, worker):
+  `apps/cli/tests/e2e-scaffold.test.ts` and
+  `bun toolings/scripts/verify-generated-project.ts --combo-matrix`.
 - Agent-context output:
   `apps/cli/tests/agent-context.test.ts` and `apps/cli/tests/add.test.ts`.
 - Preset support-label guard:
   `apps/cli/tests/registry.test.ts` and
   `apps/cli/tests/verification-matrix.test.ts`.
+
+## Stable presets (2026-06)
+
+Graduated to `Stable` in `packages/registry`: `typescript-fullstack`, `rust-api`,
+`rust-fullstack`, `convex-product`, and all `solana-*` presets. Proof: e2e combo
+matrix, `bun run verify:generated`, and `bun toolings/scripts/smoke-scaffold-manual.ts`.
+`customize` and `experiments` remain non-stable.
 
 ## Stable graduation requirements
 

@@ -13,7 +13,6 @@ into verified presets.
 - `src/lib/generators/` — per-feature transforms
 - `src/types/schemas.ts` — Zod schemas + compatibility checks
 - `src/registry/` — preset candidates, support status, capability validation
-- `src/recipe/` — recipe schema and replay command support
 - `src/render/` — workspace and generated context renderers
 
 ## Scaffold Pipeline
@@ -42,6 +41,23 @@ Copy template → update package.json → family transform → addon/bundle tran
 - `bun run dev:cli -- my-app` — dev mode
 - `bun run build` — build for npm
 - `bun test` — run tests
+
+## Rust presets (`rust-api`, `rust-fullstack`)
+
+- Template: `src/templates/rust/` (module-first Axum: `routes → handler → service → repository`)
+- `rust-api`: copies template to project root; `rust-fullstack`: copies into `services/api` via `applyRustServiceApiScaffold()` in `generators/rust.ts`
+- SQLx migrations run on startup when `DATABASE_URL` is set (`migrate` feature on sqlx)
+- CI: `renderRustCi()` — fmt, clippy, `cargo test`; postgres adds optional `sqlx prepare --check`
+- Verify: `bun run verify:generated -- --preset=rust-api,rust-fullstack --run=cargo-check`
+
+## Solana presets (`solana-*`)
+
+- Generator: `generators/solana.ts` (string scaffold, not template copy)
+- Anchor 0.32 Counter program, `packages/solana-config` + `packages/solana-client` (IDL stub + `@coral-xyz/anchor`)
+- Web: wallet adapter page; mobile: Expo + MWA protocol dep (not Expo Router yet)
+- CI: `renderSolanaCi()` — TS lint/typecheck + `anchor build` job (no `repo:doctor`)
+- Public doc: `docs/solana-development.md`; per-project `docs/solana-getting-started.md`
+- Verify: `bun test apps/cli/tests/solana-preset.test.ts`; optional `--run=anchor-build`
 
 ## When to Update
 

@@ -23,6 +23,7 @@
 - `bun run verify:generated` - Generate the curated preset matrix into temp dirs and verify structure without installing dependencies.
 - `bun run verify:generated -- --preset=typescript-fullstack --pm=bun,pnpm` - Verify selected preset/package-manager structure.
 - `bun run verify:generated -- --preset=solana-product --run=cargo-check,anchor-build` - Opt into slower generated-project tool gates.
+- `bun run smoke:scaffold` - Scaffold stable presets into temp dirs, install, typecheck/build, and probe Rust API health (needs Postgres on `localhost:5432` for live API checks).
 
 ## Web development
 

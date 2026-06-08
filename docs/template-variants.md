@@ -32,6 +32,9 @@ The default TypeScript monorepo family.
 - Default bundle: `product`
 - Optional extras: `worker`, `docs`, `examples`
 - Addon groups: `product`, `realtime`, `growth`, `infra`, `AI`
+- Web client: `@trpc/tanstack-react-query` + TanStack Query (`TRPCReactProvider` in layout)
+- Databases: `postgres` and `sqlite` only (MongoDB removed)
+- CI combo matrix: `bun toolings/scripts/verify-generated-project.ts --combo-matrix` covers default, `hono-bun`, `drizzle`, `sqlite`, `rust-axum`, and `--worker`
 
 ## `next`
 
@@ -60,14 +63,19 @@ Next.js + Convex family. Prefer preset **`convex-product`** in the CLI menu.
 
 Rust service family.
 
-- Default: Rust API service
-- Presets: `axum`, `actix`
+- Module-first Axum API: `routes → handler → service → repository`
+- SQLx migrations apply on startup when `DATABASE_URL` is set
+- Presets: `rust-api` (standalone), `rust-fullstack` (Next.js + `services/api` with the same module tree)
+- Docs: generated `README.md`; see [Rust book](https://doc.rust-lang.org/book/) and [Axum](https://docs.rs/axum/latest/axum/)
 
 ## `solana`
 
-Solana program family.
+Solana + Anchor family (Anchor 0.32+).
 
-- Default: Anchor program
+- Presets: `solana-program`, `solana-web`, `solana-mobile`, `solana-product`
+- Layout: `programs/core`, `packages/solana-config`, `packages/solana-client` (Anchor TS client), optional `apps/web` / `apps/mobile`
+- Scripts: `anchor:build`, `anchor:test`; generated `docs/solana-getting-started.md`
+- References: [Anchor book](https://book.anchor-lang.com/), [Solana docs](https://solana.com/docs)
 
 ## `worker`
 
