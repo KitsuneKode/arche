@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { HydrateClient, prefetch, trpc } from '@/trpc/server'
+import { helloQueryOptions, HydrateClient, prefetch } from '@/trpc/server'
 import { TrpcStatus } from './trpc-status'
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ const services = [
 ] as const
 
 export default async function HomePage() {
-  await prefetch(trpc.hello!.queryOptions({ name: 'Arche' }))
+  await prefetch(helloQueryOptions('Arche'))
 
   return (
     <main className="shell">

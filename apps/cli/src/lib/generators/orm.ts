@@ -355,7 +355,7 @@ function drizzleStorePackageJsonPatch(database: 'postgres' | 'sqlite'): {
     } as Record<string, string>,
     addDevDeps: {
       'drizzle-kit': '^0.30.0',
-    },
+    } as Record<string, string>,
     scriptOverrides: {
       'db:generate': 'bunx drizzle-kit generate',
       'db:migrate': 'bunx drizzle-kit migrate',

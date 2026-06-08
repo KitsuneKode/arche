@@ -242,7 +242,17 @@ ${dirs.map((d) => `- ${d}`).join('\n')}
 ## Where Things Go
 
 ${placements.map((item) => `- ${item}`).join('\n')}
+${
+  config.family === 'fullstack' && !usesServiceApi(config)
+    ? `
+## Data fetching (tRPC)
 
+- **Server Components / server actions:** \`const api = await trpcCaller()\` from \`apps/web/trpc/caller.ts\`.
+- **Client components:** \`useTRPC\` from \`apps/web/trpc/client.tsx\` (HTTP).
+- **Prefetch + hydrate:** \`prefetch()\` + \`HydrateClient\` in \`apps/web/trpc/server.tsx\`.
+`
+    : ''
+}
 ## Commands
 
 ${cmds.join('\n')}
@@ -324,7 +334,15 @@ See \`services/api/.env.example\` and \`apps/web/.env.example\` for required var
 - Database schema: \`packages/store/prisma/schema.prisma\`${config.orm === 'drizzle' ? '\n- Database schema: `packages/store/src/schema.ts`' : ''}
 - Auth configuration: \`packages/auth/src/index.ts\`
 - Frontend shell: \`apps/web/app/layout.tsx\` and \`apps/web/app/page.tsx\`
-- tRPC client: \`apps/web/trpc/client.tsx\`; RSC prefetch + hydration: \`apps/web/trpc/server.tsx\` (HTTP); in-process RSC data uses \`createCaller\` from \`@arche-template/server/trpc\` in a dedicated server-only module
+- tRPC client hooks: \`apps/web/trpc/client.tsx\`
+- HTTP prefetch + hydration: \`apps/web/trpc/server.tsx\`
+- In-process RSC / server actions: \`apps/web/trpc/caller.ts\` (\`trpcCaller\` via \`createCaller\`)
+
+## Data fetching (tRPC)
+
+- **Server Components / server actions:** \`const api = await trpcCaller()\` then \`api.<router>.<proc>()\` — in-process, no HTTP loopback.
+- **Client components:** hooks via \`useTRPC\` from \`@/trpc/client\` (HTTP to \`NEXT_PUBLIC_API_URL\`).
+- **Prefetch + hydrate:** \`prefetch()\` + \`HydrateClient\` for client-bound queries (HTTP; safe when API is offline during build).
 
 ## Environment Variables
 

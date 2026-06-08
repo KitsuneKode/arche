@@ -22,6 +22,11 @@ export const trpc = createTRPCOptionsProxy({
   queryClient: getQueryClient,
 })
 
+/** Typed hello query options for the homepage demo (avoids non-null assertions on optional routers). */
+export function helloQueryOptions(name: string) {
+  return trpc.hello.queryOptions({ name })
+}
+
 export function HydrateClient(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient()
   return <HydrationBoundary state={dehydrate(queryClient)}>{props.children}</HydrationBoundary>

@@ -145,6 +145,11 @@ describe('applyBackendTransform', () => {
       join(tempDir, 'apps/server/src/modules/root/root.controller.ts'),
       'import express from "express"\n',
     )
+    await mkdir(join(tempDir, 'apps/web/app'), { recursive: true })
+    await writeFile(
+      join(tempDir, 'apps/web/app/page.tsx'),
+      'export default function Home() { return <main>Express + tRPC</main> }\n',
+    )
   })
 
   afterEach(async () => {
@@ -257,6 +262,13 @@ describe('applyBackendTransform', () => {
       expect(trpcTs).toContain('../common/logger.js')
       expect(trpcTs).not.toContain('backend-common/logger')
       expect(trpcTs).not.toContain('fromNodeHeaders')
+    })
+
+    it('patches fullstack homepage copy to Hono + tRPC', async () => {
+      await applyBackendTransform(tempDir, makeConfig({ backend: 'hono-bun' }))
+      const page = await readFile(join(tempDir, 'apps/web/app/page.tsx'), 'utf8')
+      expect(page).toContain('Hono + tRPC')
+      expect(page).not.toContain('Express + tRPC')
     })
   })
 })

@@ -213,6 +213,23 @@ const COMMAND_TIMEOUT_MS: Record<GeneratedProjectCommand, number> = {
   'anchor-build': 600_000,
 }
 
+/** Per-combo overrides for native compile / heavy install paths. */
+const COMBO_COMMAND_TIMEOUT_MS: Partial<
+  Record<string, Partial<Record<GeneratedProjectCommand, number>>>
+> = {
+  'fullstack-sqlite': {
+    install: 300_000,
+    typecheck: 240_000,
+    build: 360_000,
+  },
+}
+
+function commandTimeoutMs(comboId: string | undefined, command: GeneratedProjectCommand): number {
+  return comboId
+    ? (COMBO_COMMAND_TIMEOUT_MS[comboId]?.[command] ?? COMMAND_TIMEOUT_MS[command])
+    : COMMAND_TIMEOUT_MS[command]
+}
+
 function configForCase(destinationDir: string, testCase: GeneratedProjectCase): ProjectConfig {
   const defaults = projectDefaultsForPreset(testCase.preset)
 
@@ -328,6 +345,7 @@ function runCommand(
   command: GeneratedProjectCommand,
   packageManager: PackageManager,
   skipMissingTools: boolean,
+  comboId?: string,
 ): GeneratedProjectCommandResult {
   const argv = commandArgv(command, packageManager)
   const binary = argv[0] ?? command
@@ -351,11 +369,12 @@ function runCommand(
     }
   }
 
+  const timeoutMs = commandTimeoutMs(comboId, command)
   const result = spawnSync(binary, argv.slice(1), {
     cwd,
     encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 10,
-    timeout: COMMAND_TIMEOUT_MS[command],
+    timeout: timeoutMs,
   })
   const output = [result.stdout, result.stderr].filter(Boolean).join('\n').trim()
 
@@ -365,7 +384,7 @@ function runCommand(
     status: result.status === 0 && !result.error ? 'passed' : 'failed',
     output:
       result.error?.name === 'TimeoutError'
-        ? `${output}\nCommand timed out after ${COMMAND_TIMEOUT_MS[command]}ms.`.trim()
+        ? `${output}\nCommand timed out after ${timeoutMs}ms.`.trim()
         : output,
   }
 }
@@ -457,7 +476,13 @@ export async function verifyGeneratedCombo(
       missingFiles.length > 0
         ? []
         : commands.map((command) =>
-            runCommand(destinationDir, command, options.packageManager, skipMissingTools),
+            runCommand(
+              destinationDir,
+              command,
+              options.packageManager,
+              skipMissingTools,
+              options.id,
+            ),
           )
     const commandsPassed = commandResults.every((command) => command.status !== 'failed')
 

@@ -18,8 +18,12 @@ function commandsForCombo(id: string, family: string): GeneratedProjectCommand[]
   return ['install', 'typecheck', 'lint', 'build']
 }
 
-describe('e2e scaffold combo matrix', () => {
-  for (const combo of buildGeneratedComboCases()) {
+const comboCases = buildGeneratedComboCases()
+const runComboSerial = process.env.SCAFFOLD_E2E_SERIAL === '1' || process.env.CI === 'true'
+const comboDescribe = runComboSerial ? describe.serial : describe
+
+comboDescribe('e2e scaffold combo matrix', () => {
+  for (const combo of comboCases) {
     it(`${combo.id} (${combo.family}) passes generated-project verification`, async () => {
       const result = await verifyGeneratedCombo({
         ...combo,

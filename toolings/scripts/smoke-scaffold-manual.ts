@@ -33,7 +33,12 @@ function parsePresetArg(argv: string[]): Preset[] {
 }
 
 function run(cwd: string, argv: string[], timeoutMs = 300_000): { ok: boolean; output: string } {
-  const result = spawnSync(argv[0], argv.slice(1), {
+  const [command, ...args] = argv
+  if (!command) {
+    return { ok: false, output: 'Missing command' }
+  }
+
+  const result = spawnSync(command, args, {
     cwd,
     encoding: 'utf8',
     timeout: timeoutMs,
@@ -176,7 +181,10 @@ async function smokeTypescriptFullstack(dir: string, failures: string[]): Promis
 
   const page = readFileSync(join(dir, 'apps/web/app/page.tsx'), 'utf8')
   const trpcStatus = readFileSync(join(dir, 'apps/web/app/trpc-status.tsx'), 'utf8')
-  if (!page.includes('trpc.hello') || !page.includes('TrpcStatus')) {
+  if (
+    (!page.includes('helloQueryOptions') && !page.includes('trpc.hello')) ||
+    !page.includes('TrpcStatus')
+  ) {
     failures.push('typescript-fullstack: web page missing RSC prefetch + TrpcStatus demo')
   }
   if (!trpcStatus.includes('useQuery')) {
