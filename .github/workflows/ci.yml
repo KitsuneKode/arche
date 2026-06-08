@@ -94,6 +94,8 @@ jobs:
         run: bun run verify:generated:fullstack
 
       - name: Verify fullstack combo matrix
+        env:
+          SCAFFOLD_E2E_SERIAL: '1'
         run: bun toolings/scripts/verify-generated-project.ts --combo-matrix --run=install,typecheck,lint,build
         timeout-minutes: 25
 
