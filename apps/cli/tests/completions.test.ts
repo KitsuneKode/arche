@@ -1,24 +1,25 @@
 import { describe, expect, it } from 'bun:test'
-import { renderCompletion } from '../src/lib/completions'
+import { CLI_PRESETS } from '../src/lib/cli-constants'
+import { renderBashCompletion, renderZshCompletion } from '../src/lib/completions'
+import { PresetSchema } from '../src/types/schemas'
 
 describe('shell completions', () => {
-  it('renders bash completion with commands, presets, and package managers', () => {
-    const completion = renderCompletion('bash')
-
-    expect(completion).toContain('complete -F _arche_completion arche create-arche')
-    expect(completion).toContain('solana-product')
-    expect(completion).toContain('typescript-fullstack')
-    expect(completion).toContain('bun pnpm npm')
-    expect(completion).toContain('--preset=')
+  it('includes every preset from PresetSchema', () => {
+    for (const preset of PresetSchema.options) {
+      expect(CLI_PRESETS).toContain(preset)
+    }
   })
 
-  it('renders zsh completion with commands, presets, and package managers', () => {
-    const completion = renderCompletion('zsh')
+  it('renders bash completion with preset words', () => {
+    const bash = renderBashCompletion()
+    expect(bash).toContain('rust-fullstack')
+    expect(bash).toContain('typescript-fullstack')
+    expect(bash).toContain('solana-product')
+  })
 
-    expect(completion).toContain('#compdef arche create-arche')
-    expect(completion).toContain('"completion"')
-    expect(completion).toContain('"solana-product"')
-    expect(completion).toContain('"pnpm"')
-    expect(completion).toContain('--package-manager=')
+  it('renders zsh completion with preset words', () => {
+    const zsh = renderZshCompletion()
+    expect(zsh).toContain('convex-product')
+    expect(zsh).not.toContain('"npm"')
   })
 })

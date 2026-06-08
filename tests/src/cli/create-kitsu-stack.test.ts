@@ -28,7 +28,6 @@ function baseConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
     orm: 'prisma',
     backend: 'express-bun',
     runtime: 'bun',
-    addons: [],
     example: 'none',
     testing: 'bun',
     deployment: 'vercel-railway',

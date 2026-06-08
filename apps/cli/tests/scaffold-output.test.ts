@@ -17,7 +17,6 @@ function makeFullstackConfig(destinationDir: string): ProjectConfig {
     orm: 'prisma',
     backend: 'express-bun',
     runtime: 'bun',
-    addons: [],
     example: 'none',
     testing: 'none',
     deployment: 'none',

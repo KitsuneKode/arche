@@ -18,7 +18,6 @@ function configForPreset(destinationDir: string, preset: Preset): ProjectConfig 
     orm: 'none',
     backend: 'none',
     runtime: 'bun',
-    addons: [],
     example: 'none',
     testing: 'bun',
     deployment: 'none',

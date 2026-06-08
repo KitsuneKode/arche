@@ -822,7 +822,6 @@ async function main(): Promise<void> {
     orm: hasOrmOptions(family) ? orm : 'none',
     vectorDatabase: 'none',
     runtime: 'bun',
-    addons: [],
     example: family === 'rust' ? rustExample : 'none',
     rustAuth: family === 'rust' ? rustAuth : 'placeholder',
     includeShowcase,

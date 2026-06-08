@@ -58,9 +58,8 @@ describe('checkCompatibility', () => {
   it('warns when chat example is used without websocket addon', () => {
     const result = checkCompatibility({
       example: 'chat',
-      addons: [],
     })
-    expect(result.warnings.some((w: string) => w.includes('WebSocket'))).toBe(true)
+    expect(result.warnings.some((w: string) => w.includes('arche add websocket'))).toBe(true)
   })
 
   it('errors when fastify-node backend is requested', () => {
@@ -82,7 +81,6 @@ describe('checkCompatibility', () => {
   it('warns about reel time bundle without worker', () => {
     const result = checkCompatibility({
       example: 'todo',
-      addons: [],
       bundles: ['realtime'],
       includeWorker: false,
       family: 'fullstack',

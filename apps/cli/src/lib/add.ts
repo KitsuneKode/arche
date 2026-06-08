@@ -87,7 +87,6 @@ function buildProjectConfig(
     orm: (config?.choices?.orm as ProjectConfig['orm']) || 'prisma',
     vectorDatabase: 'none',
     runtime: 'bun',
-    addons: [],
     example: 'none',
     testing: (config?.choices?.testing as ProjectConfig['testing']) || 'bun',
     deployment: (config?.choices?.deployment as ProjectConfig['deployment']) || 'vercel-railway',

@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Bootstrap CLI for scaffolding repositories from this template. The legacy
-family flow remains while the capability-registry/recipe foundation is wired
-into verified presets.
+Bootstrap CLI for scaffolding repositories from this template. Preset status
+and verification evidence live in `packages/registry`; regression coverage uses
+the fullstack combo matrix (`e2e-scaffold.test.ts` + `verify:generated --combo-matrix`).
 
 ## Read First
 
@@ -26,7 +26,7 @@ Copy template → update package.json → family transform → addon/bundle tran
 - Family transforms
 - Bundle/addon transforms
 - Generated files (Docker, CI, env, deployment, agent-docs, showcase)
-- Recipe/capability foundations and support-status truthfulness
+- Preset registry and support-status truthfulness (`packages/registry`)
 
 ## Context Output
 

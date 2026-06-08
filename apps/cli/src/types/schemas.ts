@@ -99,15 +99,6 @@ export const RuntimeSchema = z.enum(['bun', 'node', 'workers']).describe('JavaSc
 export type RuntimeType = z.infer<typeof RuntimeSchema>
 
 // =============================================================================
-// Addon Schemas
-// =============================================================================
-
-export const AddonSchema = z
-  .enum(['websocket', 'worker', 's3', 'email', 'payments', 'analytics', 'none'])
-  .describe('Optional feature addons')
-export type AddonType = z.infer<typeof AddonSchema>
-
-// =============================================================================
 // Example Templates
 // =============================================================================
 
@@ -149,7 +140,6 @@ export const ProjectConfigSchema = z.object({
   orm: ORMSchema.default('prisma'),
   backend: BackendSchema.default('express-bun'),
   runtime: RuntimeSchema.default('bun'),
-  addons: z.array(AddonSchema).default([]),
   example: ExampleSchema.default('none'),
   testing: TestingSchema.default('bun'),
   deployment: DeploymentSchema.default('vercel-railway'),
@@ -354,8 +344,10 @@ export function checkCompatibility(config: Partial<ProjectConfig>): {
     warnings.push('Worker without a backend server may not be useful.')
   }
 
-  if (config.example === 'chat' && config.addons && !config.addons.includes('websocket')) {
-    warnings.push('Chat example works best with WebSocket addon.')
+  if (config.example === 'chat') {
+    warnings.push(
+      'Chat example expects a WebSocket server — run `arche add websocket` after scaffold.',
+    )
   }
 
   if (config.database === 'sqlite' && config.includeDocker) {

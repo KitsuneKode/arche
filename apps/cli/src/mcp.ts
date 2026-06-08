@@ -243,7 +243,6 @@ function buildConfig(args: Record<string, unknown>): ProjectConfig {
     installDependencies: args.install !== false,
     testing: (args.testing as ProjectConfig['testing']) || 'bun',
     deployment: (args.deployment as ProjectConfig['deployment']) || 'vercel-railway',
-    addons: [],
     example: 'none',
     vectorDatabase: 'none',
     runtime: 'bun',

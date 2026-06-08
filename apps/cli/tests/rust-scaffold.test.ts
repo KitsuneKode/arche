@@ -18,7 +18,6 @@ function makeConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
     orm: 'none',
     backend: 'rust-axum',
     runtime: 'bun',
-    addons: [],
     example: 'posts',
     testing: 'none',
     deployment: 'none',

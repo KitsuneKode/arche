@@ -21,7 +21,6 @@ function makeConfig(
     orm: 'prisma',
     backend: 'express-bun',
     runtime: 'bun',
-    addons: [],
     example: 'none',
     testing: 'bun',
     deployment: 'none',
