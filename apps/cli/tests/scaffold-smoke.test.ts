@@ -58,7 +58,7 @@ const MATRIX: Array<{
     database: 'none',
     orm: 'none',
   },
-  { family: 'backend', pm: 'npm', bundles: ['product', 'infra'], includeWorker: false },
+  { family: 'backend', pm: 'pnpm', bundles: ['product', 'infra'], includeWorker: false },
   {
     family: 'lib',
     pm: 'bun',

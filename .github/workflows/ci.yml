@@ -93,5 +93,9 @@ jobs:
       - name: Verify scaffolded fullstack installs and builds
         run: bun run verify:generated:fullstack
 
+      - name: Verify fullstack combo matrix
+        run: bun toolings/scripts/verify-generated-project.ts --combo-matrix --run=install,typecheck,lint,build
+        timeout-minutes: 25
+
       - name: Repo doctor
         run: bun run repo:doctor:strict

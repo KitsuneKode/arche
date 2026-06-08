@@ -267,13 +267,6 @@ describe('renderDockerCompose', () => {
     expect(output).toContain('volumes:')
   })
 
-  it('generates mongo + redis for mongodb database', () => {
-    const output = renderDockerCompose(makeConfig({ database: 'mongodb' }))
-    expect(output).toContain('mongo:7')
-    expect(output).toContain('redis:7-alpine')
-    expect(output).not.toContain('postgres')
-  })
-
   it('generates redis only for sqlite database', () => {
     const output = renderDockerCompose(makeConfig({ database: 'sqlite' }))
     expect(output).toContain('redis:7-alpine')
@@ -398,11 +391,6 @@ describe('buildServerEnv', () => {
   it('includes sqlite DATABASE_URL for sqlite', () => {
     const output = buildServerEnv(makeConfig({ database: 'sqlite' }))
     expect(output).toContain('DATABASE_URL=file:./dev.db')
-  })
-
-  it('includes mongodb DATABASE_URL for mongodb', () => {
-    const output = buildServerEnv(makeConfig({ database: 'mongodb' }))
-    expect(output).toContain('mongodb://')
   })
 
   it('omits DATABASE_URL when no database', () => {

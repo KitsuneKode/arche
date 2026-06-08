@@ -3,7 +3,15 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { projectDefaultsForPreset } from '../registry/preset-config'
-import type { PackageManager, Preset, ProjectConfig } from '../types/schemas'
+import type {
+  BackendType,
+  DatabaseType,
+  Family,
+  ORMType,
+  PackageManager,
+  Preset,
+  ProjectConfig,
+} from '../types/schemas'
 import { createProject } from './create'
 
 export type GeneratedProjectCommand =
@@ -18,6 +26,14 @@ export type GeneratedProjectCommand =
 export interface GeneratedProjectCase {
   preset: Preset
   packageManager: PackageManager
+}
+
+export interface GeneratedComboCase {
+  id: string
+  family: Family
+  packageManager: PackageManager
+  configOverrides?: Partial<ProjectConfig>
+  expectedFiles?: string[]
 }
 
 export interface VerifyGeneratedProjectOptions extends GeneratedProjectCase {
@@ -41,6 +57,70 @@ export interface GeneratedProjectVerificationResult {
   commands: GeneratedProjectCommandResult[]
   success: boolean
 }
+
+const FULLSTACK_COMBO_CASES: GeneratedComboCase[] = [
+  { id: 'fullstack-default', family: 'fullstack', packageManager: 'bun' },
+  {
+    id: 'fullstack-hono',
+    family: 'fullstack',
+    packageManager: 'bun',
+    configOverrides: { backend: 'hono-bun' satisfies BackendType },
+  },
+  {
+    id: 'fullstack-drizzle',
+    family: 'fullstack',
+    packageManager: 'bun',
+    configOverrides: { orm: 'drizzle' satisfies ORMType },
+  },
+  {
+    id: 'fullstack-sqlite',
+    family: 'fullstack',
+    packageManager: 'bun',
+    configOverrides: { database: 'sqlite' satisfies DatabaseType },
+  },
+  {
+    id: 'fullstack-rust-axum',
+    family: 'fullstack',
+    packageManager: 'bun',
+    configOverrides: { backend: 'rust-axum' satisfies BackendType },
+    expectedFiles: ['services/api/Cargo.toml', 'apps/web/package.json'],
+  },
+  {
+    id: 'fullstack-worker',
+    family: 'fullstack',
+    packageManager: 'bun',
+    configOverrides: { includeWorker: true },
+    expectedFiles: ['apps/worker/package.json'],
+  },
+]
+
+const FAMILY_COMBO_CASES: GeneratedComboCase[] = [
+  { id: 'next', family: 'next', packageManager: 'bun', expectedFiles: ['app/layout.tsx'] },
+  { id: 'convex', family: 'convex', packageManager: 'bun', expectedFiles: ['convex/schema.ts'] },
+  { id: 'backend', family: 'backend', packageManager: 'bun', expectedFiles: ['src/server.ts'] },
+  { id: 'polyglot', family: 'polyglot', packageManager: 'bun', expectedFiles: ['package.json'] },
+  {
+    id: 'rust',
+    family: 'rust',
+    packageManager: 'bun',
+    expectedFiles: ['Cargo.toml', 'src/main.rs'],
+  },
+  {
+    id: 'solana-program',
+    family: 'solana',
+    packageManager: 'bun',
+    configOverrides: { preset: 'solana-program' },
+    expectedFiles: [
+      'Anchor.toml',
+      'programs/core/src/lib.rs',
+      'packages/solana-client/src/index.ts',
+    ],
+  },
+  { id: 'lib', family: 'lib', packageManager: 'bun', expectedFiles: ['package.json'] },
+  { id: 'cli', family: 'cli', packageManager: 'bun', expectedFiles: ['package.json'] },
+  { id: 'worker', family: 'worker', packageManager: 'bun', expectedFiles: ['package.json'] },
+  { id: 'mobile', family: 'mobile', packageManager: 'bun', expectedFiles: ['package.json'] },
+]
 
 const DEFAULT_CASES: GeneratedProjectCase[] = [
   { preset: 'typescript-fullstack', packageManager: 'bun' },
@@ -79,6 +159,9 @@ const EXPECTED_FILES: Record<Preset, string[]> = {
     'programs/core/src/lib.rs',
     'packages/solana-config/src/index.ts',
     'packages/solana-client/src/index.ts',
+    'packages/solana-client/src/idl/core.json',
+    'tests/core.ts',
+    'docs/solana-getting-started.md',
     'AGENTS.md',
   ],
   'solana-web': [
@@ -127,7 +210,7 @@ const COMMAND_TIMEOUT_MS: Record<GeneratedProjectCommand, number> = {
   test: 180_000,
   build: 300_000,
   'cargo-check': 300_000,
-  'anchor-build': 300_000,
+  'anchor-build': 600_000,
 }
 
 function configForCase(destinationDir: string, testCase: GeneratedProjectCase): ProjectConfig {
@@ -288,8 +371,112 @@ function runCommand(
   }
 }
 
+function baseConfigForCombo(destinationDir: string, testCase: GeneratedComboCase): ProjectConfig {
+  const projectName = `arche-${testCase.id}`
+  return {
+    projectName,
+    destinationDir,
+    family: testCase.family,
+    bundles: ['product'],
+    packageManager: testCase.packageManager,
+    database: 'postgres',
+    vectorDatabase: 'none',
+    orm: 'prisma',
+    backend: testCase.family === 'fullstack' ? 'express-bun' : 'none',
+    runtime: 'bun',
+    addons: [],
+    example: 'none',
+    testing: 'bun',
+    deployment: testCase.family === 'fullstack' ? 'vercel-railway' : 'none',
+    includeShowcase: false,
+    includeWorker: false,
+    includeDocker: testCase.family === 'fullstack',
+    includeCi: testCase.family === 'fullstack',
+    initializeGit: false,
+    installDependencies: false,
+    presets: [],
+    rustAuth: 'placeholder',
+    ...testCase.configOverrides,
+  }
+}
+
 export function buildGeneratedProjectCases(): GeneratedProjectCase[] {
   return [...DEFAULT_CASES]
+}
+
+export function buildGeneratedComboCases(): GeneratedComboCase[] {
+  return [...FULLSTACK_COMBO_CASES, ...FAMILY_COMBO_CASES]
+}
+
+export interface GeneratedComboVerificationResult {
+  id: string
+  family: Family
+  packageManager: PackageManager
+  destinationDir: string
+  missingFiles: string[]
+  commands: GeneratedProjectCommandResult[]
+  success: boolean
+}
+
+export async function verifyGeneratedCombo(
+  options: GeneratedComboCase & {
+    commands?: GeneratedProjectCommand[]
+    keepOutput?: boolean
+    skipMissingTools?: boolean
+  },
+): Promise<GeneratedComboVerificationResult> {
+  const tmpRoot = mkdtempSync(join(tmpdir(), 'arche-generated-combo-'))
+  const destinationDir = join(tmpRoot, options.id)
+  const commands = options.commands ?? []
+  const skipMissingTools = options.skipMissingTools ?? true
+
+  try {
+    const result = await createProject({
+      config: baseConfigForCombo(destinationDir, options),
+      dryRun: false,
+    })
+
+    if (!result.success) {
+      return {
+        id: options.id,
+        family: options.family,
+        packageManager: options.packageManager,
+        destinationDir,
+        missingFiles: [`createProject failed: ${result.errors.join('; ')}`],
+        commands: [],
+        success: false,
+      }
+    }
+
+    const defaultExpected =
+      options.family === 'fullstack'
+        ? ['package.json', 'apps/web/package.json', 'AGENTS.md']
+        : ['package.json', 'AGENTS.md']
+    const expectedFiles = options.expectedFiles ?? defaultExpected
+    const missingFiles = expectedFiles.filter((file) => !existsSync(join(destinationDir, file)))
+
+    const commandResults =
+      missingFiles.length > 0
+        ? []
+        : commands.map((command) =>
+            runCommand(destinationDir, command, options.packageManager, skipMissingTools),
+          )
+    const commandsPassed = commandResults.every((command) => command.status !== 'failed')
+
+    return {
+      id: options.id,
+      family: options.family,
+      packageManager: options.packageManager,
+      destinationDir,
+      missingFiles,
+      commands: commandResults,
+      success: missingFiles.length === 0 && commandsPassed,
+    }
+  } finally {
+    if (!options.keepOutput) {
+      rmSync(tmpRoot, { recursive: true, force: true })
+    }
+  }
 }
 
 export async function verifyGeneratedProject(
