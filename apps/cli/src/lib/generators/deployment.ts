@@ -113,7 +113,7 @@ No Render/Railway API host or external Postgres is required for this route.
     : '- Worker optional unless you enable background jobs.'
 
   const dockerLine = config.includeDocker
-    ? `- Local: \`docker compose\` for ${config.database === 'postgres' ? 'Postgres and ' : config.database === 'mongodb' ? 'MongoDB and ' : ''}Redis.`
+    ? `- Local: \`docker compose\` for ${config.database === 'postgres' ? 'Postgres and ' : ''}Redis.`
     : `- Provide managed Postgres and Redis URLs in production (Neon + Upstash recommended).`
 
   if (config.family === 'backend') {

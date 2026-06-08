@@ -6,7 +6,6 @@
  *
  * - postgres: PostgreSQL container + Redis
  * - sqlite: Redis only (SQLite is file-based, no container needed)
- * - mongodb: MongoDB container + Redis
  * - none: Redis only
  */
 
@@ -40,20 +39,6 @@ function buildDbService(config: ProjectConfig): { services: string[]; volumes: s
     volumes:
       - postgres-data:/var/lib/postgresql/data`)
     volumes.push('  postgres-data:')
-  }
-
-  if (config.database === 'mongodb') {
-    services.push(`  mongo:
-    image: mongo:7
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: mongo
-      MONGO_INITDB_ROOT_PASSWORD: mongo
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db`)
-    volumes.push('  mongo-data:')
   }
 
   return { services, volumes }
@@ -211,7 +196,7 @@ networks:
     ports:
       - "3001:3001"
     depends_on:
-      - redis${config.database === 'postgres' ? '\n      - postgres' : ''}${config.database === 'mongodb' ? '\n      - mongo' : ''}`)
+      - redis${config.database === 'postgres' ? '\n      - postgres' : ''}`)
 
   // Worker
   if (config.includeWorker) {

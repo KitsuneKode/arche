@@ -11,6 +11,7 @@ import { join, dirname } from 'node:path'
 import type { ProjectConfig } from '../../types/schemas'
 import { sanitizeProjectName } from '../slug'
 import { buildServerEnv } from './env'
+import { applyRustServiceApiScaffold } from './rust'
 
 // =============================================================================
 // Hono on Bun
@@ -22,7 +23,7 @@ import { cors } from 'hono/cors'
 import { auth } from '@arche-template/auth/server'
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
 import { appRouter, createTRPCContext } from '@arche-template/server/trpc'
-import { config } from './utils/config'
+import { env } from './common/env.js'
 
 const app = new Hono()
 
@@ -38,7 +39,7 @@ app.use('*', async (c, next) => {
 app.use(
   '*',
   cors({
-    origin: config.getConfig('frontendUrl'),
+    origin: env.FRONTEND_URL,
     credentials: true,
   }),
 )
@@ -69,14 +70,14 @@ export { app }
 }
 
 function honoServerTs(): string {
-  return `import { config } from './utils/config'
-import { logger } from './utils/logger'
+  return `import { validateEnvironment } from '@arche-template/backend-common/validate-env'
+import { env } from './common/env.js'
+import { logger } from './common/logger.js'
 import { app } from './app'
 
-// Validate all required environment variables on startup
-config.validateAll()
+validateEnvironment('server')
 
-const port = config.getConfig('port')
+const port = env.PORT
 
 const server = Bun.serve({
   port,
@@ -123,13 +124,27 @@ function honoPackageJsonPatch(): {
 // =============================================================================
 
 /** Rewrite apps/server/src/modules/trpc/trpc.ts for fetch-based context */
+const HONO_EXPRESS_ARTIFACTS = [
+  'src/vercel-handler.ts',
+  'src/common/validate.ts',
+  'src/modules/trpc/trpc.routes.ts',
+  'src/modules/admin/admin.routes.ts',
+  'src/modules/admin/admin.controller.ts',
+  'src/modules/admin/admin.service.ts',
+  'src/modules/auth/auth.routes.ts',
+  'src/modules/health/health.routes.ts',
+  'src/modules/health/health.controller.ts',
+  'src/modules/root/root.routes.ts',
+  'src/modules/root/root.controller.ts',
+] as const
+
 function trpcContextFetch(): string {
   return `import { initTRPC, TRPCError } from '@trpc/server'
-import { auth, fromNodeHeaders } from '@arche-template/auth/server'
+import { auth } from '@arche-template/auth/server'
 import { prisma as db } from '@arche-template/store'
 import superjson from 'superjson'
 import { ZodError } from 'zod'
-import { logger } from '@arche-template/backend-common/logger'
+import { logger } from '../../common/logger.js'
 
 /**
  * tRPC context for fetch-based backends (Hono, etc.)
@@ -202,115 +217,33 @@ export const protectedProcedure = t.procedure
 /** Keep @arche-template/trpc as a thin re-export for web clients */
 function trpcIndexFetch(): string {
   return `export type { AppRouter, RouterInputs, RouterOutputs } from '@arche-template/server/trpc'
-export { appRouter, createCaller, createTRPCContext, createCallerFactory } from '@arche-template/server/trpc'
+`
+}
+
+/** Server-side tRPC barrel after removing Express-only route modules (Hono fetch adapter). */
+function trpcIndexFetchServer(): string {
+  return `import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server'
+import { appRouter } from './app.router'
+import { createCallerFactory, createTRPCContext } from './trpc'
+
+export type RouterInputs = inferRouterInputs<typeof appRouter>
+export type RouterOutputs = inferRouterOutputs<typeof appRouter>
+
+export const createCaller = createCallerFactory(appRouter)
+
+export { appRouter, createTRPCContext, createCallerFactory }
+export type { AppRouter } from './app.router'
 `
 }
 
 // =============================================================================
-// Rust / Axum
+// Rust (Actix workspace stub)
 // =============================================================================
-
-function rustAxumCargoToml(projectName: string): string {
-  const safeName = sanitizeProjectName(projectName).replace(/-/g, '_')
-  return `[package]
-name = "${safeName}-api"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-axum = "0.8"
-tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-tower-http = { version = "0.6", features = ["cors", "trace"] }
-tracing = "0.1"
-tracing-subscriber = "0.3"
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "sqlite", "migrate"] }
-dotenvy = "0.15"
-uuid = { version = "1", features = ["v4"] }
-`
-}
 
 function rustCargoWorkspaceToml(): string {
   return `[workspace]
 members = ["services/api"]
 resolver = "2"
-`
-}
-
-function rustAxumMainRs(): string {
-  return `use axum::{routing::get, Router};
-use tower_http::cors::{Any, CorsLayer};
-use tracing::info;
-
-mod config;
-mod routes;
-
-#[tokio::main]
-async fn main() {
-    tracing_subscriber::fmt::init();
-
-    dotenvy::dotenv().ok();
-
-    let port = std::env::var("PORT").unwrap_or_else(|_| "3001".to_string());
-    let frontend_url = std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
-    let allowed_origin = frontend_url
-        .parse::<axum::http::HeaderValue>()
-        .unwrap_or_else(|_| axum::http::HeaderValue::from_static("http://localhost:3000"));
-
-    let cors = CorsLayer::new()
-        .allow_origin(allowed_origin)
-        .allow_methods(Any)
-        .allow_headers(Any);
-
-    let app = Router::new()
-        .route("/health", get(routes::health))
-        .layer(cors);
-
-    let addr = format!("0.0.0.0:{}", port);
-    info!("Server listening on http://{}", addr);
-
-    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
-}
-`
-}
-
-function rustAxumConfigRs(): string {
-  return `use std::env;
-
-pub struct Config {
-    pub port: u16,
-    pub database_url: String,
-    pub frontend_url: String,
-}
-
-impl Config {
-    pub fn from_env() -> Self {
-        Self {
-            port: env::var("PORT")
-                .unwrap_or_else(|_| "3001".to_string())
-                .parse()
-                .unwrap_or(3001),
-            database_url: env::var("DATABASE_URL")
-                .unwrap_or_else(|_| "postgresql://postgres:postgres@localhost:5432/app".to_string()),
-            frontend_url: env::var("FRONTEND_URL")
-                .unwrap_or_else(|_| "http://localhost:3000".to_string()),
-        }
-    }
-}
-`
-}
-
-function rustAxumRoutesRs(): string {
-  return `use axum::Json;
-use serde_json::{json, Value};
-
-pub async fn health() -> Json<Value> {
-    Json(json!({
-        "status": "ok"
-    }))
-}
 `
 }
 
@@ -429,33 +362,6 @@ cargo run
 \`\`\`
 
 Server listens on \`PORT\` (default \`3001\`).
-`
-}
-
-function rustAxumReadme(projectName: string): string {
-  return `# ${projectName} API
-
-Rust API service built with [Axum](https://github.com/tokio-rs/axum).
-
-## Prerequisites
-
-- [Rust](https://rustup.rs/) (stable)
-- [PostgreSQL](https://www.postgresql.org/) (or SQLite)
-
-## Quick Start
-
-\`\`\`sh
-cp .env.example .env
-cargo run
-\`\`\`
-
-## Build
-
-\`\`\`sh
-cargo build --release
-\`\`\`
-
-The binary will be at \`target/release/${sanitizeProjectName(projectName).replace(/-/g, '_')}-api\`.
 `
 }
 
@@ -616,8 +522,7 @@ export async function applyBackendTransform(
     // 1. Rewrite server app files
     await writeFile_(join(destinationDir, serverDir, 'src/app.ts'), honoAppTs())
     await writeFile_(join(destinationDir, serverDir, 'src/server.ts'), honoServerTs())
-
-    // 2. Remove Express-only middleware (not applicable to Hono)
+    // 2. Remove Express-only middleware and route modules (not applicable to Hono)
     await rm(join(destinationDir, serverDir, 'src/middlewares'), {
       recursive: true,
       force: true,
@@ -626,6 +531,9 @@ export async function applyBackendTransform(
       recursive: true,
       force: true,
     })
+    for (const relativePath of HONO_EXPRESS_ARTIFACTS) {
+      await rm(join(destinationDir, serverDir, relativePath), { force: true })
+    }
 
     // 3. Patch server package.json
     await patchPackageJson(join(destinationDir, serverDir, 'package.json'), honoPackageJsonPatch())
@@ -635,8 +543,12 @@ export async function applyBackendTransform(
     try {
       await stat(trpcSrcDir)
       await writeFile_(
-        join(destinationDir, 'apps/server/src/modules/trpc/trpc.ts'),
+        join(destinationDir, serverDir, 'src/modules/trpc/trpc.ts'),
         trpcContextFetch(),
+      )
+      await writeFile_(
+        join(destinationDir, serverDir, 'src/modules/trpc/index.ts'),
+        trpcIndexFetchServer(),
       )
       await writeFile_(join(destinationDir, 'packages/trpc/src/index.ts'), trpcIndexFetch())
     } catch {
@@ -655,20 +567,18 @@ export async function applyBackendTransform(
     await mkdir(join(apiDir, 'src'), { recursive: true })
 
     if (useActix) {
+      await rm(apiDir, { recursive: true, force: true })
+      await mkdir(join(apiDir, 'src'), { recursive: true })
       await writeFile_(join(apiDir, 'Cargo.toml'), rustActixCargoToml(projectName))
       await writeFile_(join(apiDir, 'src', 'main.rs'), rustActixMainRs())
       await writeFile_(join(apiDir, 'README.md'), rustActixReadme(projectName))
+      await writeFile_(join(destinationDir, 'Cargo.toml'), rustCargoWorkspaceToml())
+      await writeFile_(join(apiDir, '.env.example'), buildServerEnv(config))
+      await writeFile_(join(apiDir, 'Dockerfile'), rustServiceDockerfile())
     } else {
-      await writeFile_(join(apiDir, 'Cargo.toml'), rustAxumCargoToml(projectName))
-      await writeFile_(join(apiDir, 'src', 'main.rs'), rustAxumMainRs())
-      await writeFile_(join(apiDir, 'src', 'config.rs'), rustAxumConfigRs())
-      await writeFile_(join(apiDir, 'src', 'routes.rs'), rustAxumRoutesRs())
-      await writeFile_(join(apiDir, 'README.md'), rustAxumReadme(projectName))
+      await applyRustServiceApiScaffold(destinationDir, config)
     }
 
-    await writeFile_(join(destinationDir, 'Cargo.toml'), rustCargoWorkspaceToml())
-    await writeFile_(join(apiDir, '.env.example'), buildServerEnv(config))
-    await writeFile_(join(apiDir, 'Dockerfile'), rustServiceDockerfile())
     await patchRootPackageForServiceApi(destinationDir)
 
     return

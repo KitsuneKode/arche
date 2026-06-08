@@ -7,17 +7,28 @@
 
 import type { ProjectConfig } from '../../types/schemas'
 
-export function renderNginxConfig(_config: ProjectConfig): string {
+function backendUsesServiceApi(config: ProjectConfig): boolean {
+  return (
+    config.backend === 'rust-axum' ||
+    config.backend === 'rust-actix' ||
+    config.backend === 'go-fiber' ||
+    config.backend === 'python-fastapi'
+  )
+}
+
+export function renderNginxConfig(config: ProjectConfig): string {
+  const apiUpstream = backendUsesServiceApi(config) ? 'api' : 'server'
+
   return `upstream nextjs {
     server web:3000;
 }
 
 upstream api {
-    server server:3001;
+    server ${apiUpstream}:3001;
 }
 
 upstream bullboard {
-    server server:3001;
+    server ${apiUpstream}:3001;
 }
 
 # Rate limit zones

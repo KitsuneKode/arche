@@ -127,12 +127,13 @@ describe('applyDatabaseTransform', () => {
       expect(schema).toContain('model Message')
     })
 
-    it('rewrites store index without pg adapter', async () => {
+    it('rewrites store index with better-sqlite3 adapter', async () => {
       await applyDatabaseTransform(tempDir, makeConfig({ database: 'sqlite' }))
       const index = await readFile(join(tempDir, 'packages/store/src/index.ts'), 'utf8')
+      expect(index).toContain('PrismaBetterSqlite3')
       expect(index).toContain('PrismaClient')
       expect(index).not.toContain('@prisma/adapter-pg')
-      expect(index).not.toContain('pg')
+      expect(index).not.toContain('PrismaPg')
     })
 
     it('rewrites prisma.config.ts', async () => {
@@ -148,12 +149,13 @@ describe('applyDatabaseTransform', () => {
       expect(await pathExists(join(tempDir, 'packages/store/prisma/migrations'))).toBe(false)
     })
 
-    it('patches store package.json (removes pg deps)', async () => {
+    it('patches store package.json (sqlite adapter deps)', async () => {
       await applyDatabaseTransform(tempDir, makeConfig({ database: 'sqlite' }))
       const pkg = JSON.parse(await readFile(join(tempDir, 'packages/store/package.json'), 'utf8'))
       expect(pkg.dependencies['@prisma/adapter-pg']).toBeUndefined()
       expect(pkg.dependencies.pg).toBeUndefined()
-      // Should keep @prisma/client
+      expect(pkg.dependencies['@prisma/adapter-better-sqlite3']).toBeDefined()
+      expect(pkg.dependencies['better-sqlite3']).toBeDefined()
       expect(pkg.dependencies['@prisma/client']).toBeDefined()
     })
 
@@ -169,92 +171,6 @@ describe('applyDatabaseTransform', () => {
       const auth = await readFile(join(tempDir, 'packages/auth/src/index.ts'), 'utf8')
       expect(auth).toContain('toNodeHandler')
       expect(auth).toContain('fromNodeHeaders')
-    })
-  })
-
-  describe('mongodb', () => {
-    it('rewrites Prisma schema with mongodb provider', async () => {
-      await applyDatabaseTransform(tempDir, makeConfig({ database: 'mongodb' }))
-      const schema = await readFile(join(tempDir, 'packages/store/prisma/schema.prisma'), 'utf8')
-      expect(schema).toContain('provider = "mongodb"')
-      expect(schema).not.toContain('postgresql')
-    })
-
-    it('uses @db.ObjectId for all ID fields', async () => {
-      await applyDatabaseTransform(tempDir, makeConfig({ database: 'mongodb' }))
-      const schema = await readFile(join(tempDir, 'packages/store/prisma/schema.prisma'), 'utf8')
-      expect(schema).toContain('@db.ObjectId')
-      expect(schema).toContain('@map("_id")')
-    })
-
-    it('includes all required models in schema', async () => {
-      await applyDatabaseTransform(tempDir, makeConfig({ database: 'mongodb' }))
-      const schema = await readFile(join(tempDir, 'packages/store/prisma/schema.prisma'), 'utf8')
-      expect(schema).toContain('model User')
-      expect(schema).toContain('model Session')
-      expect(schema).toContain('model Account')
-      expect(schema).toContain('model Verification')
-      expect(schema).toContain('model Post')
-      expect(schema).toContain('model Message')
-    })
-
-    it('rewrites store index without pg adapter', async () => {
-      await applyDatabaseTransform(tempDir, makeConfig({ database: 'mongodb' }))
-      const index = await readFile(join(tempDir, 'packages/store/src/index.ts'), 'utf8')
-      expect(index).toContain('PrismaClient')
-      expect(index).not.toContain('@prisma/adapter-pg')
-      expect(index).not.toContain('PrismaPg')
-    })
-
-    it('rewrites prisma.config.ts without migrations path', async () => {
-      await applyDatabaseTransform(tempDir, makeConfig({ database: 'mongodb' }))
-      const config = await readFile(join(tempDir, 'packages/store/prisma.config.ts'), 'utf8')
-      expect(config).toContain('defineConfig')
-      expect(config).not.toContain('migrations')
-    })
-
-    it('removes old postgres migrations', async () => {
-      expect(await pathExists(join(tempDir, 'packages/store/prisma/migrations'))).toBe(true)
-      await applyDatabaseTransform(tempDir, makeConfig({ database: 'mongodb' }))
-      expect(await pathExists(join(tempDir, 'packages/store/prisma/migrations'))).toBe(false)
-    })
-
-    it('patches store package.json (removes pg deps, updates scripts)', async () => {
-      // Add scripts to the mock package.json for this test
-      const pkgPath = join(tempDir, 'packages/store/package.json')
-      const pkg = JSON.parse(await readFile(pkgPath, 'utf8'))
-      pkg.scripts = {
-        'db:migrate': 'bunx --bun prisma migrate dev',
-        'db:reset': 'prisma migrate reset',
-      }
-      await writeFile(pkgPath, JSON.stringify(pkg, null, 2))
-
-      await applyDatabaseTransform(tempDir, makeConfig({ database: 'mongodb' }))
-      const patched = JSON.parse(await readFile(pkgPath, 'utf8'))
-      expect(patched.dependencies['@prisma/adapter-pg']).toBeUndefined()
-      expect(patched.dependencies.pg).toBeUndefined()
-      expect(patched.dependencies['@prisma/client']).toBeDefined()
-      expect(patched.scripts['db:migrate']).toContain('db push')
-    })
-
-    it('rewrites auth with mongodb provider', async () => {
-      await applyDatabaseTransform(tempDir, makeConfig({ database: 'mongodb' }))
-      const auth = await readFile(join(tempDir, 'packages/auth/src/index.ts'), 'utf8')
-      expect(auth).toContain("provider: 'mongodb'")
-      expect(auth).not.toContain("provider: 'postgresql'")
-    })
-
-    it('auth still exports toNodeHandler and fromNodeHeaders', async () => {
-      await applyDatabaseTransform(tempDir, makeConfig({ database: 'mongodb' }))
-      const auth = await readFile(join(tempDir, 'packages/auth/src/index.ts'), 'utf8')
-      expect(auth).toContain('toNodeHandler')
-      expect(auth).toContain('fromNodeHeaders')
-    })
-
-    it('schema includes datasource url from env', async () => {
-      await applyDatabaseTransform(tempDir, makeConfig({ database: 'mongodb' }))
-      const schema = await readFile(join(tempDir, 'packages/store/prisma/schema.prisma'), 'utf8')
-      expect(schema).toContain('url      = env("DATABASE_URL")')
     })
   })
 

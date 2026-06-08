@@ -55,6 +55,7 @@ describe('applyOrmTransform', () => {
     await mkdir(join(tempDir, 'apps/server/src/modules/post'), { recursive: true })
     await mkdir(join(tempDir, 'apps/server/src/modules/chat'), { recursive: true })
     await mkdir(join(tempDir, 'apps/server/src/modules/user'), { recursive: true })
+    await mkdir(join(tempDir, 'packages/store/src/scripts'), { recursive: true })
 
     // Mock files
     await writeFile(
@@ -121,6 +122,30 @@ describe('applyOrmTransform', () => {
     await writeFile(
       join(tempDir, 'apps/server/src/modules/user/user.trpc.ts'),
       "import { prisma } from '@arche-template/store'\nprisma.user.findMany()\n",
+    )
+    await writeFile(
+      join(tempDir, 'packages/store/src/scripts/seed.ts'),
+      "import { prisma } from '../index'\nawait prisma.user.create({ data: {} })\n",
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/package.json'),
+      JSON.stringify({ name: '@test/server', dependencies: {} }, null, 2),
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/server.ts'),
+      `import { prisma } from './db/index.js'
+onShutdown(async () => {
+  logger.info('Closing Prisma connection...')
+  await prisma.$disconnect()
+})`,
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/post/post.repository.ts'),
+      'export const postRepo = {}\n',
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/post/post.service.ts'),
+      'export const postService = {}\n',
     )
   })
 
@@ -215,6 +240,32 @@ describe('applyOrmTransform', () => {
       // Updated scripts
       expect(pkg.scripts['db:generate']).toContain('drizzle-kit generate')
       expect(pkg.scripts['db:migrate']).toContain('drizzle-kit migrate')
+      expect(pkg.scripts['db:seed']).toContain('seed.ts')
+    })
+
+    it('rewrites seed script with Drizzle db.insert', async () => {
+      await applyOrmTransform(tempDir, config)
+      const seed = await readFile(join(tempDir, 'packages/store/src/scripts/seed.ts'), 'utf8')
+      expect(seed).toContain('.insert(')
+      expect(seed).not.toContain('prisma')
+    })
+
+    it('adds drizzle-orm to apps/server package.json', async () => {
+      await applyOrmTransform(tempDir, config)
+      const serverPkg = JSON.parse(
+        await readFile(join(tempDir, 'apps/server/package.json'), 'utf8'),
+      )
+      expect(serverPkg.dependencies['drizzle-orm']).toBeDefined()
+    })
+
+    it('removes Prisma repository and service layers', async () => {
+      await applyOrmTransform(tempDir, config)
+      expect(
+        await pathExists(join(tempDir, 'apps/server/src/modules/post/post.repository.ts')),
+      ).toBe(false)
+      expect(await pathExists(join(tempDir, 'apps/server/src/modules/post/post.service.ts'))).toBe(
+        false,
+      )
     })
 
     it('rewrites auth with drizzleAdapter', async () => {
@@ -243,9 +294,9 @@ describe('applyOrmTransform', () => {
       )
       expect(postRouter).toContain("from '@arche-template/store'")
       expect(postRouter).toContain('db.query.post')
-      expect(postRouter).toContain('db.insert(post)')
-      expect(postRouter).toContain('db.update(post)')
-      expect(postRouter).toContain('db.delete(post)')
+      expect(postRouter).toContain('db.insert(postTable)')
+      expect(postRouter).toContain('db.update(postTable)')
+      expect(postRouter).toContain('db.delete(postTable)')
       expect(postRouter).not.toContain('prisma')
 
       const chatRouter = await readFile(
@@ -253,7 +304,7 @@ describe('applyOrmTransform', () => {
         'utf8',
       )
       expect(chatRouter).toContain('db.query.message')
-      expect(chatRouter).toContain('db.insert(message)')
+      expect(chatRouter).toContain('db.insert(messageTable)')
       expect(chatRouter).not.toContain('prisma')
 
       const userRouter = await readFile(

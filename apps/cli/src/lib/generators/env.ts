@@ -14,11 +14,9 @@ function buildDatabaseUrl(config: ProjectConfig): string | null {
 
   switch (config.database) {
     case 'postgres':
-      return `postgresql://postgres:postgres@localhost:5432/${safeName}`
+      return `postgresql://user:password@localhost:5432/${safeName}`
     case 'sqlite':
       return `file:./dev.db`
-    case 'mongodb':
-      return `mongodb://mongo:mongo@localhost:27017/${safeName}?authSource=admin`
     case 'none':
       return null
   }
@@ -26,6 +24,7 @@ function buildDatabaseUrl(config: ProjectConfig): string | null {
 
 /** Server .env content */
 export function buildServerEnv(config: ProjectConfig): string {
+  const safeName = sanitizeProjectName(config.projectName).replace(/-/g, '_')
   const lines: string[] = [
     `# ============================================`,
     `# Core Configuration`,
@@ -42,16 +41,12 @@ export function buildServerEnv(config: ProjectConfig): string {
     // Add commented alternatives for production
     if (config.database === 'postgres') {
       lines.push(
+        `# Local alternatives:`,
+        `# DATABASE_URL=postgresql://postgres:postgres@localhost:5432/${safeName}`,
         `# Production alternatives:`,
         `# DATABASE_URL=postgresql://user:password@prod-db.example.com:5432/dbname`,
         `# DATABASE_URL=postgresql://user:password@db.neon.tech:5432/dbname?sslmode=require`,
         `# DATABASE_URL=postgresql://user:password@db.supabase.co:5432/postgres`,
-      )
-    } else if (config.database === 'mongodb') {
-      lines.push(
-        `# Production alternatives:`,
-        `# DATABASE_URL=mongodb+srv://user:password@cluster.mongodb.net/dbname`,
-        `# DATABASE_URL=mongodb://user:password@mongo.mongodb.net:27017/dbname`,
       )
     }
   }

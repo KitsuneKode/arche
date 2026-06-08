@@ -52,6 +52,10 @@ describe('applyBackendTransform', () => {
     // Create mock template files that would exist after copy
     await mkdir(join(tempDir, 'apps/server/src/common/middleware'), { recursive: true })
     await mkdir(join(tempDir, 'apps/server/src/modules/trpc'), { recursive: true })
+    await mkdir(join(tempDir, 'apps/server/src/modules/admin'), { recursive: true })
+    await mkdir(join(tempDir, 'apps/server/src/modules/auth'), { recursive: true })
+    await mkdir(join(tempDir, 'apps/server/src/modules/health'), { recursive: true })
+    await mkdir(join(tempDir, 'apps/server/src/modules/root'), { recursive: true })
     await mkdir(join(tempDir, 'packages/trpc/src'), { recursive: true })
 
     // Mock Express app.ts
@@ -96,6 +100,51 @@ describe('applyBackendTransform', () => {
     await writeFile(
       join(tempDir, 'packages/trpc/src/index.ts'),
       'export { expressMiddleWare } from "./middleware"\n',
+    )
+    // Mock Express-only artifacts removed by hono-bun transform
+    await writeFile(
+      join(tempDir, 'apps/server/src/vercel-handler.ts'),
+      'import express from "express"\n',
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/common/validate.ts'),
+      'import express from "express"\n',
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/trpc/trpc.routes.ts'),
+      'import express from "express"\n',
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/admin/admin.routes.ts'),
+      'import express from "express"\n',
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/admin/admin.controller.ts'),
+      'import express from "express"\n',
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/admin/admin.service.ts'),
+      'import express from "express"\n',
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/auth/auth.routes.ts'),
+      'import express from "express"\n',
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/health/health.routes.ts'),
+      'import express from "express"\n',
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/health/health.controller.ts'),
+      'import express from "express"\n',
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/root/root.routes.ts'),
+      'import express from "express"\n',
+    )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/root/root.controller.ts'),
+      'import express from "express"\n',
     )
   })
 
@@ -158,12 +207,13 @@ describe('applyBackendTransform', () => {
       expect(trpcTs).not.toContain('CreateExpressContextOptions')
     })
 
-    it('rewrites tRPC index.ts for fetch adapter (no express middleware export)', async () => {
+    it('rewrites tRPC index.ts to client contract types only', async () => {
       await applyBackendTransform(tempDir, makeConfig({ backend: 'hono-bun' }))
       const indexTs = await readFile(join(tempDir, 'packages/trpc/src/index.ts'), 'utf8')
-      expect(indexTs).toContain('createTRPCContext')
-      expect(indexTs).toContain('createCallerFactory')
+      expect(indexTs).toContain('AppRouter')
+      expect(indexTs).toContain('RouterInputs')
       expect(indexTs).not.toContain('expressMiddleWare')
+      expect(indexTs).not.toContain('createCaller')
     })
 
     it('app.ts mounts auth, trpc, health, and 404 routes', async () => {
@@ -181,6 +231,33 @@ describe('applyBackendTransform', () => {
       expect(trpcTs).toContain('session')
       expect(trpcTs).toContain('db')
       expect(trpcTs).toContain('auth.api.getSession')
+    })
+
+    it('removes Express-only server artifacts', async () => {
+      await applyBackendTransform(tempDir, makeConfig({ backend: 'hono-bun' }))
+      expect(await pathExists(join(tempDir, 'apps/server/src/vercel-handler.ts'))).toBe(false)
+      expect(await pathExists(join(tempDir, 'apps/server/src/modules/trpc/trpc.routes.ts'))).toBe(
+        false,
+      )
+      expect(await pathExists(join(tempDir, 'apps/server/src/modules/admin/admin.routes.ts'))).toBe(
+        false,
+      )
+    })
+
+    it('server.ts uses common logger and env', async () => {
+      await applyBackendTransform(tempDir, makeConfig({ backend: 'hono-bun' }))
+      const serverTs = await readFile(join(tempDir, 'apps/server/src/server.ts'), 'utf8')
+      expect(serverTs).toContain('./common/logger.js')
+      expect(serverTs).toContain('./common/env.js')
+      expect(serverTs).not.toContain('utils/logger')
+    })
+
+    it('tRPC context uses common logger', async () => {
+      await applyBackendTransform(tempDir, makeConfig({ backend: 'hono-bun' }))
+      const trpcTs = await readFile(join(tempDir, 'apps/server/src/modules/trpc/trpc.ts'), 'utf8')
+      expect(trpcTs).toContain('../common/logger.js')
+      expect(trpcTs).not.toContain('backend-common/logger')
+      expect(trpcTs).not.toContain('fromNodeHeaders')
     })
   })
 })

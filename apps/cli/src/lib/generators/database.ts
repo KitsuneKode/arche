@@ -116,7 +116,11 @@ model Message {
 }
 
 function sqliteStoreIndex(): string {
-  return `import { PrismaClient } from './generated/client'
+  return `import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+import { PrismaClient } from './generated/client'
+
+const databaseUrl = process.env.DATABASE_URL ?? 'file:./dev.db'
+const adapter = new PrismaBetterSqlite3({ url: databaseUrl })
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -124,11 +128,17 @@ const globalForPrisma = globalThis as unknown as {
 
 const prisma =
   globalForPrisma.prisma ??
-  new PrismaClient()
+  new PrismaClient({
+    adapter,
+    log:
+      process.env.NODE_ENV === 'development'
+        ? ['query', 'info', 'warn', 'error']
+        : ['warn', 'error'],
+  })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
-export { prisma }
+export { prisma, prisma as db }
 `
 }
 
@@ -138,7 +148,10 @@ function sqliteStorePackageJsonPatch(): {
 } {
   return {
     removeDeps: ['@prisma/adapter-pg', 'pg'],
-    addDeps: {},
+    addDeps: {
+      '@prisma/adapter-better-sqlite3': '^7.8.0',
+      'better-sqlite3': '^11.8.1',
+    },
   }
 }
 
@@ -149,6 +162,9 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+  },
+  datasource: {
+    url: process.env.DATABASE_URL ?? 'file:./dev.db',
   },
 })
 `
@@ -163,179 +179,6 @@ import { fromNodeHeaders, toNodeHandler } from 'better-auth/node'
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'sqlite',
-  }),
-  emailAndPassword: {
-    enabled: true,
-    autoSignIn: false,
-  },
-  plugins: [],
-  socialProviders: {},
-})
-
-export { toNodeHandler, fromNodeHeaders }
-export type Session = typeof auth.$Infer.Session
-`
-}
-
-// =============================================================================
-// MongoDB (via Prisma with built-in MongoDB driver)
-// =============================================================================
-
-function mongoPrismaSchema(): string {
-  return `datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client"
-  output   = "../src/generated"
-}
-
-// ─── Better Auth models ─────────────────────────────────────────────────────
-
-model User {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  posts         Post[]
-  messages      Message[]
-
-  @@map("user")
-}
-
-model Session {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  expiresAt DateTime
-  token     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("session")
-}
-
-model Account {
-  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
-  accountId             String
-  providerId            String
-  userId                String    @db.ObjectId
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  @@map("account")
-}
-
-model Verification {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime? @default(now())
-  updatedAt  DateTime? @updatedAt
-
-  @@map("verification")
-}
-
-// ─── Application models ─────────────────────────────────────────────────────
-
-model Post {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  slug      String   @unique
-  content   String
-  published Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  authorId  String   @db.ObjectId
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  @@map("post")
-}
-
-model Message {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  content   String
-  createdAt DateTime @default(now())
-  senderId  String   @db.ObjectId
-  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-  @@map("message")
-}
-`
-}
-
-function mongoStoreIndex(): string {
-  return `import { PrismaClient } from './generated/client'
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
-
-const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
-
-export { prisma }
-`
-}
-
-function mongoStorePackageJsonPatch(): {
-  removeDeps: string[]
-  addDeps: Record<string, string>
-  scriptOverrides: Record<string, string>
-} {
-  return {
-    removeDeps: ['@prisma/adapter-pg', 'pg'],
-    addDeps: {},
-    scriptOverrides: {
-      // MongoDB doesn't use SQL migrations — use db push instead
-      'db:migrate': 'bunx --bun prisma db push',
-      'db:reset': 'bunx --bun prisma db push --force-reset',
-    },
-  }
-}
-
-function mongoPrismaConfig(): string {
-  return `import { defineConfig } from 'prisma/config'
-
-export default defineConfig({
-  schema: 'prisma/schema.prisma',
-  datasource: {
-    url: process.env.DATABASE_URL!,
-  },
-})
-`
-}
-
-function mongoAuthPatch(): string {
-  return `import { prisma } from '@arche-template/store'
-import { betterAuth } from 'better-auth'
-import { prismaAdapter } from 'better-auth/adapters/prisma'
-import { fromNodeHeaders, toNodeHandler } from 'better-auth/node'
-
-export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: 'mongodb',
   }),
   emailAndPassword: {
     enabled: true,
@@ -429,37 +272,6 @@ export async function applyDatabaseTransform(
     return
   }
 
-  if (config.database === 'mongodb') {
-    // 1. Rewrite Prisma schema for MongoDB (ObjectId types, no SQL features)
-    await writeFile_(
-      join(destinationDir, 'packages/store/prisma/schema.prisma'),
-      mongoPrismaSchema(),
-    )
-
-    // 2. Rewrite store index (no pg adapter, plain PrismaClient)
-    await writeFile_(join(destinationDir, 'packages/store/src/index.ts'), mongoStoreIndex())
-
-    // 3. Rewrite prisma.config.ts (no migrations path for MongoDB)
-    await writeFile_(join(destinationDir, 'packages/store/prisma.config.ts'), mongoPrismaConfig())
-
-    // 4. Remove old SQL migrations (MongoDB doesn't use them)
-    await rm(join(destinationDir, 'packages/store/prisma/migrations'), {
-      recursive: true,
-      force: true,
-    })
-
-    // 5. Patch store package.json (remove pg deps, update scripts)
-    await patchStorePackageJson(
-      join(destinationDir, 'packages/store/package.json'),
-      mongoStorePackageJsonPatch(),
-    )
-
-    // 6. Update auth to use mongodb provider
-    await writeFile_(join(destinationDir, 'packages/auth/src/index.ts'), mongoAuthPatch())
-
-    return
-  }
-
   if (config.database === 'none') {
     // Rewrite store index to export a minimal Prisma client placeholder
     await writeFile_(
@@ -485,6 +297,21 @@ export const toNodeHandler = null as never
 export const fromNodeHeaders = null as never
 `,
     )
+
+    const rootPkgPath = join(destinationDir, 'package.json')
+    try {
+      const raw = await readFile(rootPkgPath, 'utf8')
+      const pkg = JSON.parse(raw) as { scripts?: Record<string, string> }
+      if (pkg.scripts) {
+        delete pkg.scripts.postinstall
+        delete pkg.scripts['db:generate']
+        delete pkg.scripts['db:migrate']
+        delete pkg.scripts['db:seed']
+        await writeFile(rootPkgPath, JSON.stringify(pkg, null, 2) + '\n')
+      }
+    } catch {
+      // non-monorepo families have no root db scripts
+    }
 
     return
   }

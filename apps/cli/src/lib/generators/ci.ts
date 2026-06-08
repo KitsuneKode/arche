@@ -7,6 +7,7 @@
 import type { ProjectConfig } from '../../types/schemas'
 
 import { renderRustCi } from './rust'
+import { renderSolanaCi } from './solana'
 
 function renderPackageManagerSteps(config: ProjectConfig): string {
   switch (config.packageManager) {
@@ -131,7 +132,11 @@ export function renderGithubActionsWorkflow(config: ProjectConfig): string {
     return `${renderConvexCi(config)}\n`
   }
 
-  if (config.family !== 'fullstack' && config.family !== 'polyglot' && config.family !== 'solana') {
+  if (config.family === 'solana') {
+    return renderSolanaCi(config)
+  }
+
+  if (config.family !== 'fullstack' && config.family !== 'polyglot') {
     return renderStandaloneCi(config)
   }
 

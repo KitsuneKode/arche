@@ -15,10 +15,14 @@ export { applyBackendTransform, applyRustFamilyTransform } from './backend'
 export { renderGitignore } from './gitignore'
 export {
   applyRustScaffoldTransform,
+  applyRustServiceApiScaffold,
   renderRustCi,
   renderRustDockerCompose,
   renderRustDockerfile,
+  renderRustEnvExample,
+  renderRustWorkspaceCargoToml,
 } from './rust'
+export { renderServiceApiWebLayout, renderServiceApiWebPage } from './scaffold-home'
 export { applySolanaScaffoldTransform } from './solana'
 export { applyDatabaseTransform } from './database'
 export { applyOrmTransform } from './orm'

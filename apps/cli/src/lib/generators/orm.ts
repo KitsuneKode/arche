@@ -15,6 +15,7 @@
  * get caught by the scope rename).
  */
 
+import { existsSync } from 'node:fs'
 import { readFile, writeFile, rm, mkdir } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import type { ProjectConfig } from '../../types/schemas'
@@ -242,21 +243,31 @@ export const messageRelations = relations(message, ({ one }) => ({
 // =============================================================================
 
 function drizzleStoreIndexPostgres(): string {
-  return `import { drizzle } from 'drizzle-orm/node-postgres'
+  return `import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres'
+import { Pool } from 'pg'
 import * as schema from './schema'
 
 const globalForDb = globalThis as unknown as {
-  db: ReturnType<typeof drizzle> | undefined
+  db: NodePgDatabase<typeof schema> | undefined
+  pool: Pool | undefined
 }
 
-const db =
-  globalForDb.db ??
-  drizzle({
-    connection: process.env.DATABASE_URL!,
-    schema,
+const pool =
+  globalForDb.pool ??
+  new Pool({
+    connectionString: process.env.DATABASE_URL!,
   })
 
-if (process.env.NODE_ENV !== 'production') globalForDb.db = db
+const db = globalForDb.db ?? drizzle({ client: pool, schema })
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForDb.db = db
+  globalForDb.pool = pool
+}
+
+export async function closeDb(): Promise<void> {
+  await pool.end()
+}
 
 export { db }
 export * from './schema'
@@ -264,21 +275,29 @@ export * from './schema'
 }
 
 function drizzleStoreIndexSqlite(): string {
-  return `import { drizzle } from 'drizzle-orm/bun-sqlite'
+  return `import { drizzle, type BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 import { Database } from 'bun:sqlite'
 import * as schema from './schema'
 
 const globalForDb = globalThis as unknown as {
-  db: ReturnType<typeof drizzle> | undefined
+  db: BunSQLiteDatabase<typeof schema> | undefined
+  sqlite: Database | undefined
 }
 
-const sqlite = new Database(process.env.DATABASE_URL?.replace('file:', '') ?? 'dev.db')
+const sqlite =
+  globalForDb.sqlite ??
+  new Database(process.env.DATABASE_URL?.replace('file:', '') ?? 'dev.db')
 
-const db =
-  globalForDb.db ??
-  drizzle({ client: sqlite, schema })
+const db = globalForDb.db ?? drizzle({ client: sqlite, schema })
 
-if (process.env.NODE_ENV !== 'production') globalForDb.db = db
+if (process.env.NODE_ENV !== 'production') {
+  globalForDb.db = db
+  globalForDb.sqlite = sqlite
+}
+
+export function closeDb(): void {
+  sqlite.close()
+}
 
 export { db }
 export * from './schema'
@@ -329,8 +348,8 @@ function drizzleStorePackageJsonPatch(database: 'postgres' | 'sqlite'): {
   scriptOverrides: Record<string, string>
 } {
   const base = {
-    removeDeps: ['@prisma/adapter-pg', '@prisma/client', 'pg'],
-    removeDevDeps: ['prisma', '@types/pg'],
+    removeDeps: ['@prisma/adapter-pg', '@prisma/client'],
+    removeDevDeps: ['prisma'],
     addDeps: {
       'drizzle-orm': '^0.39.0',
     } as Record<string, string>,
@@ -344,13 +363,17 @@ function drizzleStorePackageJsonPatch(database: 'postgres' | 'sqlite'): {
       'db:push': 'bunx drizzle-kit push',
       'db:deploy': 'bunx drizzle-kit migrate',
       'db:reset': 'bunx drizzle-kit push --force',
+      'db:seed': 'bun run src/scripts/seed.ts',
     },
   }
 
   if (database === 'postgres') {
     base.addDeps.pg = '^8.19.0'
+    base.addDevDeps['@types/pg'] = '^8.11.0'
+  } else {
+    base.removeDeps.push('pg')
+    base.removeDevDeps.push('@types/pg')
   }
-  // SQLite uses bun:sqlite (built-in, no extra dep)
 
   return base
 }
@@ -392,7 +415,7 @@ function drizzleTrpcContextExpress(): string {
 import * as trpcExpress from '@trpc/server/adapters/express'
 import { initTRPC, TRPCError } from '@trpc/server'
 import { db } from '@arche-template/store'
-import { logger } from '@arche-template/backend-common/logger'
+import { logger } from '../../common/logger.js'
 import superjson from 'superjson'
 import { ZodError } from 'zod'
 
@@ -466,7 +489,7 @@ import { auth, fromNodeHeaders } from '@arche-template/auth/server'
 import { db } from '@arche-template/store'
 import superjson from 'superjson'
 import { ZodError } from 'zod'
-import { logger } from '@arche-template/backend-common/logger'
+import { logger } from '../../common/logger.js'
 
 /**
  * tRPC context for fetch-based backends (Hono, etc.)
@@ -536,29 +559,29 @@ export const protectedProcedure = t.procedure
 // =============================================================================
 
 function drizzlePostRouter(): string {
-  return `import { protectedProcedure, publicProcedure } from '@/modules/trpc/trpc'
-import type { TRPCRouterRecord } from '@trpc/server'
-import { db, post, user } from '@arche-template/store'
+  return `import type { TRPCRouterRecord } from '@trpc/server'
+import { protectedProcedure, publicProcedure } from '../trpc/trpc.js'
+import { db, post as postTable } from '@arche-template/store'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 export const postRouter = {
   list: publicProcedure.query(async () => {
     return db.query.post.findMany({
-      where: eq(post.published, true),
-      orderBy: (post, { desc }) => [desc(post.createdAt)],
+      where: eq(postTable.published, true),
+      orderBy: (posts, { desc }) => [desc(posts.createdAt)],
       with: { author: true },
     })
   }),
   byId: publicProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
     return db.query.post.findFirst({
-      where: eq(post.id, input.id),
+      where: eq(postTable.id, input.id),
       with: { author: true },
     })
   }),
   bySlug: publicProcedure.input(z.object({ slug: z.string() })).query(async ({ input }) => {
     return db.query.post.findFirst({
-      where: eq(post.slug, input.slug),
+      where: eq(postTable.slug, input.slug),
       with: { author: true },
     })
   }),
@@ -570,7 +593,7 @@ export const postRouter = {
       published: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const [created] = await db.insert(post).values({
+      const [created] = await db.insert(postTable).values({
         ...input,
         published: input.published ?? false,
         authorId: ctx.session.user.id,
@@ -586,21 +609,21 @@ export const postRouter = {
     }))
     .mutation(async ({ ctx, input }) => {
       const existing = await db.query.post.findFirst({
-        where: eq(post.id, input.id),
+        where: eq(postTable.id, input.id),
       })
       if (!existing || existing.authorId !== ctx.session.user.id) throw new Error('Unauthorized')
       const { id, ...data } = input
-      const [updated] = await db.update(post).set(data).where(eq(post.id, id)).returning()
+      const [updated] = await db.update(postTable).set(data).where(eq(postTable.id, id)).returning()
       return updated
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const existing = await db.query.post.findFirst({
-        where: eq(post.id, input.id),
+        where: eq(postTable.id, input.id),
       })
       if (!existing || existing.authorId !== ctx.session.user.id) throw new Error('Unauthorized')
-      const [deleted] = await db.delete(post).where(eq(post.id, input.id)).returning()
+      const [deleted] = await db.delete(postTable).where(eq(postTable.id, input.id)).returning()
       return deleted
     }),
 } satisfies TRPCRouterRecord
@@ -608,15 +631,15 @@ export const postRouter = {
 }
 
 function drizzleChatRouter(): string {
-  return `import { protectedProcedure, publicProcedure } from '@/modules/trpc/trpc'
-import type { TRPCRouterRecord } from '@trpc/server'
-import { db, message } from '@arche-template/store'
+  return `import type { TRPCRouterRecord } from '@trpc/server'
+import { protectedProcedure, publicProcedure } from '../trpc/trpc.js'
+import { db, message as messageTable } from '@arche-template/store'
 import { z } from 'zod'
 
 export const chatRouter = {
   list: publicProcedure.query(async () => {
     return db.query.message.findMany({
-      orderBy: (message, { asc }) => [asc(message.createdAt)],
+      orderBy: (messages, { asc }) => [asc(messages.createdAt)],
       limit: 50,
       with: { sender: true },
     })
@@ -624,7 +647,7 @@ export const chatRouter = {
   send: protectedProcedure
     .input(z.object({ content: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      const [created] = await db.insert(message).values({
+      const [created] = await db.insert(messageTable).values({
         content: input.content,
         senderId: ctx.session.user.id,
       }).returning()
@@ -634,9 +657,103 @@ export const chatRouter = {
 `
 }
 
+function drizzleSeedTs(): string {
+  return `import { db, post, user } from '../index'
+
+async function main() {
+  console.log('Seeding database...')
+
+  const [demoUser] = await db
+    .insert(user)
+    .values({
+      id: 'user_demo_123',
+      email: 'demo@example.com',
+      name: 'Kitsune Team',
+      emailVerified: true,
+    })
+    .onConflictDoNothing()
+    .returning()
+
+  const authorId = demoUser?.id ?? 'user_demo_123'
+
+  await db
+    .insert(post)
+    .values({
+      title: 'Welcome to your Arche stack',
+      slug: 'welcome-arche-stack',
+      content: 'Replace this seed with your own demo content.',
+      published: true,
+      authorId,
+    })
+    .onConflictDoNothing()
+
+  console.log('Seed complete.')
+}
+
+main()
+  .catch((error) => {
+    console.error(error)
+    process.exit(1)
+  })
+  .finally(async () => {
+    process.exit(0)
+  })
+`
+}
+
+async function patchServerPackageJsonForDrizzle(packageJsonPath: string): Promise<void> {
+  const raw = await readFile(packageJsonPath, 'utf8')
+  const pkg = JSON.parse(raw) as Record<string, unknown>
+  const deps = (pkg.dependencies ?? {}) as Record<string, string>
+  deps['drizzle-orm'] = '^0.39.0'
+  pkg.dependencies = deps
+  await writeFile(packageJsonPath, JSON.stringify(pkg, null, 2) + '\n')
+}
+
+function drizzleServerDbIndex(): string {
+  return `export { closeDb, db } from '@arche-template/store'
+`
+}
+
+function drizzleHealthRepository(database: 'postgres' | 'sqlite'): string {
+  const ping =
+    database === 'postgres' ? `await db.execute(sql\`SELECT 1\`)` : `await db.run(sql\`SELECT 1\`)`
+  return `import { sql } from 'drizzle-orm'
+import { db } from '../../db/index.js'
+
+export const healthRepository = {
+  async pingDatabase(): Promise<void> {
+    ${ping}
+  },
+}
+`
+}
+
+async function patchServerShutdownForDrizzle(destinationDir: string): Promise<void> {
+  const serverPath = join(destinationDir, 'apps/server/src/server.ts')
+  if (!existsSync(serverPath)) return
+
+  let content = await readFile(serverPath, 'utf8')
+  content = content.replace(
+    "import { prisma } from './db/index.js'",
+    "import { closeDb } from './db/index.js'",
+  )
+  content = content.replace(
+    `  onShutdown(async () => {
+    logger.info('Closing Prisma connection...')
+    await prisma.$disconnect()
+  })`,
+    `  onShutdown(async () => {
+    logger.info('Closing database connection...')
+    await closeDb()
+  })`,
+  )
+  await writeFile(serverPath, content)
+}
+
 function drizzleUserRouter(): string {
-  return `import { protectedProcedure, publicProcedure } from '@/modules/trpc/trpc'
-import type { TRPCRouterRecord } from '@trpc/server'
+  return `import type { TRPCRouterRecord } from '@trpc/server'
+import { protectedProcedure, publicProcedure } from '../trpc/trpc.js'
 import { db, user } from '@arche-template/store'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
@@ -690,8 +807,6 @@ async function patchPackageJson(
   // Patch scripts
   const scripts = (pkg.scripts ?? {}) as Record<string, string>
   Object.assign(scripts, patch.scriptOverrides)
-  // Remove Prisma-specific scripts that don't apply
-  delete scripts['db:seed'] // seed script references Prisma, users can add back
   pkg.scripts = scripts
 
   await writeFile(packageJsonPath, JSON.stringify(pkg, null, 2) + '\n')
@@ -770,6 +885,33 @@ export async function applyOrmTransform(
       join(destinationDir, 'apps/server/src/modules/user/user.trpc.ts'),
       drizzleUserRouter(),
     )
+
+    // 10. Rewrite seed script for Drizzle
+    await writeFile_(join(destinationDir, 'packages/store/src/scripts/seed.ts'), drizzleSeedTs())
+
+    // 11. Rewrite server db re-export and health check for Drizzle
+    await writeFile_(join(destinationDir, 'apps/server/src/db/index.ts'), drizzleServerDbIndex())
+    await writeFile_(
+      join(destinationDir, 'apps/server/src/modules/health/health.repository.ts'),
+      drizzleHealthRepository(database),
+    )
+    await patchServerShutdownForDrizzle(destinationDir)
+
+    // 12. Remove Prisma-based service/repository layers (routers use Drizzle directly)
+    const prismaLayers = [
+      'apps/server/src/modules/post/post.repository.ts',
+      'apps/server/src/modules/post/post.service.ts',
+      'apps/server/src/modules/chat/chat.repository.ts',
+      'apps/server/src/modules/chat/chat.service.ts',
+      'apps/server/src/modules/user/user.repository.ts',
+      'apps/server/src/modules/user/user.service.ts',
+    ]
+    for (const relativePath of prismaLayers) {
+      await rm(join(destinationDir, relativePath), { force: true })
+    }
+
+    // 13. Add drizzle-orm to server package for router imports
+    await patchServerPackageJsonForDrizzle(join(destinationDir, 'apps/server/package.json'))
 
     return
   }
