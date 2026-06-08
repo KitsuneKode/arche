@@ -47,17 +47,9 @@ describe('checkCompatibility', () => {
     expect(result.errors).toEqual([])
   })
 
-  it('warns when MongoDB is used with Prisma', () => {
-    const result = checkCompatibility({
-      database: 'mongodb',
-      orm: 'prisma',
-    })
-    expect(result.warnings.some((w: string) => w.includes('MongoDB'))).toBe(true)
-  })
-
   it('errors when pgvector is used without postgres', () => {
     const result = checkCompatibility({
-      database: 'mongodb',
+      database: 'sqlite',
       vectorDatabase: 'pgvector',
     })
     expect(result.errors.some((e: string) => e.includes('pgvector'))).toBe(true)
@@ -69,14 +61,6 @@ describe('checkCompatibility', () => {
       addons: [],
     })
     expect(result.warnings.some((w: string) => w.includes('WebSocket'))).toBe(true)
-  })
-
-  it('errors when Drizzle is used with MongoDB', () => {
-    const result = checkCompatibility({
-      database: 'mongodb',
-      orm: 'drizzle',
-    })
-    expect(result.errors.some((e: string) => e.includes('Drizzle'))).toBe(true)
   })
 
   it('errors when fastify-node backend is requested', () => {
@@ -143,11 +127,19 @@ describe('checkCompatibility', () => {
     expect(result.warnings.filter((w: string) => w.includes('only applicable'))).toEqual([])
   })
 
-  it('warns that npm is outside first-class package manager support', () => {
+  it('errors when npm package manager is selected', () => {
     const result = checkCompatibility({
       packageManager: 'npm',
     })
-    expect(result.warnings.some((w: string) => w.includes('experimental'))).toBe(true)
+    expect(result.errors.some((e: string) => e.includes('npm'))).toBe(true)
+  })
+
+  it('errors when fullstack has database none', () => {
+    const result = checkCompatibility({
+      family: 'fullstack',
+      database: 'none',
+    })
+    expect(result.errors.some((e: string) => e.includes('database'))).toBe(true)
   })
 })
 
@@ -186,8 +178,8 @@ describe('Zod schemas', () => {
   describe('DatabaseSchema', () => {
     it('accepts valid database types', () => {
       expect(DatabaseSchema.parse('postgres')).toBe('postgres')
-      expect(DatabaseSchema.parse('mongodb')).toBe('mongodb')
       expect(DatabaseSchema.parse('sqlite')).toBe('sqlite')
+      expect(() => DatabaseSchema.parse('mongodb')).toThrow()
       expect(DatabaseSchema.parse('none')).toBe('none')
     })
   })

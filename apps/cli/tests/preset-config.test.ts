@@ -55,7 +55,7 @@ describe('preset config defaults', () => {
     expect(presetMenuOptions()[0]).toEqual({
       label: 'TypeScript Fullstack',
       value: 'typescript-fullstack',
-      hint: 'Requires validation - Next.js plus TypeScript API, contracts, auth, database, and deployment foundations.',
+      hint: 'Stable - Next.js plus TypeScript API, contracts, auth, database, and deployment foundations.',
     })
     expect(presetMenuOptions().at(-1)).toEqual({
       label: 'Experiments',

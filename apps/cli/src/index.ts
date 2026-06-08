@@ -38,9 +38,7 @@ import {
   familySupportsWorker,
   PresetSchema,
 } from './types/schemas'
-
-const PKG_NAME = '@kitsunekode/arche'
-const PKG_VERSION = '0.1.0'
+import { PKG_NAME, PKG_VERSION } from './version'
 const SITE_URL = 'https://arche.kitsunelabs.xyz'
 
 const SUBCOMMANDS = new Set([
@@ -135,7 +133,7 @@ ${pc.bold('Options:')}
   --deployment=<m>   Deployment guide: vercel-railway, none (default: stack-aware)
   --dry-run           Preview without writing files
   --backend=<b>      Backend: express-bun, hono-bun, rust-axum, rust-actix, go-fiber, python-fastapi, none
-  --database=<d>     Database: postgres, sqlite, mongodb, none (default: postgres)
+  --database=<d>     Database: postgres, sqlite, none (default: postgres)
   --orm=<o>          ORM: prisma, drizzle, none (default: prisma)
   -v, --version      Show version number
   -h, --help         Show this help message
@@ -159,7 +157,7 @@ ${pc.bold('Examples:')}
   npx @kitsunekode/arche create-json '{"projectName":"my-app","destinationDir":"/tmp/my-app","family":"fullstack"}'
 
   ${pc.dim('# Validate without writing')}
-  npx ${PKG_NAME} validate '{"projectName":"my-app","database":"mongodb","orm":"prisma"}'
+  npx ${PKG_NAME} validate '{"projectName":"my-app","database":"sqlite","orm":"prisma"}'
 
   ${pc.dim('# Dry-run — preview files')}
   npx ${PKG_NAME} my-app --yes --dry-run
@@ -582,7 +580,6 @@ async function main(): Promise<void> {
             options: [
               { label: 'PostgreSQL', value: 'postgres', hint: 'recommended for production' },
               { label: 'SQLite', value: 'sqlite', hint: 'zero-config, file-based' },
-              { label: 'MongoDB', value: 'mongodb', hint: 'document database' },
               { label: 'None', value: 'none', hint: 'API-only or external DB' },
             ],
           })
@@ -599,24 +596,15 @@ async function main(): Promise<void> {
           const ormOptions =
             database === 'none'
               ? [{ label: 'None', value: 'none' as const, hint: 'no database selected' }]
-              : database === 'mongodb'
-                ? [
-                    {
-                      label: 'Prisma',
-                      value: 'prisma' as const,
-                      hint: 'type-safe, MongoDB support',
-                    },
-                    { label: 'None', value: 'none' as const, hint: 'raw queries' },
-                  ]
-                : [
-                    {
-                      label: 'Prisma',
-                      value: 'prisma' as const,
-                      hint: 'type-safe, migration support',
-                    },
-                    { label: 'Drizzle', value: 'drizzle' as const, hint: 'lightweight, SQL-first' },
-                    { label: 'None', value: 'none' as const, hint: 'raw queries' },
-                  ]
+              : [
+                  {
+                    label: 'Prisma',
+                    value: 'prisma' as const,
+                    hint: 'type-safe, migration support',
+                  },
+                  { label: 'Drizzle', value: 'drizzle' as const, hint: 'lightweight, SQL-first' },
+                  { label: 'None', value: 'none' as const, hint: 'raw queries' },
+                ]
           const value = await select({
             message: 'ORM',
             initialValue: database === 'none' ? 'none' : 'prisma',
@@ -729,9 +717,7 @@ async function main(): Promise<void> {
         const dockerHint =
           database === 'postgres'
             ? 'Generate a local Docker Compose file for PostgreSQL and Redis?'
-            : database === 'mongodb'
-              ? 'Generate a local Docker Compose file for MongoDB and Redis?'
-              : 'Generate a local Docker Compose file for Redis?'
+            : 'Generate a local Docker Compose file for Redis?'
         const value = await confirm({
           message: dockerHint,
           initialValue: true,

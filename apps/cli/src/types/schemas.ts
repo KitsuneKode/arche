@@ -64,9 +64,7 @@ export type CleanupTarget = z.infer<typeof CleanupTargetSchema>
 // Database Schemas
 // =============================================================================
 
-export const DatabaseSchema = z
-  .enum(['postgres', 'mongodb', 'sqlite', 'none'])
-  .describe('Primary database')
+export const DatabaseSchema = z.enum(['postgres', 'sqlite', 'none']).describe('Primary database')
 export type DatabaseType = z.infer<typeof DatabaseSchema>
 
 export const VectorDatabaseSchema = z
@@ -316,11 +314,15 @@ export function checkCompatibility(config: Partial<ProjectConfig>): {
   const errors: string[] = []
 
   if (config.packageManager === 'npm') {
-    warnings.push('npm support is experimental. Bun and pnpm are the first-class outputs.')
+    errors.push(
+      'npm is not supported for generated projects. Use bun or pnpm (catalog: references require a workspace catalog).',
+    )
   }
 
-  if (config.database === 'mongodb' && config.orm === 'drizzle') {
-    errors.push('Drizzle does not support MongoDB. Use Prisma.')
+  if (config.family === 'fullstack' && config.database === 'none') {
+    errors.push(
+      'database=none is not supported for fullstack. Use postgres or sqlite, or choose the next family for frontend-only.',
+    )
   }
 
   if (config.backend === 'fastify-node') {
@@ -350,12 +352,6 @@ export function checkCompatibility(config: Partial<ProjectConfig>): {
 
   if (config.backend === 'none' && config.includeWorker) {
     warnings.push('Worker without a backend server may not be useful.')
-  }
-
-  if (config.database === 'mongodb' && config.orm === 'prisma') {
-    warnings.push(
-      'MongoDB with Prisma has limitations. Review Prisma MongoDB provider docs before production use.',
-    )
   }
 
   if (config.example === 'chat' && config.addons && !config.addons.includes('websocket')) {

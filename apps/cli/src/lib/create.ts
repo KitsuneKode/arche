@@ -85,7 +85,7 @@ export function getSchema(): Record<string, unknown> {
       },
       database: {
         type: 'string',
-        enum: ['postgres', 'mongodb', 'sqlite', 'none'],
+        enum: ['postgres', 'sqlite', 'none'],
         description: 'Primary database',
         default: 'postgres',
       },
@@ -98,7 +98,8 @@ export function getSchema(): Record<string, unknown> {
       packageManager: {
         type: 'string',
         enum: ['bun', 'pnpm', 'npm'],
-        description: 'Package manager. Bun is default; pnpm is first-class; npm is experimental.',
+        description:
+          'Package manager. Bun is default; pnpm is first-class; npm is rejected at validation.',
         default: 'bun',
         support: PACKAGE_MANAGER_SUPPORT,
       },

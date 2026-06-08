@@ -1,7 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { constants } from 'node:fs'
+import { access, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { renderInternalDocsIndex, renderPlansIndex } from '../render/docs/agent-context'
 import type { ProjectConfig } from '../types/schemas'
+import { checkCompatibility } from '../types/schemas'
 import { validateConfig } from './create'
 import { buildGeneratedArchitectureMd, buildRootAgentsMd } from './generators/agent-docs'
 import { renderGithubActionsWorkflow } from './generators/ci'
@@ -43,11 +45,22 @@ const VALID_FEATURES = [
   'payments',
 ] as const
 
-function readProjectConfig(destinationDir: string): ProjectConfigFile | null {
+const BLOCKED_FEATURES_BY_FAMILY: Partial<Record<ProjectConfig['family'], string[]>> = {
+  convex: ['docker', 'worker', 'websocket'],
+  next: ['worker', 'websocket'],
+  mobile: ['docker', 'ci', 'worker', 'websocket'],
+}
+
+async function readProjectConfig(destinationDir: string): Promise<ProjectConfigFile | null> {
   const configPath = join(destinationDir, 'arche.json')
-  if (!existsSync(configPath)) return null
   try {
-    const raw = readFileSync(configPath, 'utf8')
+    await access(configPath, constants.F_OK)
+  } catch {
+    return null
+  }
+
+  try {
+    const raw = await readFile(configPath, 'utf8')
     const cleaned = raw.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '')
     return JSON.parse(cleaned) as ProjectConfigFile
   } catch {
@@ -58,9 +71,8 @@ function readProjectConfig(destinationDir: string): ProjectConfigFile | null {
 function buildProjectConfig(
   baseDir: string,
   feature: string,
-  params: Record<string, string>,
+  config: ProjectConfigFile | null,
 ): ProjectConfig {
-  const config = readProjectConfig(baseDir)
   const family = (config?.family as ProjectConfig['family']) || 'fullstack'
   const pm = (config?.packageManager as ProjectConfig['packageManager']) || 'bun'
 
@@ -75,7 +87,7 @@ function buildProjectConfig(
     orm: (config?.choices?.orm as ProjectConfig['orm']) || 'prisma',
     vectorDatabase: 'none',
     runtime: 'bun',
-    addons: [feature as ProjectConfig['addons'][number]].filter(Boolean),
+    addons: [],
     example: 'none',
     testing: (config?.choices?.testing as ProjectConfig['testing']) || 'bun',
     deployment: (config?.choices?.deployment as ProjectConfig['deployment']) || 'vercel-railway',
@@ -90,30 +102,56 @@ function buildProjectConfig(
   }
 }
 
-function writeGeneratedFile(baseDir: string, relativePath: string, content: string): void {
+async function writeGeneratedFile(
+  baseDir: string,
+  relativePath: string,
+  content: string,
+): Promise<void> {
   const filePath = join(baseDir, relativePath)
-  mkdirSync(filePath.substring(0, filePath.lastIndexOf('/')), { recursive: true })
-  writeFileSync(filePath, content)
+  await mkdir(dirname(filePath), { recursive: true })
+  await writeFile(filePath, content)
 }
 
-function writeGeneratedClaudeSymlink(baseDir: string): void {
+async function writeGeneratedClaudeSymlink(baseDir: string): Promise<void> {
   const filePath = join(baseDir, 'CLAUDE.md')
-  rmSync(filePath, { force: true })
-  symlinkSync('AGENTS.md', filePath)
+  await rm(filePath, { force: true })
+  await symlink('AGENTS.md', filePath)
+}
+
+async function patchRootWorkspaces(baseDir: string, packageDir: string): Promise<void> {
+  const pkgPath = join(baseDir, 'package.json')
+  try {
+    await access(pkgPath, constants.F_OK)
+  } catch {
+    return
+  }
+
+  const pkg = JSON.parse(await readFile(pkgPath, 'utf8')) as {
+    workspaces?: string[]
+  }
+  if (!Array.isArray(pkg.workspaces)) return
+
+  const hasGlob = pkg.workspaces.some((entry) => entry.includes('*'))
+  if (hasGlob) return
+
+  if (!pkg.workspaces.includes(packageDir)) {
+    pkg.workspaces.push(packageDir)
+    await writeFile(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
+  }
 }
 
 async function addDockerCompose(baseDir: string, config: ProjectConfig): Promise<string[]> {
   const files: string[] = []
-  writeGeneratedFile(baseDir, 'docker-compose.yml', renderDockerCompose(config))
+  await writeGeneratedFile(baseDir, 'docker-compose.yml', renderDockerCompose(config))
   files.push('docker-compose.yml')
-  writeGeneratedFile(baseDir, 'docker-compose.prod.yml', renderDockerComposeProd(config))
+  await writeGeneratedFile(baseDir, 'docker-compose.prod.yml', renderDockerComposeProd(config))
   files.push('docker-compose.prod.yml')
   return files
 }
 
 async function addCi(baseDir: string, config: ProjectConfig): Promise<string[]> {
   const files: string[] = []
-  writeGeneratedFile(baseDir, '.github/workflows/ci.yml', renderGithubActionsWorkflow(config))
+  await writeGeneratedFile(baseDir, '.github/workflows/ci.yml', renderGithubActionsWorkflow(config))
   files.push('.github/workflows/ci.yml')
   return files
 }
@@ -121,26 +159,26 @@ async function addCi(baseDir: string, config: ProjectConfig): Promise<string[]> 
 async function addEnvFiles(baseDir: string, config: ProjectConfig): Promise<string[]> {
   const files: string[] = []
   const serverEnv = buildServerEnv(config)
-  writeGeneratedFile(baseDir, 'apps/server/.env.example', serverEnv)
+  await writeGeneratedFile(baseDir, 'apps/server/.env.example', serverEnv)
   files.push('apps/server/.env.example')
   return files
 }
 
 async function addAgentDocs(baseDir: string, config: ProjectConfig): Promise<string[]> {
   const files: string[] = []
-  writeGeneratedFile(baseDir, 'AGENTS.md', buildRootAgentsMd(config))
+  await writeGeneratedFile(baseDir, 'AGENTS.md', buildRootAgentsMd(config))
   files.push('AGENTS.md')
-  writeGeneratedClaudeSymlink(baseDir)
+  await writeGeneratedClaudeSymlink(baseDir)
   files.push('CLAUDE.md')
-  writeGeneratedFile(baseDir, '.docs/README.md', renderInternalDocsIndex())
+  await writeGeneratedFile(baseDir, '.docs/README.md', renderInternalDocsIndex())
   files.push('.docs/README.md')
-  writeGeneratedFile(
+  await writeGeneratedFile(
     baseDir,
     '.docs/architecture/generated-project.md',
     buildGeneratedArchitectureMd(config),
   )
   files.push('.docs/architecture/generated-project.md')
-  writeGeneratedFile(baseDir, '.plans/README.md', renderPlansIndex())
+  await writeGeneratedFile(baseDir, '.plans/README.md', renderPlansIndex())
   files.push('.plans/README.md')
   return files
 }
@@ -162,7 +200,7 @@ export function createWSServer(port = 3002) {
   return wss
 }
 `
-  writeGeneratedFile(baseDir, `${wsDir}/src/index.ts`, content)
+  await writeGeneratedFile(baseDir, `${wsDir}/src/index.ts`, content)
   files.push(`${wsDir}/src/index.ts`)
 
   const pkgJson = JSON.stringify(
@@ -177,7 +215,7 @@ export function createWSServer(port = 3002) {
     null,
     2,
   )
-  writeGeneratedFile(baseDir, `${wsDir}/package.json`, pkgJson + '\n')
+  await writeGeneratedFile(baseDir, `${wsDir}/package.json`, pkgJson + '\n')
   files.push(`${wsDir}/package.json`)
 
   const tsconfig = JSON.stringify(
@@ -189,8 +227,9 @@ export function createWSServer(port = 3002) {
     null,
     2,
   )
-  writeGeneratedFile(baseDir, `${wsDir}/tsconfig.json`, tsconfig + '\n')
+  await writeGeneratedFile(baseDir, `${wsDir}/tsconfig.json`, tsconfig + '\n')
   files.push(`${wsDir}/tsconfig.json`)
+  await patchRootWorkspaces(baseDir, wsDir)
 
   return files
 }
@@ -202,7 +241,7 @@ async function addFeatureStub(
 ): Promise<string[]> {
   const dir = `packages/${feature}`
   const content = `// ${feature} stub — add your implementation here\nexport const placeholder = true\n`
-  writeGeneratedFile(baseDir, `${dir}/src/index.ts`, content)
+  await writeGeneratedFile(baseDir, `${dir}/src/index.ts`, content)
 
   const pkgJson = JSON.stringify(
     {
@@ -215,7 +254,8 @@ async function addFeatureStub(
     null,
     2,
   )
-  writeGeneratedFile(baseDir, `${dir}/package.json`, pkgJson + '\n')
+  await writeGeneratedFile(baseDir, `${dir}/package.json`, pkgJson + '\n')
+  await patchRootWorkspaces(baseDir, dir)
 
   return [`${dir}/src/index.ts`, `${dir}/package.json`]
 }
@@ -241,7 +281,7 @@ const FEATURE_HANDLERS: Record<
  * Requires arche.json to detect current config.
  */
 export async function addFeature(options: AddOptions): Promise<AddResult> {
-  const { feature, destinationDir, params = {} } = options
+  const { feature, destinationDir } = options
   const generatedFiles: string[] = []
   const warnings: string[] = []
 
@@ -260,19 +300,47 @@ export async function addFeature(options: AddOptions): Promise<AddResult> {
     }
   }
 
-  const configFile = readProjectConfig(destinationDir)
+  try {
+    await access(destinationDir, constants.F_OK)
+  } catch {
+    return {
+      success: false,
+      feature,
+      errors: [`Destination directory does not exist: ${destinationDir}`],
+      warnings: [],
+      generatedFiles: [],
+    }
+  }
+
+  const configFile = await readProjectConfig(destinationDir)
   if (!configFile) {
     warnings.push('No arche.json found. Using fullstack defaults.')
   }
 
-  const config = buildProjectConfig(destinationDir, feature, params)
-  const validation = validateConfig(config)
-  if (!validation.valid) {
+  const family = (configFile?.family as ProjectConfig['family']) || 'fullstack'
+  const blocked = BLOCKED_FEATURES_BY_FAMILY[family] ?? []
+  if (blocked.includes(feature)) {
     return {
       success: false,
       feature,
-      errors: validation.errors,
-      warnings: validation.warnings,
+      errors: [`Feature "${feature}" is not compatible with family "${family}".`],
+      warnings: [],
+      generatedFiles: [],
+    }
+  }
+
+  const config = buildProjectConfig(destinationDir, feature, configFile)
+  const compatibility = checkCompatibility(config)
+  const validation = validateConfig(config)
+  const errors = [...compatibility.errors, ...validation.errors]
+  const allWarnings = [...compatibility.warnings, ...validation.warnings, ...warnings]
+
+  if (errors.length > 0) {
+    return {
+      success: false,
+      feature,
+      errors,
+      warnings: allWarnings,
       generatedFiles: [],
     }
   }
@@ -283,21 +351,26 @@ export async function addFeature(options: AddOptions): Promise<AddResult> {
     generatedFiles.push(...files)
   }
 
-  // Update arche.json to record the addon
   if (configFile) {
     configFile.choices = {
       ...configFile.choices,
       addons: [...((configFile.choices.addons as string[]) || []), feature],
     }
-    writeGeneratedFile(destinationDir, 'arche.json', JSON.stringify(configFile, null, 2) + '\n')
+    await writeGeneratedFile(
+      destinationDir,
+      'arche.json',
+      JSON.stringify(configFile, null, 2) + '\n',
+    )
     generatedFiles.push('arche.json (updated)')
   }
+
+  allWarnings.push('Run `bun install` in the project root to link new workspace packages.')
 
   return {
     success: true,
     feature,
     errors: [],
-    warnings,
+    warnings: allWarnings,
     generatedFiles,
   }
 }

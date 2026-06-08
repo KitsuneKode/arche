@@ -2,7 +2,14 @@ import { resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { createProject, validateConfig, getSchema } from './lib/create'
 import type { ProjectConfig, Family } from './types/schemas'
-import { FamilySchema } from './types/schemas'
+import {
+  BackendSchema,
+  BundleSchema,
+  DeploymentSchema,
+  FamilySchema,
+  PresetSchema,
+} from './types/schemas'
+import { PKG_NAME, PKG_VERSION } from './version'
 
 type JsonRpcRequest = {
   jsonrpc: '2.0'
@@ -42,7 +49,7 @@ const TOOLS = [
         },
         database: {
           type: 'string',
-          enum: ['postgres', 'sqlite', 'mongodb', 'none'],
+          enum: ['postgres', 'sqlite', 'none'],
           default: 'postgres',
         },
         orm: { type: 'string', enum: ['prisma', 'drizzle', 'none'], default: 'prisma' },
@@ -68,16 +75,25 @@ const TOOLS = [
         family: { type: 'string', enum: FamilySchema.options, default: 'fullstack' },
         backend: {
           type: 'string',
-          enum: ['express-bun', 'hono-bun', 'none'],
+          enum: BackendSchema.options,
           default: 'express-bun',
         },
         database: {
           type: 'string',
-          enum: ['postgres', 'sqlite', 'mongodb', 'none'],
+          enum: ['postgres', 'sqlite', 'none'],
           default: 'postgres',
         },
         orm: { type: 'string', enum: ['prisma', 'drizzle', 'none'], default: 'prisma' },
         packageManager: { type: 'string', enum: ['bun', 'pnpm', 'npm'], default: 'bun' },
+        preset: { type: 'string', enum: PresetSchema.options },
+        bundles: {
+          type: 'array',
+          items: { type: 'string', enum: BundleSchema.options },
+        },
+        includeWorker: { type: 'boolean', default: false },
+        includeDocker: { type: 'boolean', default: true },
+        includeCi: { type: 'boolean', default: true },
+        deployment: { type: 'string', enum: DeploymentSchema.options, default: 'vercel-railway' },
         install: { type: 'boolean', default: true },
         git: { type: 'boolean', default: true },
         testing: { type: 'string', enum: ['bun', 'none'], default: 'bun' },
@@ -190,7 +206,7 @@ async function handleToolsCall(
         id,
         result: {
           tool: '@kitsunekode/arche',
-          version: '0.1.0',
+          version: PKG_VERSION,
           family: family || 'all',
           guidance: [
             'Use arche_plan_project first to validate config before creating.',
@@ -226,32 +242,34 @@ function buildConfig(args: Record<string, unknown>): ProjectConfig {
     initializeGit: args.git !== false,
     installDependencies: args.install !== false,
     testing: (args.testing as ProjectConfig['testing']) || 'bun',
-    deployment: 'vercel-railway',
+    deployment: (args.deployment as ProjectConfig['deployment']) || 'vercel-railway',
     addons: [],
     example: 'none',
     vectorDatabase: 'none',
     runtime: 'bun',
     includeShowcase: false,
-    includeWorker: false,
-    bundles: ['product'],
+    includeWorker: args.includeWorker === true,
+    bundles: (args.bundles as ProjectConfig['bundles']) ?? ['product'],
     presets: [],
+    preset: args.preset as ProjectConfig['preset'],
     rustAuth: 'placeholder',
   }
 }
 
-export function startMcpServer(): void {
-  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: false })
-
-  // Send initialize response
+function handleInitialize(id: number | string | null): void {
   send({
     jsonrpc: '2.0',
-    id: null,
+    id,
     result: {
       protocolVersion: '2024-11-05',
       capabilities: { tools: {} },
-      serverInfo: { name: '@kitsunekode/arche', version: '0.1.0' },
+      serverInfo: { name: PKG_NAME, version: PKG_VERSION },
     },
   })
+}
+
+export function startMcpServer(): void {
+  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: false })
 
   rl.on('line', async (line: string) => {
     let request: JsonRpcRequest
@@ -266,6 +284,7 @@ export function startMcpServer(): void {
 
     switch (request.method) {
       case 'initialize':
+        handleInitialize(id)
         break
       case 'tools/list':
         handleToolsList(id)
@@ -278,6 +297,7 @@ export function startMcpServer(): void {
         )
         break
       case 'notifications/initialized':
+      case 'notifications/cancelled':
         break
       default:
         rpcError(id, -32601, `Method not found: ${request.method}`)

@@ -51,24 +51,33 @@ async function mcpExchange(requests: Record<string, unknown>[]): Promise<JsonRpc
 }
 
 describe('MCP Server', () => {
-  it('sends initialize response on startup', async () => {
-    const responses = await mcpExchange([{ jsonrpc: '2.0', id: 1, method: 'tools/list' }])
+  it('responds to initialize request', async () => {
+    const responses = await mcpExchange([
+      { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2024-11-05' } },
+    ])
 
     const initResp = responses[0]
     expect(initResp.jsonrpc).toBe('2.0')
-    expect(initResp.id).toBeNull()
+    expect(initResp.id).toBe(1)
     expect(initResp.result).toBeDefined()
     const result = initResp.result as Record<string, unknown>
     expect(result.protocolVersion).toBe('2024-11-05')
     expect(result.serverInfo).toBeDefined()
     const serverInfo = result.serverInfo as Record<string, unknown>
     expect(serverInfo.name).toBe('@kitsunekode/arche')
+    expect(typeof serverInfo.version).toBe('string')
+  })
+
+  it('does not send unsolicited initialize on startup', async () => {
+    const responses = await mcpExchange([{ jsonrpc: '2.0', id: 1, method: 'tools/list' }])
+    expect(responses).toHaveLength(1)
+    expect(responses[0]?.id).toBe(1)
   })
 
   it('responds to tools/list', async () => {
     const responses = await mcpExchange([{ jsonrpc: '2.0', id: 1, method: 'tools/list' }])
 
-    const listResp = responses[1] ?? responses[0]
+    const listResp = responses[0]
     expect(listResp.jsonrpc).toBe('2.0')
     expect(listResp.id).toBe(1)
     expect(listResp.result).toBeDefined()
@@ -93,7 +102,7 @@ describe('MCP Server', () => {
       },
     ])
 
-    const schemaResp = responses[1] ?? responses[0]
+    const schemaResp = responses[0]
     expect(schemaResp.jsonrpc).toBe('2.0')
     expect(schemaResp.id).toBe(2)
     expect(schemaResp.result).toBeDefined()
@@ -120,7 +129,7 @@ describe('MCP Server', () => {
       },
     ])
 
-    const guidanceResp = responses[1] ?? responses[0]
+    const guidanceResp = responses[0]
     expect(guidanceResp.jsonrpc).toBe('2.0')
     expect(guidanceResp.id).toBe(3)
     expect(guidanceResp.result).toBeDefined()
@@ -140,7 +149,7 @@ describe('MCP Server', () => {
       },
     ])
 
-    const resp = responses[1] ?? responses[0]
+    const resp = responses[0]
     expect(resp.id).toBe(4)
     const result = resp.result as Record<string, unknown>
     expect(result.family).toBe('next')
@@ -159,7 +168,7 @@ describe('MCP Server', () => {
       },
     ])
 
-    const resp = responses[1] ?? responses[0]
+    const resp = responses[0]
     expect(resp.id).toBe(5)
     const result = resp.result as Record<string, unknown>
     expect(result.valid).toBeDefined()
@@ -179,7 +188,7 @@ describe('MCP Server', () => {
       },
     ])
 
-    const resp = responses[1] ?? responses[0]
+    const resp = responses[0]
     expect(resp.id).toBe(6)
     expect(resp.error).toBeDefined()
     expect(resp.error?.code).toBe(-32601)
@@ -189,7 +198,7 @@ describe('MCP Server', () => {
   it('returns error for unknown method', async () => {
     const responses = await mcpExchange([{ jsonrpc: '2.0', id: 7, method: 'unknown_method' }])
 
-    const resp = responses[1] ?? responses[0]
+    const resp = responses[0]
     expect(resp.id).toBe(7)
     expect(resp.error).toBeDefined()
     expect(resp.error?.code).toBe(-32601)
@@ -205,7 +214,7 @@ describe('MCP Server', () => {
       },
     ])
 
-    const resp = responses[1] ?? responses[0]
+    const resp = responses[0]
     expect(resp.id).toBe(8)
     expect(resp.error).toBeDefined()
     expect(resp.error?.message).toContain('projectName')
