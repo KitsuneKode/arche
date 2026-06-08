@@ -68,7 +68,7 @@ interface GithubButtonProps
   transition?: SpringOptions
 }
 
-function GithubButton({
+function GithubButtonInner({
   initialStars = 0,
   targetStars = 0,
   starsClass = '',
@@ -92,20 +92,10 @@ function GithubButton({
   transition,
   ...props
 }: GithubButtonProps) {
-  const starTargetKey = `${initialStars}:${targetStars}:${filled}`
-  const [trackedTargetKey, setTrackedTargetKey] = useState(starTargetKey)
   const [currentStars, setCurrentStars] = useState(initialStars)
   const [isAnimating, setIsAnimating] = useState(false)
   const [starProgress, setStarProgress] = useState(filled ? 100 : 0)
   const [hasAnimated, setHasAnimated] = useState(false)
-
-  if (trackedTargetKey !== starTargetKey) {
-    setTrackedTargetKey(starTargetKey)
-    setHasAnimated(false)
-    setCurrentStars(initialStars)
-    setStarProgress(filled ? 100 : 0)
-    setIsAnimating(false)
-  }
 
   // Format number with units
   const formatNumber = (num: number) => {
@@ -295,6 +285,11 @@ function GithubButton({
       </div>
     </button>
   )
+}
+
+function GithubButton(props: GithubButtonProps) {
+  const starTargetKey = `${props.initialStars ?? 0}:${props.targetStars ?? 0}:${props.filled ?? false}`
+  return <GithubButtonInner key={starTargetKey} {...props} />
 }
 
 export { GithubButton, githubButtonVariants }

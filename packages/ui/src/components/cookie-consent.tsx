@@ -2,22 +2,37 @@
 
 import { useSyncExternalStore, useState } from 'react'
 
+const CONSENT_STORAGE_KEY = 'cookieConsent'
+const CONSENT_CHANGE_EVENT = 'cookie-consent-change'
+
 /**
  * Cookie consent banner component
  *
  * GDPR-compliant cookie consent banner.
  * Stores user preference in localStorage under `cookieConsent`.
  */
-function subscribeToConsent() {
-  return () => {}
+function subscribeToConsent(onStoreChange: () => void) {
+  const handleChange = () => onStoreChange()
+
+  window.addEventListener('storage', handleChange)
+  window.addEventListener(CONSENT_CHANGE_EVENT, handleChange)
+
+  return () => {
+    window.removeEventListener('storage', handleChange)
+    window.removeEventListener(CONSENT_CHANGE_EVENT, handleChange)
+  }
 }
 
 function getConsentSnapshot() {
-  return localStorage.getItem('cookieConsent')
+  return localStorage.getItem(CONSENT_STORAGE_KEY)
 }
 
 function getServerConsentSnapshot() {
   return 'unknown'
+}
+
+function notifyConsentChange() {
+  window.dispatchEvent(new Event(CONSENT_CHANGE_EVENT))
 }
 
 export function CookieConsent() {
@@ -30,12 +45,14 @@ export function CookieConsent() {
   const isVisible = storedConsent === null && !dismissed
 
   const handleAccept = () => {
-    localStorage.setItem('cookieConsent', 'accepted')
+    localStorage.setItem(CONSENT_STORAGE_KEY, 'accepted')
+    notifyConsentChange()
     setDismissed(true)
   }
 
   const handleReject = () => {
-    localStorage.setItem('cookieConsent', 'rejected')
+    localStorage.setItem(CONSENT_STORAGE_KEY, 'rejected')
+    notifyConsentChange()
     setDismissed(true)
   }
 
