@@ -2,8 +2,10 @@
  * Rust family scaffold transforms — token replacement, optional modules, Docker/CI.
  */
 
-import { readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { existsSync } from 'node:fs'
+import { cp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { ProjectConfig } from '../../types/schemas'
 import { rustUsesSqlx } from '../../types/schemas'
 import { sanitizeProjectName } from '../slug'
@@ -25,10 +27,10 @@ function crateName(projectName: string): string {
 }
 
 function databaseUrl(config: ProjectConfig): string {
-  const db = config.database === 'mongodb' ? 'none' : config.database
+  const db = config.database
   if (db === 'postgres') {
     const dbName = sanitizeProjectName(config.projectName).replace(/-/g, '_')
-    return `postgres://postgres:postgres@localhost:5432/${dbName}`
+    return `postgres://user:password@localhost:5432/${dbName}`
   }
   if (db === 'sqlite') {
     return 'sqlite://./data.db'
@@ -41,7 +43,7 @@ export function renderRustCargoToml(config: ProjectConfig): string {
   const useSqlx = rustUsesSqlx(config)
   const sqlxBlock = useSqlx
     ? `
-sqlx = { version = "0.8", features = ["runtime-tokio", "chrono", "uuid", "${
+sqlx = { version = "0.8", features = ["runtime-tokio", "chrono", "uuid", "migrate", "${
         config.database === 'sqlite' ? 'sqlite' : 'postgres'
       }"] }
 `
@@ -233,6 +235,10 @@ pub async fn connect(config: &Config) -> Result<Option<SqlitePool>, AppError> {
         return Ok(None);
     };
     let pool = SqlitePoolOptions::new().max_connections(5).connect(url).await?;
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .map_err(|e| AppError::Internal(format!("migration: {e}")))?;
     Ok(Some(pool))
 }
 `,
@@ -291,8 +297,24 @@ CREATE INDEX IF NOT EXISTS posts_author_id_idx ON posts (author_id);
       `use crate::config::Config;
 use crate::error::AppError;
 
-pub async fn connect(_config: &Config) -> Result<Option<sqlx::PgPool>, AppError> {
+pub async fn connect(_config: &Config) -> Result<Option<()>, AppError> {
     Ok(None)
+}
+`,
+    )
+    await writeFile(
+      join(destinationDir, 'src', 'state.rs'),
+      `use crate::config::Config;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub config: Config,
+}
+
+impl AppState {
+    pub fn new(config: Config, _db: Option<()>) -> Self {
+        Self { config }
+    }
 }
 `,
     )
@@ -324,4 +346,51 @@ pub async fn connect(_config: &Config) -> Result<Option<sqlx::PgPool>, AppError>
   }
 
   return generated
+}
+
+function resolveRustTemplateSource(): string {
+  const here = dirname(fileURLToPath(import.meta.url))
+  const candidates = [join(here, '../../templates/rust'), join(here, '../../../src/templates/rust')]
+  for (const dir of candidates) {
+    if (existsSync(dir)) return dir
+  }
+  throw new Error('Missing rust template at apps/cli/src/templates/rust')
+}
+
+export function renderRustWorkspaceCargoToml(): string {
+  return `[workspace]
+members = ["services/api"]
+resolver = "2"
+`
+}
+
+/**
+ * Copy the module-first Axum template into `services/api` for rust-fullstack presets.
+ * Reuses the same transforms as the standalone `rust` family.
+ */
+export async function applyRustServiceApiScaffold(
+  destinationDir: string,
+  config: ProjectConfig,
+): Promise<void> {
+  const apiDir = join(destinationDir, 'services', 'api')
+  const templateSource = resolveRustTemplateSource()
+
+  await rm(apiDir, { recursive: true, force: true })
+  await cp(templateSource, apiDir, {
+    recursive: true,
+    filter: (src) => !src.split('/').includes('target'),
+  })
+
+  const apiConfig: ProjectConfig = {
+    ...config,
+    family: 'rust',
+    backend: 'rust-axum',
+    example: config.database === 'none' ? 'none' : 'posts',
+    includeDocker: false,
+  }
+
+  await applyRustScaffoldTransform(apiDir, apiConfig)
+  await writeFile(join(destinationDir, 'Cargo.toml'), renderRustWorkspaceCargoToml())
+  await writeFile(join(apiDir, 'Dockerfile'), renderRustDockerfile())
+  await writeFile(join(apiDir, '.env.example'), renderRustEnvExample(apiConfig))
 }

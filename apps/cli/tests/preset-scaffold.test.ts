@@ -85,14 +85,37 @@ describe('preset scaffold output', () => {
       expect(webPackage.dependencies['@arche-template/auth']).toBeUndefined()
       expect(webPackage.dependencies['@arche-template/store']).toBeUndefined()
       expect(webPackage.dependencies['@arche-template/trpc']).toBeUndefined()
+      expect(webPackage.dependencies['@arche-template/common']).toBeUndefined()
+      expect(webPackage.dependencies['@arche-template/server']).toBeUndefined()
       expect(Object.keys(webPackage.dependencies).some((key) => key.endsWith('/auth'))).toBe(false)
       expect(Object.keys(webPackage.dependencies).some((key) => key.endsWith('/store'))).toBe(false)
       expect(Object.keys(webPackage.dependencies).some((key) => key.endsWith('/trpc'))).toBe(false)
+      expect(Object.keys(webPackage.dependencies).some((key) => key.endsWith('/common'))).toBe(
+        false,
+      )
+      expect(Object.keys(webPackage.dependencies).some((key) => key.endsWith('/server'))).toBe(
+        false,
+      )
+      expect(existsSync(join(destinationDir, 'apps/web/env.ts'))).toBe(false)
+
+      expect(existsSync(join(destinationDir, 'services/api/src/app.rs'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'services/api/src/modules/health'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'services/api/src/modules/posts'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'services/api/migrations'))).toBe(true)
 
       const apiMain = readFileSync(join(destinationDir, 'services/api/src/main.rs'), 'utf8')
-      expect(apiMain).toContain('let allowed_origin = frontend_url')
-      expect(apiMain).toContain('.allow_origin(allowed_origin)')
-      expect(apiMain).not.toContain('unwrap_or_default()')
+      expect(apiMain).toContain('app::run')
+
+      const webPage = readFileSync(join(destinationDir, 'apps/web/app/page.tsx'), 'utf8')
+      expect(webPage).toContain('/posts?limit=5')
+      expect(webPage).toContain('PostsPreview')
+
+      const webLayout = readFileSync(join(destinationDir, 'apps/web/app/layout.tsx'), 'utf8')
+      expect(webLayout).not.toContain('TRPCReactProvider')
+
+      const apiEnv = readFileSync(join(destinationDir, 'services/api/.env'), 'utf8')
+      expect(apiEnv).toContain('PORT=3001')
+      expect(apiEnv).toContain('DATABASE_URL=')
 
       const architecture = readFileSync(
         join(destinationDir, '.docs/architecture/generated-project.md'),

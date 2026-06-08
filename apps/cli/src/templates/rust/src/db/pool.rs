@@ -14,5 +14,10 @@ pub async fn connect(config: &Config) -> Result<Option<PgPool>, AppError> {
         .connect(url)
         .await?;
 
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .map_err(|e| AppError::Internal(format!("migration: {e}")))?;
+
     Ok(Some(pool))
 }

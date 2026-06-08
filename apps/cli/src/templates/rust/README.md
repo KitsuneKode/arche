@@ -9,7 +9,7 @@ cp .env.example .env
 cargo run
 ```
 
-Server starts at `http://localhost:8080`.
+Server starts at `http://localhost:3001` (override with `PORT` in `.env`).
 
 ## Build
 
