@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'motion/react'
+import { m } from 'motion/react'
 import { useState } from 'react'
 
 import { CodePanel, SectionHeading } from '@/components/arche/site-primitives'
@@ -154,7 +154,7 @@ export function ArchitectureGraph() {
 
           <div className="relative z-10 grid grid-cols-1 gap-8 lg:grid-cols-4">
             {route.nodes.map((node, index) => (
-              <motion.article
+              <m.article
                 key={`${active}-${node.path}`}
                 initial={{ opacity: 0, y: 14 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -182,7 +182,7 @@ export function ArchitectureGraph() {
                     <code>{node.code}</code>
                   </CodePanel>
                 </div>
-              </motion.article>
+              </m.article>
             ))}
           </div>
         </div>

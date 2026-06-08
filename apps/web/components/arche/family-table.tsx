@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'motion/react'
+import { m } from 'motion/react'
 
 import {
   devScaffoldCommand,
@@ -28,7 +28,7 @@ function PresetTable({ rows }: { rows: typeof PUBLIC_PRESET_ROWS }) {
           <th className="px-6 py-4 font-medium">Best for</th>
         </tr>
       </thead>
-      <motion.tbody
+      <m.tbody
         initial="hidden"
         animate="visible"
         variants={{
@@ -37,7 +37,7 @@ function PresetTable({ rows }: { rows: typeof PUBLIC_PRESET_ROWS }) {
         }}
       >
         {rows.map((family, index) => (
-          <motion.tr
+          <m.tr
             key={family.id}
             variants={{
               hidden: { opacity: 0, y: 10 },
@@ -81,9 +81,9 @@ function PresetTable({ rows }: { rows: typeof PUBLIC_PRESET_ROWS }) {
             <td className="px-6 py-4 align-top whitespace-normal text-zinc-400">
               {family.goodFor}
             </td>
-          </motion.tr>
+          </m.tr>
         ))}
-      </motion.tbody>
+      </m.tbody>
     </table>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'motion/react'
+import { m } from 'motion/react'
 
 export function StackDiagram() {
   const diagram = `┌─────────────────────────────────────┐
@@ -25,7 +25,7 @@ export function StackDiagram() {
         Data Flow Diagram
       </div>
       <div className="overflow-x-auto p-6 md:p-8">
-        <motion.pre
+        <m.pre
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -87,7 +87,7 @@ export function StackDiagram() {
               />
             )
           })}
-        </motion.pre>
+        </m.pre>
       </div>
     </div>
   )

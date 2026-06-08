@@ -11,12 +11,17 @@ const MAX_PROGRESS_BEFORE_COMPLETE = 88
 export function RouteTopLoader() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const routeKey = `${pathname}?${searchParams.toString()}`
   const [progress, setProgress] = useState(0)
   const [visible, setVisible] = useState(false)
 
   const isPendingRef = useRef(false)
+  const visibleRef = useRef(false)
+  const previousRouteKeyRef = useRef<string | null>(null)
   const intervalRef = useRef<number | null>(null)
   const hideTimeoutRef = useRef<number | null>(null)
+
+  visibleRef.current = visible
 
   const clearTimers = useCallback(() => {
     if (intervalRef.current) {
@@ -47,7 +52,7 @@ export function RouteTopLoader() {
   }, [clearTimers])
 
   const complete = useCallback(() => {
-    if (!isPendingRef.current && !visible) return
+    if (!isPendingRef.current && !visibleRef.current) return
 
     isPendingRef.current = false
 
@@ -61,7 +66,7 @@ export function RouteTopLoader() {
       setVisible(false)
       setProgress(0)
     }, HIDE_DELAY_MS)
-  }, [visible])
+  }, [])
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
@@ -109,8 +114,11 @@ export function RouteTopLoader() {
   }, [start])
 
   useEffect(() => {
+    const previous = previousRouteKeyRef.current
+    previousRouteKeyRef.current = routeKey
+    if (previous === null || previous === routeKey) return
     complete()
-  }, [pathname, searchParams, complete])
+  }, [routeKey, complete])
 
   useEffect(() => {
     return () => clearTimers()

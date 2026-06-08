@@ -1,0 +1,14 @@
+{
+  "ignore": {
+    "files": [
+      "app/__design-lab/**",
+      "trpc/**",
+      "utils/config.ts",
+      "utils/logger.ts",
+      "components/arche/command-table.tsx",
+      "components/arche/highlighted-code.tsx",
+      "components/docs/docs-reference-hero.tsx"
+    ],
+    "rules": ["react-doctor/no-danger"]
+  }
+}

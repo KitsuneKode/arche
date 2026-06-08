@@ -11,7 +11,8 @@
     "lint:fix": "oxlint --fix",
     "mdx:generate": "fumadocs-mdx",
     "postinstall": "fumadocs-mdx",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "doctor": "bunx react-doctor@latest --verbose ."
   },
   "dependencies": {
     "@arche-template/auth": "workspace:*",

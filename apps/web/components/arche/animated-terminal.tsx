@@ -1,7 +1,7 @@
 'use client'
 
-import { motion } from 'motion/react'
-import { useState, useEffect } from 'react'
+import { m } from 'motion/react'
+import { useEffect, useReducer } from 'react'
 
 import { PrimaryLink } from '@/components/arche/site-primitives'
 
@@ -24,52 +24,90 @@ const terminalSteps = [
     type: 'prompt',
     delay: 0,
   },
-]
+] as const
+
+type TerminalState = {
+  currentStep: number
+  isTyping: boolean
+  typedCommand: string
+}
+
+type TerminalAction =
+  | { type: 'set_typed_command'; command: string }
+  | { type: 'finish_typing' }
+  | { type: 'advance_step' }
+
+const initialTerminalState: TerminalState = {
+  currentStep: 0,
+  isTyping: true,
+  typedCommand: '',
+}
+
+function terminalReducer(state: TerminalState, action: TerminalAction): TerminalState {
+  switch (action.type) {
+    case 'set_typed_command':
+      return { ...state, typedCommand: action.command }
+    case 'finish_typing':
+      return { ...state, isTyping: false, currentStep: 1 }
+    case 'advance_step':
+      return { ...state, currentStep: state.currentStep + 1 }
+    default:
+      return state
+  }
+}
 
 export function AnimatedTerminal() {
-  const [currentStep, setCurrentStep] = useState(0)
-  const [isTyping, setIsTyping] = useState(true)
-  const [typedCommand, setTypedCommand] = useState('')
+  const [{ currentStep, isTyping, typedCommand }, dispatch] = useReducer(
+    terminalReducer,
+    initialTerminalState,
+  )
 
   useEffect(() => {
-    // Only run sequence once on mount
-    let isSubscribed = true
+    let cancelled = false
+    const timeouts: number[] = []
 
-    const runSequence = async () => {
-      // Step 0: Typing animation for the initial command
-      if (currentStep === 0) {
-        const command = terminalSteps[0]!.text
-        for (let i = 0; i <= command.length; i++) {
-          if (!isSubscribed) return
-          setTypedCommand(command.slice(0, i))
-          await new Promise((r) => setTimeout(r, 40)) // Typing speed
-        }
-        await new Promise((r) => setTimeout(r, terminalSteps[0]!.delay))
-        if (!isSubscribed) return
-        setIsTyping(false)
-        setCurrentStep(1)
-        return
-      }
-
-      // Subsequent steps
-      if (currentStep > 0 && currentStep < terminalSteps.length) {
-        await new Promise((r) => setTimeout(r, terminalSteps[currentStep - 1]!.delay))
-        if (!isSubscribed) return
-        setCurrentStep((prev) => prev + 1)
-      }
+    const schedule = (fn: () => void, ms: number) => {
+      timeouts.push(window.setTimeout(fn, ms))
     }
 
-    runSequence()
+    if (currentStep === 0 && isTyping) {
+      const command = terminalSteps[0]!.text
+      let index = 0
+
+      const typeTick = () => {
+        if (cancelled) return
+        dispatch({ type: 'set_typed_command', command: command.slice(0, index) })
+        index += 1
+        if (index <= command.length) {
+          schedule(typeTick, 40)
+        } else {
+          schedule(() => {
+            if (cancelled) return
+            dispatch({ type: 'finish_typing' })
+          }, terminalSteps[0]!.delay)
+        }
+      }
+
+      typeTick()
+    } else if (currentStep > 0 && currentStep < terminalSteps.length) {
+      schedule(
+        () => {
+          if (cancelled) return
+          dispatch({ type: 'advance_step' })
+        },
+        terminalSteps[currentStep - 1]!.delay,
+      )
+    }
 
     return () => {
-      isSubscribed = false
+      cancelled = true
+      for (const id of timeouts) window.clearTimeout(id)
     }
-  }, [currentStep])
+  }, [currentStep, isTyping])
 
   return (
     <div className="relative z-20 flex w-full max-w-2xl flex-col gap-4 sm:flex-row">
       <div className="group flex flex-1 flex-col overflow-hidden border border-zinc-800 bg-black shadow-[4px_4px_0_0_rgba(39,39,42,1)] transition-all duration-300 hover:shadow-[8px_8px_0_0_rgba(39,39,42,1)]">
-        {/* Terminal Header */}
         <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900 px-4 py-2 font-mono text-[10px] tracking-widest text-white uppercase">
           <div className="flex items-center gap-2">
             <div className="size-2 animate-pulse bg-amber-500" />
@@ -78,26 +116,25 @@ export function AnimatedTerminal() {
           <div className="opacity-50">v3.0.0</div>
         </div>
 
-        {/* Terminal Content */}
         <div className="relative flex min-h-[220px] flex-col items-start bg-black p-4 text-left font-mono text-sm leading-relaxed md:p-6">
           <div className="flex items-center gap-3 text-white">
             <span className="text-zinc-400">~</span>
             <span>{isTyping ? typedCommand : terminalSteps[0]!.text}</span>
-            {isTyping && (
-              <motion.span
+            {isTyping ? (
+              <m.span
                 animate={{ opacity: [1, 0] }}
                 transition={{ repeat: Infinity, duration: 0.8 }}
                 className="block h-4 w-2 bg-white"
               />
-            )}
+            ) : null}
           </div>
 
-          {terminalSteps.slice(1, currentStep).map((step, i) => (
-            <motion.div
+          {terminalSteps.slice(1, currentStep).map((step) => (
+            <m.div
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-              key={i}
+              key={step.text}
               className={`mt-2 ${
                 step.type === 'prompt'
                   ? 'text-zinc-400'
@@ -111,18 +148,18 @@ export function AnimatedTerminal() {
               }`}
             >
               {step.text}
-            </motion.div>
+            </m.div>
           ))}
 
-          {currentStep === 7 && (
-            <motion.div
+          {currentStep === 7 ? (
+            <m.div
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
               className="mt-4 inline-block text-blue-400"
             >
               ⠋
-            </motion.div>
-          )}
+            </m.div>
+          ) : null}
         </div>
       </div>
 

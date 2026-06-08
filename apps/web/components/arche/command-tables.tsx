@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'motion/react'
+import { m } from 'motion/react'
 
 import { devScaffoldCommand } from '@/lib/presets-public'
 
@@ -23,7 +23,7 @@ function CommandTableSection({
       </div>
       <div className="divide-y divide-zinc-800">
         {commands.map((c, i) => (
-          <motion.div
+          <m.div
             key={c.cmd}
             initial={{ opacity: 0, x: -10 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -38,7 +38,7 @@ function CommandTableSection({
             <div className="shrink-0 text-sm font-medium text-pretty text-zinc-400 lg:max-w-[14rem]">
               {c.desc}
             </div>
-          </motion.div>
+          </m.div>
         ))}
       </div>
     </div>

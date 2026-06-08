@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore, useState } from 'react'
 
 /**
  * Cookie consent banner component
@@ -8,25 +8,35 @@ import { useEffect, useState } from 'react'
  * GDPR-compliant cookie consent banner.
  * Stores user preference in localStorage under `cookieConsent`.
  */
-export function CookieConsent() {
-  const [isVisible, setIsVisible] = useState(false)
+function subscribeToConsent() {
+  return () => {}
+}
 
-  useEffect(() => {
-    // Check if user has already given consent
-    const consent = localStorage.getItem('cookieConsent')
-    if (!consent) {
-      setIsVisible(true)
-    }
-  }, [])
+function getConsentSnapshot() {
+  return localStorage.getItem('cookieConsent')
+}
+
+function getServerConsentSnapshot() {
+  return 'unknown'
+}
+
+export function CookieConsent() {
+  const storedConsent = useSyncExternalStore(
+    subscribeToConsent,
+    getConsentSnapshot,
+    getServerConsentSnapshot,
+  )
+  const [dismissed, setDismissed] = useState(false)
+  const isVisible = storedConsent === null && !dismissed
 
   const handleAccept = () => {
     localStorage.setItem('cookieConsent', 'accepted')
-    setIsVisible(false)
+    setDismissed(true)
   }
 
   const handleReject = () => {
     localStorage.setItem('cookieConsent', 'rejected')
-    setIsVisible(false)
+    setDismissed(true)
   }
 
   if (!isVisible) return null
@@ -46,12 +56,14 @@ export function CookieConsent() {
         </div>
         <div className="flex gap-2 shrink-0">
           <button
+            type="button"
             onClick={handleReject}
             className="px-4 py-2 text-sm border border-neutral-600 rounded hover:bg-neutral-800 transition"
           >
             Reject
           </button>
           <button
+            type="button"
             onClick={handleAccept}
             className="px-4 py-2 text-sm bg-blue-600 rounded hover:bg-blue-700 transition"
           >

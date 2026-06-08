@@ -2,7 +2,7 @@
 
 import { cn } from '@arche-template/ui/lib/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { motion, useInView, type SpringOptions, type UseInViewOptions } from 'motion/react'
+import { m, useInView, type SpringOptions, type UseInViewOptions } from 'motion/react'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Star } from './icons'
 
@@ -92,10 +92,20 @@ function GithubButton({
   transition,
   ...props
 }: GithubButtonProps) {
+  const starTargetKey = `${initialStars}:${targetStars}:${filled}`
+  const [trackedTargetKey, setTrackedTargetKey] = useState(starTargetKey)
   const [currentStars, setCurrentStars] = useState(initialStars)
   const [isAnimating, setIsAnimating] = useState(false)
   const [starProgress, setStarProgress] = useState(filled ? 100 : 0)
   const [hasAnimated, setHasAnimated] = useState(false)
+
+  if (trackedTargetKey !== starTargetKey) {
+    setTrackedTargetKey(starTargetKey)
+    setHasAnimated(false)
+    setCurrentStars(initialStars)
+    setStarProgress(filled ? 100 : 0)
+    setIsAnimating(false)
+  }
 
   // Format number with units
   const formatNumber = (num: number) => {
@@ -161,22 +171,12 @@ function GithubButton({
   const ref = React.useRef(null)
   const isInView = useInView(ref, inViewOptions)
 
-  // Reset animation state when targetStars changes
   useEffect(() => {
-    setHasAnimated(false)
-    setCurrentStars(initialStars)
-  }, [targetStars, initialStars])
-
-  // Auto-start animation or use in-view trigger
-  useEffect(() => {
-    if (useInViewTrigger) {
-      if (isInView && !hasAnimated) {
-        startAnimation()
-      }
-    } else if (autoAnimate && !hasAnimated) {
+    const shouldStart = useInViewTrigger ? isInView : autoAnimate
+    if (shouldStart && !hasAnimated && !isAnimating) {
       startAnimation()
     }
-  }, [autoAnimate, useInViewTrigger, isInView, hasAnimated, startAnimation])
+  }, [autoAnimate, useInViewTrigger, isInView, hasAnimated, isAnimating, startAnimation])
 
   const navigateToRepo = () => {
     if (!repoUrl) {
@@ -234,6 +234,7 @@ function GithubButton({
 
   return (
     <button
+      type="button"
       ref={ref}
       className={cn(githubButtonVariants({ variant, size, className }), separator && 'ps-0')}
       onClick={handleClick}
@@ -274,7 +275,7 @@ function GithubButton({
 
       {/* Animated Number Counter with Ticker Effect */}
       <div className={cn('flex flex-col font-semibold relative overflow-hidden', starsClass)}>
-        <motion.div
+        <m.div
           animate={{ opacity: 1 }}
           transition={{
             type: 'spring',
@@ -285,7 +286,7 @@ function GithubButton({
           className="tabular-nums"
         >
           <span>{currentStars > 0 && formatNumber(currentStars)}</span>
-        </motion.div>
+        </m.div>
         {fixedWidth && (
           <span className="opacity-0 h-0 overflow-hidden tabular-nums">
             {formatNumber(targetStars)}
