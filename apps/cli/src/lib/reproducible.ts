@@ -6,8 +6,6 @@ import {
   isRustFrameworkBackend,
 } from '../types/schemas'
 
-export { buildRecipeReplayCommand } from '../recipe/replay'
-
 /** CLI command that reproduces a scaffold with the same options. */
 export function buildReproducibleCommand(
   config: Pick<

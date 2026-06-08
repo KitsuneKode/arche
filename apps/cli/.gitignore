@@ -1,0 +1,7 @@
+# Local manual scaffold / generator probes (never commit)
+/drizzle/
+/hono-test/
+/jsontest/
+/mongo/
+/sqlite/
+/packages/
