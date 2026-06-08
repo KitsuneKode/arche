@@ -1,3 +1,6 @@
+[toolchain]
+anchor_version = "0.32.1"
+
 [programs.localnet]
 acme_program = "11111111111111111111111111111111"
 

@@ -7,4 +7,4 @@ edition = "2021"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-anchor-lang = "0.30"
+anchor-lang = "0.32"

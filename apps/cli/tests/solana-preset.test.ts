@@ -51,7 +51,21 @@ describe('solana preset output', () => {
       expect(existsSync(join(destinationDir, 'programs/core/src/lib.rs'))).toBe(true)
       expect(existsSync(join(destinationDir, 'packages/solana-config/src/index.ts'))).toBe(true)
       expect(existsSync(join(destinationDir, 'packages/solana-client/src/index.ts'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'packages/solana-client/src/idl/core.json'))).toBe(
+        true,
+      )
+      expect(existsSync(join(destinationDir, 'tests/core.ts'))).toBe(true)
+      expect(existsSync(join(destinationDir, 'docs/solana-getting-started.md'))).toBe(true)
       expect(existsSync(join(destinationDir, 'apps/web'))).toBe(false)
+
+      const programLib = readFileSync(join(destinationDir, 'programs/core/src/lib.rs'), 'utf8')
+      expect(programLib).toContain('struct Counter')
+      expect(programLib).toContain('pub fn increment')
+
+      const clientPkg = JSON.parse(
+        readFileSync(join(destinationDir, 'packages/solana-client/package.json'), 'utf8'),
+      )
+      expect(clientPkg.dependencies['@coral-xyz/anchor']).toMatch(/^(\^|~)?0\.32/)
       expect(existsSync(join(destinationDir, 'apps/mobile'))).toBe(false)
 
       const anchor = readFileSync(join(destinationDir, 'Anchor.toml'), 'utf8')
@@ -69,6 +83,11 @@ describe('solana preset output', () => {
       const rootPackage = JSON.parse(readFileSync(join(destinationDir, 'package.json'), 'utf8'))
       expect(rootPackage.packageManager).toStartWith('bun@')
       expect(rootPackage.workspaces.packages).toContain('packages/*')
+      expect(rootPackage.scripts['anchor:build']).toBe('anchor build')
+
+      const ci = readFileSync(join(destinationDir, '.github/workflows/ci.yml'), 'utf8')
+      expect(ci).toContain('anchor build')
+      expect(ci).not.toContain('repo:doctor')
     } finally {
       rmSync(tmpRoot, { recursive: true, force: true })
     }
@@ -93,9 +112,12 @@ describe('solana preset output', () => {
       expect(existsSync(join(destinationDir, 'apps/mobile/package.json'))).toBe(true)
       expect(existsSync(join(destinationDir, 'apps/mobile/App.tsx'))).toBe(true)
 
+      expect(existsSync(join(destinationDir, 'apps/web/app/styles.css'))).toBe(true)
+
       const webPage = readFileSync(join(destinationDir, 'apps/web/app/page.tsx'), 'utf8')
       expect(webPage).toStartWith("'use client'")
       expect(webPage).toContain('@solana/wallet-adapter-react')
+      expect(webPage).toContain('className="shell"')
       expect(webPage).toContain('@solana-product/solana-client')
       expect(webPage).not.toContain('@arche-template/')
 
