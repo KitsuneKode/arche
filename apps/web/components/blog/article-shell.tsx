@@ -3,22 +3,33 @@ import type { ReactNode } from 'react'
 
 import { cn } from '@arche-template/ui/lib/utils'
 import { GridBackdrop } from '@/components/arche/site-primitives'
+import { BlogPostMeta } from '@/components/blog/blog-post-chrome'
 import { DocsTocRail } from '@/components/docs/docs-toc'
 import { DocsProse } from '@/lib/mdx-components'
 
+export type ArticleBlogMeta = {
+  date?: string
+  category: string
+  readingTime: string
+  tags?: string[]
+}
+
 export function ArticleShell({
   meta,
+  blogMeta,
   title,
   description,
   children,
   footer,
 }: {
-  meta: ReactNode
+  meta?: ReactNode
+  blogMeta?: ArticleBlogMeta
   title: string
   description?: string
   children: ReactNode
   footer?: ReactNode
 }) {
+  const metaContent = blogMeta ? <BlogPostMeta {...blogMeta} /> : meta
   return (
     <>
       <header className="relative overflow-hidden border-b border-zinc-800 bg-black px-6 py-12 md:px-12 md:py-16">
@@ -30,7 +41,7 @@ export function ArticleShell({
           >
             ← All posts
           </Link>
-          <div className="mb-6 flex flex-wrap items-center gap-3">{meta}</div>
+          <div className="mb-6 flex flex-wrap items-center gap-3">{metaContent}</div>
           <h1 className="text-[clamp(2rem,4.5vw,3.25rem)] leading-[1.05] font-bold tracking-tight text-balance text-white">
             {title}
           </h1>

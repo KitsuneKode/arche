@@ -31,9 +31,15 @@ type Props = {
 }
 
 export function generateStaticParams() {
-  return BLOG_CATEGORIES.filter((cat) => cat.id !== 'all').map((cat) => ({
-    category: cat.id,
-  }))
+  const params: { category: string }[] = []
+
+  for (const cat of BLOG_CATEGORIES) {
+    if (cat.id !== 'all') {
+      params.push({ category: cat.id })
+    }
+  }
+
+  return params
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

@@ -2,7 +2,7 @@
 
 import { cn } from '@arche-template/ui/lib/utils'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 
 const INCREMENT_INTERVAL_MS = 160
 const HIDE_DELAY_MS = 220
@@ -113,12 +113,16 @@ export function RouteTopLoader() {
     }
   }, [start])
 
+  const completeOnRouteChange = useEffectEvent(() => {
+    complete()
+  })
+
   useEffect(() => {
     const previous = previousRouteKeyRef.current
     previousRouteKeyRef.current = routeKey
     if (previous === null || previous === routeKey) return
-    complete()
-  }, [routeKey, complete])
+    completeOnRouteChange()
+  }, [routeKey])
 
   useEffect(() => {
     return () => clearTimers()

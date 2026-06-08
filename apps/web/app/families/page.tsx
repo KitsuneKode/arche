@@ -1,14 +1,9 @@
 import Link from 'next/link'
 
 import { FamilyTable } from '@/components/arche/family-table'
+import { presetsHeroEyebrow } from '@/components/arche/hero-eyebrows'
 import { Navbar } from '@/components/arche/navbar'
-import {
-  HeroBlock,
-  SectionHeading,
-  SiteFrame,
-  SiteShell,
-  StatusPill,
-} from '@/components/arche/site-primitives'
+import { HeroBlock, SectionHeading, SiteFrame, SiteShell } from '@/components/arche/site-primitives'
 import { VerificationMatrixTable } from '@/components/arche/verification-matrix-table'
 import { buildPageMetadata } from '@/lib/seo'
 
@@ -25,7 +20,7 @@ export default function FamiliesPage() {
 
       <SiteFrame>
         <HeroBlock
-          eyebrow={<StatusPill tone="muted">Presets</StatusPill>}
+          eyebrow={presetsHeroEyebrow}
           title="Choose a route,"
           accent="not a vibe."
           size="md"

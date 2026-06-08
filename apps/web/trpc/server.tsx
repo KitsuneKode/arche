@@ -43,12 +43,17 @@ export function HydrateClient(props: { children: React.ReactNode }) {
   return <HydrationBoundary state={dehydrate(queryClient)}>{props.children}</HydrationBoundary>
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(queryOptions: T) {
+export async function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(queryOptions: T) {
   const queryClient = getQueryClient()
-  if (queryOptions.queryKey[1]?.type === 'infinite') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    void queryClient.prefetchInfiniteQuery(queryOptions as any)
-  } else {
-    void queryClient.prefetchQuery(queryOptions)
+
+  try {
+    if (queryOptions.queryKey[1]?.type === 'infinite') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await queryClient.prefetchInfiniteQuery(queryOptions as any)
+    } else {
+      await queryClient.prefetchQuery(queryOptions)
+    }
+  } catch {
+    // API offline during build or dev — client still probes on hydrate
   }
 }

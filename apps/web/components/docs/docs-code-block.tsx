@@ -4,6 +4,8 @@ import { cn } from '@arche-template/ui/lib/utils'
 import { useCallback, useState } from 'react'
 import type { ComponentProps } from 'react'
 
+import { extractTextFromReactNode } from '@/lib/react-node-text'
+
 type PreProps = ComponentProps<'pre'> & {
   'data-language'?: string
   title?: string
@@ -15,7 +17,7 @@ export function DocsCodeBlock({ children, className, title, ...props }: PreProps
     props['data-language'] ?? (typeof title === 'string' ? title : undefined) ?? 'terminal'
 
   const onCopy = useCallback(async () => {
-    const text = typeof children === 'string' ? children : extractTextFromPre(children)
+    const text = extractTextFromReactNode(children)
     if (!text) return
     await navigator.clipboard.writeText(text.trim())
     setCopied(true)
@@ -47,14 +49,4 @@ export function DocsCodeBlock({ children, className, title, ...props }: PreProps
       </div>
     </figure>
   )
-}
-
-function extractTextFromPre(node: PreProps['children']): string {
-  if (typeof node === 'string') return node
-  if (Array.isArray(node)) return node.map(extractTextFromPre).join('')
-  if (node && typeof node === 'object' && 'props' in node) {
-    const props = (node as { props?: { children?: PreProps['children'] } }).props
-    return extractTextFromPre(props?.children ?? '')
-  }
-  return ''
 }

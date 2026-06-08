@@ -80,34 +80,6 @@ const devCliCommands: CommandRow[] = [
   },
 ]
 
-const publishedCliCommands: CommandRow[] = [
-  {
-    cmd: 'npx @kitsunekode/arche create my-app --preset=typescript-fullstack --yes',
-    desc: 'Published CLI with the default TypeScript fullstack preset.',
-  },
-  {
-    cmd: 'npx @kitsunekode/arche create my-app convex',
-    desc: 'Family positional form (convex template).',
-  },
-]
-
-const cliFlags: CommandRow[] = [
-  {
-    cmd: '--preset=<id>',
-    desc: 'Starting point (typescript-fullstack, convex-product, solana-*, rust-*, customize, experiments).',
-  },
-  { cmd: '--family=<id>', desc: 'Template family when not using a preset default.' },
-  { cmd: '--package-manager=bun|pnpm|npm', desc: 'Bun default; pnpm first-class.' },
-  {
-    cmd: '--backend=express-bun|hono-bun|...',
-    desc: 'Fullstack only — ignored for convex, solana, rust (non-framework).',
-  },
-  { cmd: '--database=postgres|...', desc: 'Fullstack only — ignored for convex (Convex storage).' },
-  { cmd: '--orm=prisma|drizzle|...', desc: 'Fullstack only — ignored for convex.' },
-  { cmd: '--worker / --no-worker', desc: 'BullMQ worker (fullstack only).' },
-  { cmd: '--docker / --no-docker', desc: 'Docker Compose (not generated for convex-product).' },
-]
-
 const generatedProjectCommands: CommandRow[] = [
   { cmd: 'bun install', desc: 'Install dependencies in the generated workspace.' },
   { cmd: 'bun run dev', desc: 'Start dev servers (shape depends on preset).' },
@@ -122,32 +94,12 @@ const sourceTemplateCommands: CommandRow[] = [
   { cmd: 'bun run repo:doctor', desc: 'Audit this source repo health and stale scaffolding.' },
 ]
 
-export function DevArcheCliCommandTable() {
+function DevArcheCliCommandTable() {
   return (
     <CommandTableSection
       title="Develop from this repo"
       subtitle="Use dev:cli until the published @kitsunekode/arche release is explicitly trusted."
       commands={devCliCommands}
-    />
-  )
-}
-
-export function PublishedArcheCliCommandTable() {
-  return (
-    <CommandTableSection
-      title="Published CLI (future / verify first)"
-      subtitle="Documented distribution path — confirm release notes before external docs rely on it."
-      commands={publishedCliCommands}
-    />
-  )
-}
-
-export function CliFlagsTable() {
-  return (
-    <CommandTableSection
-      title="Common flags"
-      subtitle="Fullstack-only flags are ignored or warned for convex, solana, and standalone families."
-      commands={cliFlags}
     />
   )
 }
@@ -175,9 +127,4 @@ export function SourceTemplateCommandTable() {
 /** @deprecated Use DevArcheCliCommandTable */
 export function ArcheCliCommandTable() {
   return <DevArcheCliCommandTable />
-}
-
-/** @deprecated Use SourceTemplateCommandTable */
-export function CommandTable() {
-  return <SourceTemplateCommandTable />
 }

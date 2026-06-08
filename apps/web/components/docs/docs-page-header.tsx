@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
-import { DocsTocRail } from '@/components/docs/docs-toc'
+import { DocsTocRail, type TocItem } from '@/components/docs/docs-toc'
 
 export function DocsPageHeader({
   title,
@@ -44,15 +44,17 @@ export function DocsPageHeader({
 export function DocsPageBody({
   children,
   showToc = true,
+  tocItems,
 }: {
   children: ReactNode
   showToc?: boolean
+  tocItems?: TocItem[]
 }) {
   return (
     <div className="flex-1 px-6 py-10 md:px-12 md:py-14">
       <div className="mx-auto flex max-w-6xl gap-10 xl:gap-14">
         <div className="max-w-3xl min-w-0 flex-1">{children}</div>
-        {showToc ? <DocsTocRail /> : null}
+        {showToc ? <DocsTocRail items={tocItems} /> : null}
       </div>
     </div>
   )

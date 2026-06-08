@@ -4,10 +4,11 @@ import type { ComponentProps } from 'react'
 import { highlight } from 'sugar-high'
 
 import { cn } from '@arche-template/ui/lib/utils'
+import { getSingleTextChild } from '@/lib/react-node-text'
 
 /** Inline `code` only — fenced blocks use DocsCodeBlock on `pre`. */
 export function MdxInlineCode({ children, className, ...props }: ComponentProps<'code'>) {
-  const text = typeof children === 'string' ? children : null
+  const text = getSingleTextChild(children)
   const isFenced = Boolean(className?.includes('language-'))
 
   if (!text || isFenced) {

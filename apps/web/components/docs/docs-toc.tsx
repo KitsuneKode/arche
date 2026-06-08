@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
 import { cn } from '@arche-template/ui/lib/utils'
 
@@ -18,39 +18,80 @@ function collectHeadings(container: HTMLElement): TocItem[] {
   }))
 }
 
-export function DocsTocRail({ className }: { className?: string }) {
-  const [items, setItems] = useState<TocItem[]>([])
-  const [activeId, setActiveId] = useState<string>('')
+function subscribeToProseHeadings(proseSelector: string, onStoreChange: () => void) {
+  if (typeof document === 'undefined') return () => {}
 
-  useEffect(() => {
-    const prose = document.querySelector<HTMLElement>('.docs-prose')
-    if (!prose) return
+  const prose = document.querySelector<HTMLElement>(proseSelector)
+  if (!prose) return () => {}
 
-    const headings = collectHeadings(prose).filter((item) => item.id && item.title)
-    setItems(headings)
-    if (headings.length === 0) return
+  const observer = new MutationObserver(onStoreChange)
+  observer.observe(prose, { childList: true, subtree: true, characterData: true })
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-        if (visible[0]?.target.id) {
-          setActiveId(visible[0].target.id)
+  return () => observer.disconnect()
+}
+
+function getProseHeadingsSnapshot(proseSelector: string): TocItem[] {
+  if (typeof document === 'undefined') return []
+
+  const prose = document.querySelector<HTMLElement>(proseSelector)
+  if (!prose) return []
+
+  return collectHeadings(prose).filter((item) => item.id && item.title)
+}
+
+function getServerProseHeadingsSnapshot(): TocItem[] {
+  return []
+}
+
+function DocsTocRailInner({ items, className }: { items: TocItem[]; className?: string }) {
+  const activeId = useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof document === 'undefined') return () => {}
+
+      let currentActiveId = ''
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((entry) => entry.isIntersecting)
+            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+          const nextId = visible[0]?.target.id ?? ''
+          if (nextId !== currentActiveId) {
+            currentActiveId = nextId
+            onStoreChange()
+          }
+        },
+        { rootMargin: '-80px 0px -70% 0px', threshold: 0 },
+      )
+
+      for (const item of items) {
+        const el = document.getElementById(item.id)
+        if (el) observer.observe(el)
+      }
+
+      return () => observer.disconnect()
+    },
+    () => {
+      if (typeof document === 'undefined') return ''
+
+      let activeElement: HTMLElement | null = null
+      let activeTop = Number.POSITIVE_INFINITY
+
+      for (const item of items) {
+        const el = document.getElementById(item.id)
+        if (!el) continue
+
+        const rect = el.getBoundingClientRect()
+        if (rect.top >= 0 && rect.bottom > 80 && rect.top < activeTop) {
+          activeElement = el
+          activeTop = rect.top
         }
-      },
-      { rootMargin: '-80px 0px -70% 0px', threshold: 0 },
-    )
+      }
 
-    for (const item of headings) {
-      const el = document.getElementById(item.id)
-      if (el) observer.observe(el)
-    }
-
-    return () => observer.disconnect()
-  }, [])
-
-  if (items.length < 2) return null
+      return activeElement?.id ?? ''
+    },
+    () => '',
+  )
 
   return (
     <nav
@@ -82,5 +123,32 @@ export function DocsTocRail({ className }: { className?: string }) {
         ))}
       </ul>
     </nav>
+  )
+}
+
+export function DocsTocRail({
+  className,
+  items: itemsProp,
+  proseSelector = '.docs-prose',
+}: {
+  className?: string
+  items?: TocItem[]
+  proseSelector?: string
+}) {
+  const domItems = useSyncExternalStore(
+    (onStoreChange) => subscribeToProseHeadings(proseSelector, onStoreChange),
+    () => getProseHeadingsSnapshot(proseSelector),
+    getServerProseHeadingsSnapshot,
+  )
+  const items = itemsProp ?? domItems
+
+  if (items.length < 2) return null
+
+  return (
+    <DocsTocRailInner
+      key={items.map((item) => item.id).join('|')}
+      items={items}
+      className={className}
+    />
   )
 }

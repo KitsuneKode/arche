@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og'
 
-import { OgShell, ogImageSize } from '@/lib/og/shell'
+import { ogImageSize } from '@/lib/og/constants'
+import { OgShell } from '@/lib/og/shell'
 
 export function GET(request: Request) {
   const { searchParams } = new URL(request.url)

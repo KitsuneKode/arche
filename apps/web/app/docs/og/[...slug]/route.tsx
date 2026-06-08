@@ -1,7 +1,8 @@
 import { ImageResponse } from 'next/og'
 
 import { getCachedDocsOgFields } from '@/lib/content-cache'
-import { OgShell, ogImageSize } from '@/lib/og/shell'
+import { ogImageSize } from '@/lib/og/constants'
+import { OgShell } from '@/lib/og/shell'
 import { source } from '@/lib/source'
 
 type Props = {
