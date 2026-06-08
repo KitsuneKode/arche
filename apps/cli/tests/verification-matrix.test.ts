@@ -5,6 +5,17 @@ import {
   presetHasStableEvidence,
 } from '../src/registry/verification-matrix'
 
+const STABLE_PRESET_IDS = [
+  'typescript-fullstack',
+  'rust-api',
+  'rust-fullstack',
+  'convex-product',
+  'solana-program',
+  'solana-web',
+  'solana-mobile',
+  'solana-product',
+] as const
+
 describe('preset verification matrix', () => {
   it('has an evidence row for every preset', () => {
     expect(Object.keys(PRESET_VERIFICATION_MATRIX).sort()).toEqual(
@@ -22,43 +33,59 @@ describe('preset verification matrix', () => {
     }
   })
 
-  it('records completed proof for Rust-backed fullstack structure without calling it stable', () => {
+  it('marks graduated presets as stable with matching evidence', () => {
+    for (const id of STABLE_PRESET_IDS) {
+      const preset = PRESETS.find((candidate) => candidate.id === id)
+      expect(preset?.status).toBe('stable')
+      expect(presetHasStableEvidence(id)).toBe(true)
+    }
+  })
+
+  it('keeps customize and experiments non-stable', () => {
+    expect(PRESETS.find((preset) => preset.id === 'customize')?.status).toBe('requiresValidation')
+    expect(PRESETS.find((preset) => preset.id === 'experiments')?.status).toBe('experimental')
+    expect(presetHasStableEvidence('customize')).toBe(false)
+    expect(presetHasStableEvidence('experiments')).toBe(false)
+  })
+
+  it('records Rust fullstack JS + cargo evidence', () => {
     expect(PRESET_VERIFICATION_MATRIX['rust-fullstack']).toMatchObject({
       structure: true,
       cargoWorkspace: true,
       bun: true,
-      pnpm: false,
-      generatedBuild: false,
+      generatedInstall: true,
+      generatedTypecheck: true,
+      generatedLint: true,
+      generatedBuild: true,
+      rustQualityGates: true,
     })
-    expect(presetHasStableEvidence('rust-fullstack')).toBe(false)
   })
 
-  it('records completed Convex structure proof without calling convex-product stable', () => {
+  it('records Convex product evidence', () => {
     expect(PRESET_VERIFICATION_MATRIX['convex-product']).toMatchObject({
       structure: true,
       bun: true,
       convexBackend: true,
-      generatedBuild: false,
+      generatedInstall: true,
+      generatedTypecheck: true,
+      generatedLint: true,
+      generatedBuild: true,
       docs: true,
       agentContext: true,
     })
-    expect(presetHasStableEvidence('convex-product')).toBe(false)
   })
 
-  it('records completed Solana structure proof without calling Solana presets stable', () => {
-    for (const preset of [
-      'solana-program',
-      'solana-web',
-      'solana-mobile',
-      'solana-product',
-    ] as const) {
+  it('records Solana preset evidence', () => {
+    for (const preset of STABLE_PRESET_IDS.filter((id) => id.startsWith('solana-'))) {
       expect(PRESET_VERIFICATION_MATRIX[preset]).toMatchObject({
         structure: true,
         bun: true,
-        generatedBuild: false,
+        generatedInstall: true,
+        generatedTypecheck: true,
+        generatedLint: true,
+        generatedBuild: true,
         solanaProgram: true,
       })
-      expect(presetHasStableEvidence(preset)).toBe(false)
     }
   })
 })

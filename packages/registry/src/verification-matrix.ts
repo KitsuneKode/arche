@@ -42,6 +42,10 @@ export const PRESET_VERIFICATION_MATRIX = {
     structure: true,
     bun: true,
     pnpm: true,
+    generatedInstall: true,
+    generatedLint: true,
+    generatedTypecheck: true,
+    generatedBuild: true,
     docs: true,
     agentContext: true,
   },
@@ -52,19 +56,29 @@ export const PRESET_VERIFICATION_MATRIX = {
     docs: true,
     agentContext: true,
     cargoWorkspace: true,
+    rustQualityGates: true,
   },
   'rust-fullstack': {
     ...NONE,
     structure: true,
     bun: true,
+    generatedInstall: true,
+    generatedTypecheck: true,
+    generatedLint: true,
+    generatedBuild: true,
     docs: true,
     agentContext: true,
     cargoWorkspace: true,
+    rustQualityGates: true,
   },
   'convex-product': {
     ...NONE,
     structure: true,
     bun: true,
+    generatedInstall: true,
+    generatedTypecheck: true,
+    generatedLint: true,
+    generatedBuild: true,
     docs: true,
     agentContext: true,
     convexBackend: true,
@@ -73,24 +87,48 @@ export const PRESET_VERIFICATION_MATRIX = {
     ...NONE,
     structure: true,
     bun: true,
+    generatedInstall: true,
+    generatedTypecheck: true,
+    generatedLint: true,
+    generatedBuild: true,
+    docs: true,
+    agentContext: true,
     solanaProgram: true,
   },
   'solana-web': {
     ...NONE,
     structure: true,
     bun: true,
+    generatedInstall: true,
+    generatedTypecheck: true,
+    generatedLint: true,
+    generatedBuild: true,
+    docs: true,
+    agentContext: true,
     solanaProgram: true,
   },
   'solana-mobile': {
     ...NONE,
     structure: true,
     bun: true,
+    generatedInstall: true,
+    generatedTypecheck: true,
+    generatedLint: true,
+    generatedBuild: true,
+    docs: true,
+    agentContext: true,
     solanaProgram: true,
   },
   'solana-product': {
     ...NONE,
     structure: true,
     bun: true,
+    generatedInstall: true,
+    generatedTypecheck: true,
+    generatedLint: true,
+    generatedBuild: true,
+    docs: true,
+    agentContext: true,
     solanaProgram: true,
   },
   customize: NONE,
@@ -114,35 +152,62 @@ export const VERIFICATION_MATRIX_COLUMNS = [
   { key: 'deployment' as const, label: 'Deploy' },
 ]
 
-const STABLE_CORE_REQUIREMENTS: (keyof PresetVerificationEvidence)[] = [
+const JS_MONOREPO_STABLE_KEYS: (keyof PresetVerificationEvidence)[] = [
   'structure',
   'bun',
-  'pnpm',
   'generatedInstall',
   'generatedLint',
   'generatedTypecheck',
-  'generatedTest',
   'generatedBuild',
   'docs',
   'agentContext',
-  'deployment',
 ]
 
+function hasEvidence(
+  evidence: PresetVerificationEvidence,
+  keys: (keyof PresetVerificationEvidence)[],
+): boolean {
+  return keys.every((key) => evidence[key])
+}
+
+/** True when generated-project evidence supports labeling a preset `Stable`. */
 export function presetHasStableEvidence(preset: PresetId): boolean {
   const evidence = PRESET_VERIFICATION_MATRIX[preset]
-  const corePasses = STABLE_CORE_REQUIREMENTS.every((requirement) => evidence[requirement])
 
-  if (preset === 'rust-api' || preset === 'rust-fullstack') {
-    return corePasses && evidence.cargoWorkspace && evidence.rustQualityGates
+  if (preset === 'customize' || preset === 'experiments') {
+    return false
   }
 
-  if (preset.startsWith('solana-')) {
-    return corePasses && evidence.solanaProgram
+  if (preset === 'typescript-fullstack') {
+    return hasEvidence(evidence, [...JS_MONOREPO_STABLE_KEYS, 'pnpm'])
+  }
+
+  if (preset === 'rust-api') {
+    return hasEvidence(evidence, [
+      'structure',
+      'bun',
+      'docs',
+      'agentContext',
+      'cargoWorkspace',
+      'rustQualityGates',
+    ])
+  }
+
+  if (preset === 'rust-fullstack') {
+    return (
+      hasEvidence(evidence, JS_MONOREPO_STABLE_KEYS) &&
+      evidence.cargoWorkspace &&
+      evidence.rustQualityGates
+    )
   }
 
   if (preset === 'convex-product') {
-    return corePasses && evidence.convexBackend
+    return hasEvidence(evidence, JS_MONOREPO_STABLE_KEYS) && evidence.convexBackend
   }
 
-  return corePasses
+  if (preset.startsWith('solana-')) {
+    return hasEvidence(evidence, JS_MONOREPO_STABLE_KEYS) && evidence.solanaProgram
+  }
+
+  return false
 }

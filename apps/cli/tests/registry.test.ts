@@ -41,10 +41,21 @@ describe('capability registry', () => {
     ])
   })
 
-  it('does not claim target presets are stable before their matrix exists', () => {
-    for (const preset of PRESETS.filter((value) => value.id !== 'experiments')) {
-      expect(preset.status).toBe('requiresValidation')
+  it('marks graduated presets stable and keeps customize/experiments honest', () => {
+    const stableIds = [
+      'typescript-fullstack',
+      'rust-api',
+      'rust-fullstack',
+      'convex-product',
+      'solana-program',
+      'solana-web',
+      'solana-mobile',
+      'solana-product',
+    ]
+    for (const id of stableIds) {
+      expect(PRESETS.find((preset) => preset.id === id)?.status).toBe('stable')
     }
+    expect(PRESETS.find((preset) => preset.id === 'customize')?.status).toBe('requiresValidation')
     expect(PRESETS.find((preset) => preset.id === 'experiments')?.status).toBe('experimental')
   })
 })
