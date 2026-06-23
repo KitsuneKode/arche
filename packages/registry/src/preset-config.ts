@@ -31,6 +31,45 @@ export function projectDefaultsForPreset(preset: PresetId): PresetProjectDefault
         includeCi: true,
         deployment: 'vercel-railway',
       }
+    case 'next-app':
+      return {
+        family: 'next',
+        bundles: [],
+        backend: 'none',
+        database: 'none',
+        orm: 'none',
+        includeShowcase: false,
+        includeWorker: false,
+        includeDocker: false,
+        includeCi: false,
+        deployment: 'none',
+      }
+    case 'tui-app':
+      return {
+        family: 'tui',
+        bundles: [],
+        backend: 'none',
+        database: 'none',
+        orm: 'none',
+        includeShowcase: false,
+        includeWorker: false,
+        includeDocker: false,
+        includeCi: false,
+        deployment: 'none',
+      }
+    case 'tanstack-start':
+      return {
+        family: 'tanstack',
+        bundles: [],
+        backend: 'none',
+        database: 'none',
+        orm: 'none',
+        includeShowcase: false,
+        includeWorker: false,
+        includeDocker: false,
+        includeCi: false,
+        deployment: 'none',
+      }
     case 'rust-api':
       return {
         family: 'rust',

@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@arche-template/common": "workspace:*",
+    "@t3-oss/env-core": "^0.13.11",
     "date-fns": "^4.2.1",
     "ioredis": "^5.6.1",
     "redis": "^5.12.0",

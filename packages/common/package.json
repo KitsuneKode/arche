@@ -17,12 +17,12 @@
     }
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@t3-oss/env-core": "^0.13.11",
     "zod": "^4.0.0"
   },
   "devDependencies": {

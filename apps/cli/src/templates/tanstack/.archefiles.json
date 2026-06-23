@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "include": [
+    ".env.example",
+    ".oxlintrc.json",
+    "AGENTS.md",
+    "package.json",
+    "tsconfig.json",
+    "vite.config.ts",
+    "src/router.tsx",
+    "src/routeTree.gen.ts",
+    "src/routes/__root.tsx",
+    "src/routes/index.tsx",
+    "src/routes/api/health.ts"
+  ]
+}

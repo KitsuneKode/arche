@@ -21,6 +21,10 @@ const DISPLAY_BY_ID: Record<
     shape: 'Next.js web + Express API + tRPC + Better Auth + Prisma',
     goodFor: 'Default production app foundation',
   },
+  'next-app': {
+    shape: 'Standalone Next.js App Router with env validation and boundaries',
+    goodFor: 'Frontend-only apps without a bundled backend',
+  },
   'rust-api': {
     shape: 'Cargo workspace with service and worker slots',
     goodFor: 'Engine services, background work, and future polyglot scale',
@@ -48,6 +52,14 @@ const DISPLAY_BY_ID: Record<
   'solana-product': {
     shape: 'Web + mobile + program + shared Solana config',
     goodFor: 'Full product surface across web, mobile, and chain',
+  },
+  'tui-app': {
+    shape: 'OpenTUI renderer + React terminal UI starter',
+    goodFor: 'Interactive CLI tools and terminal dashboards',
+  },
+  'tanstack-start': {
+    shape: 'TanStack Start + Vite + Nitro server with file routes',
+    goodFor: 'Full-stack React apps without Next.js',
   },
 }
 

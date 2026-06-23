@@ -13,6 +13,7 @@ import type {
   ProjectConfig,
 } from '../types/schemas'
 import { createProject } from './create'
+import { runSmokeProbe, smokeApplicability } from './generated-project-smoke'
 
 export type GeneratedProjectCommand =
   | 'install'
@@ -22,6 +23,7 @@ export type GeneratedProjectCommand =
   | 'build'
   | 'cargo-check'
   | 'anchor-build'
+  | 'smoke'
 
 export interface GeneratedProjectCase {
   preset: Preset
@@ -95,7 +97,18 @@ const FULLSTACK_COMBO_CASES: GeneratedComboCase[] = [
 ]
 
 const FAMILY_COMBO_CASES: GeneratedComboCase[] = [
-  { id: 'next', family: 'next', packageManager: 'bun', expectedFiles: ['app/layout.tsx'] },
+  {
+    id: 'next',
+    family: 'next',
+    packageManager: 'bun',
+    expectedFiles: [
+      'app/layout.tsx',
+      'app/error.tsx',
+      'app/not-found.tsx',
+      'env.ts',
+      'app/api/health/route.ts',
+    ],
+  },
   { id: 'convex', family: 'convex', packageManager: 'bun', expectedFiles: ['convex/schema.ts'] },
   { id: 'backend', family: 'backend', packageManager: 'bun', expectedFiles: ['src/server.ts'] },
   { id: 'polyglot', family: 'polyglot', packageManager: 'bun', expectedFiles: ['package.json'] },
@@ -118,6 +131,18 @@ const FAMILY_COMBO_CASES: GeneratedComboCase[] = [
   },
   { id: 'lib', family: 'lib', packageManager: 'bun', expectedFiles: ['package.json'] },
   { id: 'cli', family: 'cli', packageManager: 'bun', expectedFiles: ['package.json'] },
+  {
+    id: 'tui',
+    family: 'tui',
+    packageManager: 'bun',
+    expectedFiles: ['src/index.tsx', 'src/app.tsx', 'package.json'],
+  },
+  {
+    id: 'tanstack',
+    family: 'tanstack',
+    packageManager: 'bun',
+    expectedFiles: ['src/routeTree.gen.ts', 'src/routes/api/health.ts', 'package.json'],
+  },
   { id: 'worker', family: 'worker', packageManager: 'bun', expectedFiles: ['package.json'] },
   { id: 'mobile', family: 'mobile', packageManager: 'bun', expectedFiles: ['package.json'] },
 ]
@@ -125,6 +150,7 @@ const FAMILY_COMBO_CASES: GeneratedComboCase[] = [
 const DEFAULT_CASES: GeneratedProjectCase[] = [
   { preset: 'typescript-fullstack', packageManager: 'bun' },
   { preset: 'typescript-fullstack', packageManager: 'pnpm' },
+  { preset: 'next-app', packageManager: 'bun' },
   { preset: 'rust-api', packageManager: 'bun' },
   { preset: 'rust-fullstack', packageManager: 'bun' },
   { preset: 'solana-program', packageManager: 'bun' },
@@ -132,7 +158,16 @@ const DEFAULT_CASES: GeneratedProjectCase[] = [
   { preset: 'solana-mobile', packageManager: 'bun' },
   { preset: 'solana-product', packageManager: 'bun' },
   { preset: 'convex-product', packageManager: 'bun' },
+  { preset: 'tui-app', packageManager: 'bun' },
+  { preset: 'tanstack-start', packageManager: 'bun' },
 ]
+
+const WEB_BOUNDARY_FILES = [
+  'apps/web/app/error.tsx',
+  'apps/web/app/loading.tsx',
+  'apps/web/app/not-found.tsx',
+  'apps/web/next.config.js',
+] as const
 
 const EXPECTED_FILES: Record<Preset, string[]> = {
   'typescript-fullstack': [
@@ -143,6 +178,16 @@ const EXPECTED_FILES: Record<Preset, string[]> = {
     'AGENTS.md',
     '.docs/architecture/generated-project.md',
   ],
+  'next-app': [
+    'package.json',
+    'app/layout.tsx',
+    'app/error.tsx',
+    'app/not-found.tsx',
+    'env.ts',
+    'app/api/health/route.ts',
+    'components/highlight-card.tsx',
+    'AGENTS.md',
+  ],
   'rust-api': ['Cargo.toml', 'src/main.rs', 'src/modules/mod.rs', 'AGENTS.md'],
   'rust-fullstack': [
     'package.json',
@@ -150,6 +195,7 @@ const EXPECTED_FILES: Record<Preset, string[]> = {
     'services/api/Cargo.toml',
     'Cargo.toml',
     'AGENTS.md',
+    ...WEB_BOUNDARY_FILES,
   ],
   'solana-program': [
     'package.json',
@@ -171,6 +217,7 @@ const EXPECTED_FILES: Record<Preset, string[]> = {
     'apps/web/app/page.tsx',
     'packages/solana-client/src/index.ts',
     'AGENTS.md',
+    ...WEB_BOUNDARY_FILES,
   ],
   'solana-mobile': [
     'package.json',
@@ -188,6 +235,7 @@ const EXPECTED_FILES: Record<Preset, string[]> = {
     'apps/mobile/App.tsx',
     'packages/solana-client/src/index.ts',
     'AGENTS.md',
+    ...WEB_BOUNDARY_FILES,
   ],
   'convex-product': [
     'package.json',
@@ -198,6 +246,17 @@ const EXPECTED_FILES: Record<Preset, string[]> = {
     'app/providers.tsx',
     'AGENTS.md',
     '.docs/architecture/generated-project.md',
+  ],
+  'tui-app': ['package.json', 'src/index.tsx', 'src/app.tsx', 'AGENTS.md'],
+  'tanstack-start': [
+    'package.json',
+    'vite.config.ts',
+    'src/router.tsx',
+    'src/routeTree.gen.ts',
+    'src/routes/__root.tsx',
+    'src/routes/index.tsx',
+    'src/routes/api/health.ts',
+    'AGENTS.md',
   ],
   customize: [],
   experiments: [],
@@ -211,6 +270,7 @@ const COMMAND_TIMEOUT_MS: Record<GeneratedProjectCommand, number> = {
   build: 300_000,
   'cargo-check': 300_000,
   'anchor-build': 600_000,
+  smoke: 120_000,
 }
 
 /** Per-combo overrides for native compile / heavy install paths. */
@@ -278,6 +338,8 @@ function commandArgv(command: GeneratedProjectCommand, packageManager: PackageMa
       return ['cargo', 'check', '--workspace']
     case 'anchor-build':
       return ['anchor', 'build']
+    case 'smoke':
+      return ['smoke']
   }
 }
 
@@ -310,6 +372,11 @@ function commandApplicability(
     return existsSync(join(cwd, 'Anchor.toml'))
       ? { applicable: true }
       : { applicable: false, reason: 'Skipped because Anchor.toml is not present.' }
+  }
+
+  if (command === 'smoke') {
+    const smoke = smokeApplicability(cwd)
+    return smoke.applicable ? { applicable: true } : { applicable: false, reason: smoke.reason }
   }
 
   const scripts = readPackageScripts(cwd)
@@ -347,6 +414,9 @@ function runCommand(
   skipMissingTools: boolean,
   comboId?: string,
 ): GeneratedProjectCommandResult {
+  if (command === 'smoke') {
+    throw new Error('runCommand does not support smoke; use executeGeneratedCommand instead.')
+  }
   const argv = commandArgv(command, packageManager)
   const binary = argv[0] ?? command
   const applicability = commandApplicability(cwd, command)
@@ -387,6 +457,29 @@ function runCommand(
         ? `${output}\nCommand timed out after ${timeoutMs}ms.`.trim()
         : output,
   }
+}
+
+async function executeGeneratedCommand(
+  cwd: string,
+  command: GeneratedProjectCommand,
+  packageManager: PackageManager,
+  skipMissingTools: boolean,
+  comboId?: string,
+): Promise<GeneratedProjectCommandResult> {
+  if (command === 'smoke') {
+    const applicability = commandApplicability(cwd, command)
+    if (!applicability.applicable) {
+      return {
+        command,
+        argv: ['smoke'],
+        status: 'skipped',
+        output: applicability.reason,
+      }
+    }
+    return runSmokeProbe(cwd)
+  }
+
+  return runCommand(cwd, command, packageManager, skipMissingTools, comboId)
 }
 
 function baseConfigForCombo(destinationDir: string, testCase: GeneratedComboCase): ProjectConfig {
@@ -475,13 +568,15 @@ export async function verifyGeneratedCombo(
     const commandResults =
       missingFiles.length > 0
         ? []
-        : commands.map((command) =>
-            runCommand(
-              destinationDir,
-              command,
-              options.packageManager,
-              skipMissingTools,
-              options.id,
+        : await Promise.all(
+            commands.map((command) =>
+              executeGeneratedCommand(
+                destinationDir,
+                command,
+                options.packageManager,
+                skipMissingTools,
+                options.id,
+              ),
             ),
           )
     const commandsPassed = commandResults.every((command) => command.status !== 'failed')
@@ -533,8 +628,15 @@ export async function verifyGeneratedProject(
     const commandResults =
       missingFiles.length > 0
         ? []
-        : commands.map((command) =>
-            runCommand(destinationDir, command, options.packageManager, skipMissingTools),
+        : await Promise.all(
+            commands.map((command) =>
+              executeGeneratedCommand(
+                destinationDir,
+                command,
+                options.packageManager,
+                skipMissingTools,
+              ),
+            ),
           )
     const commandsPassed = commandResults.every((command) => command.status !== 'failed')
 

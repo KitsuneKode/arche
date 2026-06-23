@@ -58,7 +58,13 @@ bun run ci:affected
 Strict doctor (matches CI):
 
 ```bash
-bun run repo:doctor:ci
+bun run repo:doctor:strict
+```
+
+Full CI parity (ladder + scaffold combo matrix):
+
+```bash
+bun run ci:full
 ```
 
 ## What CI does not run

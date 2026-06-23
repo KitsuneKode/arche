@@ -8,25 +8,9 @@ Next.js App Router frontend: runtime wiring + template showcase UI. Deploy on Ve
 - Deploy hub: [docs/deployment.md](../../docs/deployment.md)
 - Build: `bun run build --filter=@arche-template/web` (Vercel uses app root `apps/web`)
 
-## Before push (web changes)
+## Before push
 
-Web-only shortcuts are **not** enough for pushes to `main` / `prod` — CI runs **full-monorepo** `lint` and `check-types`. From repo root, always run:
-
-```bash
-bun run ci
-```
-
-When iterating on `apps/web` only, use this **fast loop** (then still run full `bun run ci` before push):
-
-```bash
-bun run format:check          # or bun run format to fix
-bun run --cwd apps/web mdx:generate   # after content/docs or content/blog MDX edits
-bunx turbo run lint check-types --filter=@arche-template/web
-bun test apps/web
-bun run build --filter=@arche-template/web
-```
-
-If you touched `packages/registry`, `packages/ui`, or shared toolings, run step 2 **without** `--filter` (or use full `bun run ci`).
+Protected branches require full-monorepo CI — see [docs/ci.md](../../docs/ci.md). Web-only fast loop: format → `mdx:generate` (after content edits) → `turbo lint check-types --filter=@arche-template/web` → `bun test apps/web` → build. If shared packages changed, drop the filter or run full `bun run ci`.
 
 ## Read first
 
@@ -47,16 +31,7 @@ If you touched `packages/registry`, `packages/ui`, or shared toolings, run step 
 
 ## Owns
 
-- App Router pages, marketing/demo routes, providers, public assets
-
-## Public content map
-
-- **Docs (Fumadocs MDX):** All public docs live in `content/docs/**` (~34 pages), rendered at `/docs/*` via `app/docs/[[...slug]]/page.tsx`, `lib/source.ts`, and `.source/server.ts` (run `bun run mdx:generate` / `postinstall` before `check-types`). IA in `content/docs/meta.json` + `components/docs/docs-sidebar.tsx` (walkthroughs, polyglot architecture, operations depth). Reading UX: `DocsTocRail`, `PackageManagerTabs`, `Mermaid` MDX component. `/docs` redirects to `/docs/getting-started` in `next.config.js`. Legacy paths (`/docs/auth`, `/docs/deploy`, …) redirect to `packages/*` and `operations/*` MDX routes. Tests: `app/docs-links.test.ts`.
-- **Blog:** MDX in `content/blog/` (author template: `BLOG-AUTHORING.md`); Fumadocs via `lib/blog-source.ts`; SEO in `lib/seo.ts` + cached indexes in `lib/content-cache.ts`; docs OG at `/docs/og/[...slug]` (catch-all pages cannot use `opengraph-image.tsx`); RSS at `/rss.xml`; per-post OG at `/blog/[slug]/opengraph-image`. Tests: `app/seo.test.ts`.
-- **Presets table:** `lib/presets-public.ts` (re-exports `packages/registry` display data).
-- **Syntax highlighting:** `lib/highlight.ts` + Shiki; examples page calls `connection()` before highlight (Cache Components).
-- **Showcase:** `/showcase` returns 404 in production (`NODE_ENV === 'production'`).
-- **Design lab:** `/__design-lab` stays noindex; reference mockups 1, 5, 7, 10, 14 for brand direction.
+App Router pages, marketing/demo routes, providers, public assets. Public docs/blog/presets map: see `.docs/product/web-brand-ui-brief.md`.
 
 ## Template cleanup
 

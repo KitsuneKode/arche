@@ -1,8 +1,8 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import type { ProjectConfig } from '../../types/schemas'
 import { sanitizeProjectName } from '../slug'
+import { readWebCoreFile, readWebCoreVersions } from '../web-core'
 
 const PROGRAM_ID = '11111111111111111111111111111111'
 
@@ -318,6 +318,7 @@ export function createCoreProgram(
 
 function webPackageJson(config: ProjectConfig): string {
   const scope = workspaceScope(config.projectName)
+  const versions = readWebCoreVersions()
   return JSON.stringify(
     {
       name: `${scope}/solana-web`,
@@ -325,9 +326,11 @@ function webPackageJson(config: ProjectConfig): string {
       private: true,
       type: 'module',
       scripts: {
-        dev: 'next dev --port 3000',
+        dev: 'next dev --turbopack --port 3000',
         build: 'next build',
-        lint: 'oxlint',
+        start: 'next start',
+        lint: 'oxlint -c .oxlintrc.json',
+        'lint:fix': 'oxlint --fix',
         'check-types': 'tsc --noEmit',
       },
       dependencies: {
@@ -336,16 +339,10 @@ function webPackageJson(config: ProjectConfig): string {
         '@solana/wallet-adapter-wallets': '^0.19.37',
         '@solana/web3.js': '^1.98.4',
         [`${scope}/solana-client`]: 'workspace:*',
-        next: '^16.2.6',
-        react: '^19.2.6',
-        'react-dom': '^19.2.6',
+        ...versions.dependencies,
       },
       devDependencies: {
-        '@types/node': '^25.9.0',
-        '@types/react': '19.2.14',
-        '@types/react-dom': '19.2.3',
-        typescript: '^6.0.3',
-        oxlint: '^1.65.0',
+        ...versions.devDependencies,
       },
     },
     null,
@@ -450,15 +447,11 @@ export default function Layout({ children }: { children: ReactNode }) {
 }
 
 async function readScaffoldHomeStyles(): Promise<string> {
-  const generatorDir = dirname(fileURLToPath(import.meta.url))
-  return readFile(join(generatorDir, '../../templates/fullstack/apps/web/app/styles.css'), 'utf8')
+  return readWebCoreFile('app/styles.scaffold.css')
 }
 
 function nextConfig(): string {
-  return `const nextConfig = {}
-
-export default nextConfig
-`
+  return readWebCoreFile('next.config.js')
 }
 
 function mobilePackageJson(config: ProjectConfig): string {
@@ -635,6 +628,10 @@ export async function applySolanaScaffoldTransform(
       ['apps/web/package.json', webPackageJson(config)],
       ['apps/web/tsconfig.json', webTsconfigJson()],
       ['apps/web/next.config.js', nextConfig()],
+      ['apps/web/.oxlintrc.json', readWebCoreFile('.oxlintrc.json')],
+      ['apps/web/app/error.tsx', readWebCoreFile('app/error.tsx')],
+      ['apps/web/app/loading.tsx', readWebCoreFile('app/loading.tsx')],
+      ['apps/web/app/not-found.tsx', readWebCoreFile('app/not-found.tsx')],
       ['apps/web/app/styles.css', scaffoldStyles],
       ['apps/web/app/layout.tsx', webLayoutTsx()],
       ['apps/web/app/page.tsx', webPageTsx(config)],

@@ -1,0 +1,31 @@
+{
+  "name": "@acme/tanstack-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node .output/server/index.mjs",
+    "lint": "oxlint -c .oxlintrc.json",
+    "lint:fix": "oxlint --fix",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "^1.166.4",
+    "@tanstack/react-start": "^1.166.4",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "^4.6.0",
+    "nitro": "^3.0.0",
+    "oxlint": "^1.65.0",
+    "typescript": "^6.0.3",
+    "vite": "^7.3.1"
+  }
+}

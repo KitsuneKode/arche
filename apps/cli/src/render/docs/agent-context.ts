@@ -1,29 +1,22 @@
 export function renderInternalDocsIndex(): string {
   return `# Internal docs
 
-This directory is for durable maintainer and agent context.
-
-Do not load this whole tree by default.
+Durable maintainer and agent context. Do not load this whole tree by default.
 
 ## Sections
 
 - architecture/
-- capabilities/
-- reference/
-- decisions/
 `
 }
 
 export function renderPlansIndex(): string {
   return `# Plans
 
-Plans are for approved work, execution notes, and shipped outcomes.
+Approved work, execution notes, and shipped outcomes.
 
 ## Directories
 
-- active/
-- completed/
-- archive/
+Create \`active/\` when you start approved work. Use \`completed/\` and \`archive/\` when closing plans.
 
 Never treat \`archive/\` as current behavior.
 `

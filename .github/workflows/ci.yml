@@ -80,7 +80,7 @@ jobs:
         run: bunx turbo run lint check-types ${{ steps.turbo-mode.outputs.affected }}
 
       - name: Tests
-        run: bun test
+        run: bun run test
 
       - name: Build
         env:
@@ -90,14 +90,15 @@ jobs:
       - name: CLI package check
         run: bun run pkg:check
 
-      - name: Verify scaffolded fullstack installs and builds
-        run: bun run verify:generated:fullstack
-
       - name: Verify fullstack combo matrix
         env:
           SCAFFOLD_E2E_SERIAL: '1'
         run: bun toolings/scripts/verify-generated-project.ts --combo-matrix --run=install,typecheck,lint,build
         timeout-minutes: 25
+
+      - name: Verify next-app with pnpm
+        run: bun toolings/scripts/verify-generated-project.ts --preset=next-app --pm=pnpm --run=install,build
+        timeout-minutes: 10
 
       - name: Repo doctor
         run: bun run repo:doctor:strict

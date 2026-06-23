@@ -7,6 +7,7 @@ import {
 
 const STABLE_PRESET_IDS = [
   'typescript-fullstack',
+  'next-app',
   'rust-api',
   'rust-fullstack',
   'convex-product',
@@ -14,6 +15,8 @@ const STABLE_PRESET_IDS = [
   'solana-web',
   'solana-mobile',
   'solana-product',
+  'tui-app',
+  'tanstack-start',
 ] as const
 
 describe('preset verification matrix', () => {

@@ -32,6 +32,7 @@ const COMMANDS = [
   'build',
   'cargo-check',
   'anchor-build',
+  'smoke',
 ] as const satisfies readonly GeneratedProjectCommand[]
 
 function splitList(value: string): string[] {
@@ -150,8 +151,13 @@ function comboCommands(
 ): GeneratedProjectCommand[] {
   if (override.length > 0) return override
   if (family === 'rust') return ['cargo-check']
+  if (family === 'tui') return ['install', 'typecheck', 'build']
+  if (family === 'tanstack') return ['install', 'typecheck', 'lint', 'build', 'smoke']
   if (family === 'lib' || family === 'cli' || family === 'worker' || family === 'mobile') {
     return ['install', 'typecheck', 'lint']
+  }
+  if (family === 'next' || family === 'backend') {
+    return ['install', 'typecheck', 'lint', 'build', 'smoke']
   }
   return ['install', 'typecheck', 'lint', 'build']
 }

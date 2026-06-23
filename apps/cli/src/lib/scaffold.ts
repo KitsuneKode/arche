@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import {
   access,
   cp,
@@ -10,7 +10,8 @@ import {
   symlink,
   writeFile,
 } from 'node:fs/promises'
-import { dirname, join, resolve, relative } from 'node:path'
+import { tmpdir } from 'node:os'
+import { basename, dirname, join, resolve, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { renderInternalDocsIndex, renderPlansIndex } from '../render/docs/agent-context'
 import { renderTurboJson } from '../render/turbo/render-turbo-json'
@@ -50,7 +51,6 @@ import {
   renderServiceApiWebProviders,
   renderServiceApiWebQueryClient,
 } from './generators'
-import { planScaffold } from './plan-scaffold'
 import { adaptScripts, pmInstallParts } from './pm'
 import { buildReproducibleCommand } from './reproducible'
 import { sanitizeProjectName as _sanitizeProjectName } from './slug'
@@ -58,8 +58,8 @@ import { sanitizeProjectName as _sanitizeProjectName } from './slug'
 export { buildCleanupTargets } from './cleanup-targets'
 export { sanitizeProjectName } from './slug'
 export { buildReproducibleCommand } from './reproducible'
-export { planScaffold } from './plan-scaffold'
 import { runCommand, tryCommand } from './spawn'
+import { readWebCoreFile, WEB_CORE_BOUNDARY_FILES } from './web-core'
 
 export interface ScaffoldResult {
   destinationDir: string
@@ -126,6 +126,9 @@ const PACKAGE_DIR = resolve(__dirname, isBundled ? '..' : '../..')
 
 /** Map family to a package-owned template source directory. */
 function resolveTemplateSource(family: Family): string {
+  if (family.startsWith('_')) {
+    throw new Error(`Family "${family}" is an internal template source, not scaffoldable.`)
+  }
   const candidates = [
     resolve(__dirname, '../templates', family),
     join(PACKAGE_DIR, 'src', 'templates', family),
@@ -153,7 +156,7 @@ function shouldStripWeb(family: Family): boolean {
 
 /** Families that should strip the server workspace */
 function shouldStripServer(family: Family): boolean {
-  return family === 'next' || family === 'mobile'
+  return family === 'next' || family === 'mobile' || family === 'tanstack'
 }
 
 function backendUsesServiceApi(backend: ProjectConfig['backend']): boolean {
@@ -198,6 +201,24 @@ async function ensureDestinationAvailable(
   const entries = await readdir(destinationDir)
   if (entries.length > 0) {
     throw new Error(`Destination directory is not empty: ${destinationDir}`)
+  }
+}
+
+export async function rollbackDestination(
+  destinationDir: string,
+  existedBefore: boolean,
+): Promise<void> {
+  try {
+    if (!(await pathExists(destinationDir))) return
+    if (existedBefore) {
+      for (const entry of await readdir(destinationDir)) {
+        await rm(join(destinationDir, entry), { recursive: true, force: true })
+      }
+    } else {
+      await rm(destinationDir, { recursive: true, force: true })
+    }
+  } catch {
+    // Best-effort cleanup; surface the original error to the caller.
   }
 }
 
@@ -625,6 +646,13 @@ async function pruneServiceApiFullstack(destinationDir: string): Promise<string[
   )
   await writeFile(join(destinationDir, 'apps/web/app/layout.tsx'), renderServiceApiWebLayout())
   await writeFile(join(destinationDir, 'apps/web/app/page.tsx'), renderServiceApiWebPage())
+  for (const relativePath of WEB_CORE_BOUNDARY_FILES) {
+    await writeFile(join(destinationDir, 'apps/web', relativePath), readWebCoreFile(relativePath))
+  }
+  await writeFile(
+    join(destinationDir, 'apps/web/next.config.js'),
+    readWebCoreFile('next.config.js'),
+  )
   await rm(join(destinationDir, 'apps/web/app/trpc-status.tsx'), { force: true })
 
   return removed
@@ -685,7 +713,11 @@ async function writeGeneratedFile(
 async function writeGeneratedClaudeSymlink(destinationDir: string): Promise<void> {
   const filePath = join(destinationDir, 'CLAUDE.md')
   await rm(filePath, { force: true })
-  await symlink('AGENTS.md', filePath)
+  try {
+    await symlink('AGENTS.md', filePath)
+  } catch {
+    await writeFile(filePath, 'See AGENTS.md\n')
+  }
 }
 
 function buildArcheConfig(options: ProjectConfig): string {
@@ -756,7 +788,26 @@ export async function scaffoldProject(
   dryRun = false,
 ): Promise<ScaffoldResult> {
   if (dryRun) {
-    return planScaffold(options)
+    const tmpRoot = mkdtempSync(join(tmpdir(), 'arche-dry-run-'))
+    const tmpDest = join(tmpRoot, basename(options.destinationDir) || 'app')
+    try {
+      const result = await scaffoldProject(
+        {
+          ...options,
+          destinationDir: tmpDest,
+          installDependencies: false,
+          initializeGit: false,
+        },
+        false,
+      )
+      return {
+        ...result,
+        destinationDir: options.destinationDir,
+        installResult: 'skipped',
+      }
+    } finally {
+      rmSync(tmpRoot, { recursive: true, force: true })
+    }
   }
 
   const packageName = _sanitizeProjectName(options.projectName)
@@ -766,198 +817,208 @@ export async function scaffoldProject(
 
   const templateSource = resolveTemplateSource(family)
   await ensureDestinationAvailable(destinationDir, templateSource)
-  await copyTemplate(destinationDir, templateSource)
-  const sanitizedArtifacts = await sanitizeScaffoldArtifacts(destinationDir)
-  const removedArtifacts = await removeGeneratedArtifacts(destinationDir)
-  await updateRootPackageJson(destinationDir, packageName, options)
+  const destExistedBefore = await pathExists(destinationDir)
 
-  let rustGeneratedFiles: string[] = []
-  let solanaGeneratedFiles: string[] = []
-  if (family === 'rust') {
-    await applyRustFamilyTransform(destinationDir, options)
-    rustGeneratedFiles = await applyRustScaffoldTransform(destinationDir, options)
-  }
+  let generatedFiles: string[] = []
+  let cleanupTargets: CleanupTarget[] = []
 
-  if (family === 'solana') {
-    solanaGeneratedFiles = await applySolanaScaffoldTransform(destinationDir, options)
-  }
+  try {
+    await copyTemplate(destinationDir, templateSource)
+    const sanitizedArtifacts = await sanitizeScaffoldArtifacts(destinationDir)
+    const removedArtifacts = await removeGeneratedArtifacts(destinationDir)
+    await updateRootPackageJson(destinationDir, packageName, options)
 
-  if (familySupportsMonorepoTransforms(family)) {
-    await applyBackendTransform(destinationDir, options)
-    if (options.orm !== 'drizzle') {
-      await applyDatabaseTransform(destinationDir, options)
+    let rustGeneratedFiles: string[] = []
+    let solanaGeneratedFiles: string[] = []
+    if (family === 'rust') {
+      await applyRustFamilyTransform(destinationDir, options)
+      rustGeneratedFiles = await applyRustScaffoldTransform(destinationDir, options)
     }
-    await applyOrmTransform(destinationDir, options)
-  }
 
-  const cleanupTargets = buildCleanupTargets(options)
-  const cleanupFiles = familySupportsTemplateCleanup(family)
-    ? await applyGeneratedCleanup(destinationDir, cleanupTargets)
-    : []
+    if (family === 'solana') {
+      solanaGeneratedFiles = await applySolanaScaffoldTransform(destinationDir, options)
+    }
 
-  const prunedFiles =
-    family === 'fullstack' && backendUsesServiceApi(options.backend)
-      ? await pruneServiceApiFullstack(destinationDir)
+    if (familySupportsMonorepoTransforms(family)) {
+      await applyBackendTransform(destinationDir, options)
+      if (options.orm !== 'drizzle') {
+        await applyDatabaseTransform(destinationDir, options)
+      }
+      await applyOrmTransform(destinationDir, options)
+    }
+
+    cleanupTargets = buildCleanupTargets(options)
+    const cleanupFiles = familySupportsTemplateCleanup(family)
+      ? await applyGeneratedCleanup(destinationDir, cleanupTargets)
       : []
 
-  // Write arche.json for reproducibility
-  await writeGeneratedFile(destinationDir, 'arche.json', buildArcheConfig(options))
+    const prunedFiles =
+      family === 'fullstack' && backendUsesServiceApi(options.backend)
+        ? await pruneServiceApiFullstack(destinationDir)
+        : []
 
-  const bundleFiles = familySupportsBundles(family)
-    ? applyBundleTransforms(destinationDir, options)
-    : []
+    // Write arche.json for reproducibility
+    await writeGeneratedFile(destinationDir, 'arche.json', buildArcheConfig(options))
 
-  await adaptPackageManagerScripts(destinationDir, pm)
-
-  const workspaceFiles =
-    family !== 'rust'
-      ? await applyJavaScriptPackageManagerFoundation(
-          destinationDir,
-          pm,
-          isMonorepoFamily(family) || family === 'solana',
-        )
+    const bundleFiles = familySupportsBundles(family)
+      ? applyBundleTransforms(destinationDir, options)
       : []
 
-  const turboFiles: string[] = []
-  if (isMonorepoFamily(family) || family === 'solana') {
-    const includeDbTasks =
-      (family === 'fullstack' && !backendUsesServiceApi(options.backend)) ||
-      family === 'polyglot' ||
-      (family === 'backend' && options.database !== 'none')
-    const includeMdxGenerate = false
-    const extraBuildOutputs = family === 'polyglot' ? ['target/**'] : undefined
-    await writeGeneratedFile(
-      destinationDir,
-      'turbo.json',
-      renderTurboJson({ includeDbTasks, includeMdxGenerate, extraBuildOutputs }),
-    )
-    turboFiles.push('turbo.json')
-  }
+    await adaptPackageManagerScripts(destinationDir, pm)
 
-  const generatedFiles: string[] = [
-    'arche.json',
-    ...bundleFiles,
-    ...rustGeneratedFiles,
-    ...solanaGeneratedFiles,
-    ...sanitizedArtifacts.map((file) => `${file} (removed)`),
-    ...removedArtifacts.map((file) => `${file} (removed)`),
-    ...cleanupFiles.map((file) => `${file} (removed)`),
-    ...prunedFiles.map((file) => `${file} (removed)`),
-    ...workspaceFiles,
-    ...turboFiles,
-  ]
+    const workspaceFiles =
+      family !== 'rust'
+        ? await applyJavaScriptPackageManagerFoundation(
+            destinationDir,
+            pm,
+            isMonorepoFamily(family) || family === 'solana',
+          )
+        : []
 
-  const monorepo = isMonorepoFamily(family)
-  const hasServer = !shouldStripServer(family) && !backendUsesServiceApi(options.backend)
-  const hasWeb = !shouldStripWeb(family)
-
-  // Server env: only for monorepo families (standalone templates ship their own .env)
-  if (hasServer && monorepo) {
-    const serverEnvContent = buildServerEnv(options)
-    const serverDir = family === 'polyglot' ? 'apps/api' : 'apps/server'
-    await writeGeneratedFile(destinationDir, `${serverDir}/.env.example`, serverEnvContent)
-    generatedFiles.push(`${serverDir}/.env.example`)
-    await writeGeneratedFile(destinationDir, `${serverDir}/.env`, serverEnvContent)
-    generatedFiles.push(`${serverDir}/.env`)
-  }
-
-  if (monorepo && backendUsesServiceApi(options.backend)) {
-    const serverEnvContent =
-      options.backend === 'rust-axum' || options.backend === 'rust-actix'
-        ? renderRustEnvExample(options)
-        : buildServerEnv(options)
-    await writeGeneratedFile(destinationDir, 'services/api/.env.example', serverEnvContent)
-    generatedFiles.push('services/api/.env.example')
-    await writeGeneratedFile(destinationDir, 'services/api/.env', serverEnvContent)
-    generatedFiles.push('services/api/.env')
-  }
-
-  // Web env: only for monorepo families
-  if (hasWeb && monorepo) {
-    const webEnvContent = buildWebEnv()
-    await writeGeneratedFile(destinationDir, 'apps/web/.env.example', webEnvContent)
-    generatedFiles.push('apps/web/.env.example')
-    await writeGeneratedFile(destinationDir, 'apps/web/.env', webEnvContent)
-    generatedFiles.push('apps/web/.env')
-  }
-
-  // Docker Compose (config-aware: adapts to database selection)
-  if (options.includeDocker) {
-    await writeGeneratedFile(destinationDir, 'docker-compose.yml', renderDockerCompose(options))
-    generatedFiles.push('docker-compose.yml')
-
-    if (monorepo) {
+    const turboFiles: string[] = []
+    if (isMonorepoFamily(family) || family === 'solana') {
+      const includeDbTasks =
+        (family === 'fullstack' && !backendUsesServiceApi(options.backend)) ||
+        family === 'polyglot' ||
+        (family === 'backend' && options.database !== 'none')
+      const includeMdxGenerate = false
+      const extraBuildOutputs = family === 'polyglot' ? ['target/**'] : undefined
       await writeGeneratedFile(
         destinationDir,
-        'docker-compose.prod.yml',
-        renderDockerComposeProd(options),
+        'turbo.json',
+        renderTurboJson({ includeDbTasks, includeMdxGenerate, extraBuildOutputs }),
       )
-      generatedFiles.push('docker-compose.prod.yml')
-
-      await writeGeneratedFile(destinationDir, 'nginx/nginx.conf', renderNginxConfig(options))
-      generatedFiles.push('nginx/nginx.conf')
+      turboFiles.push('turbo.json')
     }
-  }
 
-  // GitHub Actions CI (config-aware: adapts to testing/runtime)
-  if (options.includeCi) {
+    generatedFiles = [
+      'arche.json',
+      ...bundleFiles,
+      ...rustGeneratedFiles,
+      ...solanaGeneratedFiles,
+      ...sanitizedArtifacts.map((file) => `${file} (removed)`),
+      ...removedArtifacts.map((file) => `${file} (removed)`),
+      ...cleanupFiles.map((file) => `${file} (removed)`),
+      ...prunedFiles.map((file) => `${file} (removed)`),
+      ...workspaceFiles,
+      ...turboFiles,
+    ]
+
+    const monorepo = isMonorepoFamily(family)
+    const hasServer = !shouldStripServer(family) && !backendUsesServiceApi(options.backend)
+    const hasWeb = !shouldStripWeb(family)
+
+    // Server env: only for monorepo families (standalone templates ship their own .env)
+    if (hasServer && monorepo) {
+      const serverEnvContent = buildServerEnv(options)
+      const serverDir = family === 'polyglot' ? 'apps/api' : 'apps/server'
+      await writeGeneratedFile(destinationDir, `${serverDir}/.env.example`, serverEnvContent)
+      generatedFiles.push(`${serverDir}/.env.example`)
+      await writeGeneratedFile(destinationDir, `${serverDir}/.env`, serverEnvContent)
+      generatedFiles.push(`${serverDir}/.env`)
+    }
+
+    if (monorepo && backendUsesServiceApi(options.backend)) {
+      const serverEnvContent =
+        options.backend === 'rust-axum' || options.backend === 'rust-actix'
+          ? renderRustEnvExample(options)
+          : buildServerEnv(options)
+      await writeGeneratedFile(destinationDir, 'services/api/.env.example', serverEnvContent)
+      generatedFiles.push('services/api/.env.example')
+      await writeGeneratedFile(destinationDir, 'services/api/.env', serverEnvContent)
+      generatedFiles.push('services/api/.env')
+    }
+
+    // Web env: only for monorepo families
+    if (hasWeb && monorepo) {
+      const webEnvContent = buildWebEnv()
+      await writeGeneratedFile(destinationDir, 'apps/web/.env.example', webEnvContent)
+      generatedFiles.push('apps/web/.env.example')
+      await writeGeneratedFile(destinationDir, 'apps/web/.env', webEnvContent)
+      generatedFiles.push('apps/web/.env')
+    }
+
+    // Docker Compose (config-aware: adapts to database selection)
+    if (options.includeDocker) {
+      await writeGeneratedFile(destinationDir, 'docker-compose.yml', renderDockerCompose(options))
+      generatedFiles.push('docker-compose.yml')
+
+      if (monorepo) {
+        await writeGeneratedFile(
+          destinationDir,
+          'docker-compose.prod.yml',
+          renderDockerComposeProd(options),
+        )
+        generatedFiles.push('docker-compose.prod.yml')
+
+        await writeGeneratedFile(destinationDir, 'nginx/nginx.conf', renderNginxConfig(options))
+        generatedFiles.push('nginx/nginx.conf')
+      }
+    }
+
+    // GitHub Actions CI (config-aware: adapts to testing/runtime)
+    if (options.includeCi) {
+      await writeGeneratedFile(
+        destinationDir,
+        '.github/workflows/ci.yml',
+        renderGithubActionsWorkflow(options),
+      )
+      generatedFiles.push('.github/workflows/ci.yml')
+    }
+
+    // Agent context uses one canonical instruction file plus scoped internal docs.
     await writeGeneratedFile(
       destinationDir,
-      '.github/workflows/ci.yml',
-      renderGithubActionsWorkflow(options),
+      'AGENTS.md',
+      buildRootAgentsMd({ ...options, projectName: packageName }),
     )
-    generatedFiles.push('.github/workflows/ci.yml')
-  }
+    generatedFiles.push('AGENTS.md')
+    await writeGeneratedClaudeSymlink(destinationDir)
+    generatedFiles.push('CLAUDE.md')
+    await writeGeneratedFile(destinationDir, '.docs/README.md', renderInternalDocsIndex())
+    generatedFiles.push('.docs/README.md')
+    await writeGeneratedFile(
+      destinationDir,
+      '.docs/architecture/generated-project.md',
+      buildGeneratedArchitectureMd(options),
+    )
+    generatedFiles.push('.docs/architecture/generated-project.md')
+    await writeGeneratedFile(destinationDir, '.plans/README.md', renderPlansIndex())
+    generatedFiles.push('.plans/README.md')
 
-  // Agent context uses one canonical instruction file plus scoped internal docs.
-  await writeGeneratedFile(
-    destinationDir,
-    'AGENTS.md',
-    buildRootAgentsMd({ ...options, projectName: packageName }),
-  )
-  generatedFiles.push('AGENTS.md')
-  await writeGeneratedClaudeSymlink(destinationDir)
-  generatedFiles.push('CLAUDE.md')
-  await writeGeneratedFile(destinationDir, '.docs/README.md', renderInternalDocsIndex())
-  generatedFiles.push('.docs/README.md')
-  await writeGeneratedFile(
-    destinationDir,
-    '.docs/architecture/generated-project.md',
-    buildGeneratedArchitectureMd(options),
-  )
-  generatedFiles.push('.docs/architecture/generated-project.md')
-  await writeGeneratedFile(destinationDir, '.plans/README.md', renderPlansIndex())
-  generatedFiles.push('.plans/README.md')
+    // Agent skill configuration
+    const skillFiles = writeSkillConfigs(destinationDir, options)
+    generatedFiles.push(...skillFiles)
 
-  // Agent skill configuration
-  const skillFiles = writeSkillConfigs(destinationDir, options)
-  generatedFiles.push(...skillFiles)
+    // SHOWCASE.mdx (portfolio-ready) — only fullstack has showcase
+    if (options.includeShowcase && family === 'fullstack') {
+      await writeGeneratedFile(destinationDir, 'SHOWCASE.mdx', buildShowcaseMdx(options))
+      generatedFiles.push('SHOWCASE.mdx')
+    }
 
-  // SHOWCASE.mdx (portfolio-ready) — only fullstack has showcase
-  if (options.includeShowcase && family === 'fullstack') {
-    await writeGeneratedFile(destinationDir, 'SHOWCASE.mdx', buildShowcaseMdx(options))
-    generatedFiles.push('SHOWCASE.mdx')
-  }
+    // Project README
+    await writeGeneratedFile(destinationDir, 'README.md', buildReadme(options))
+    generatedFiles.push('README.md')
 
-  // Project README
-  await writeGeneratedFile(destinationDir, 'README.md', buildReadme(options))
-  generatedFiles.push('README.md')
+    await writeGeneratedFile(destinationDir, '.gitignore', renderGitignore(options))
+    generatedFiles.push('.gitignore')
 
-  await writeGeneratedFile(destinationDir, '.gitignore', renderGitignore(options))
-  generatedFiles.push('.gitignore')
+    // Deployment guide (config-aware: adapts to backend/database/docker)
+    const includeDeploymentGuide =
+      options.deployment !== 'none' ||
+      options.family === 'convex' ||
+      options.preset === 'convex-product'
+    if (includeDeploymentGuide) {
+      await writeGeneratedFile(destinationDir, 'docs/deployment.md', renderDeploymentGuide(options))
+      generatedFiles.push('docs/deployment.md')
+    }
 
-  // Deployment guide (config-aware: adapts to backend/database/docker)
-  const includeDeploymentGuide =
-    options.deployment !== 'none' ||
-    options.family === 'convex' ||
-    options.preset === 'convex-product'
-  if (includeDeploymentGuide) {
-    await writeGeneratedFile(destinationDir, 'docs/deployment.md', renderDeploymentGuide(options))
-    generatedFiles.push('docs/deployment.md')
-  }
-
-  if (familySupportsRenameScope(family)) {
-    await replaceWorkspaceScope(destinationDir, packageName)
+    if (familySupportsRenameScope(family)) {
+      await replaceWorkspaceScope(destinationDir, packageName)
+    }
+  } catch (error) {
+    await rollbackDestination(destinationDir, destExistedBefore)
+    throw error
   }
 
   if (options.initializeGit) {

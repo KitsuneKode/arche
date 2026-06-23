@@ -1,0 +1,25 @@
+{
+  "name": "@acme/tui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun src/index.tsx",
+    "build": "tsc",
+    "check-types": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "lint": "oxlint -c .oxlintrc.json",
+    "lint:fix": "oxlint --fix"
+  },
+  "dependencies": {
+    "@opentui/core": "0.4.1",
+    "@opentui/react": "0.4.1",
+    "react": "^19.2.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.0",
+    "@types/react": "19.2.14",
+    "oxlint": "^1.65.0",
+    "typescript": "^6.0.3"
+  }
+}

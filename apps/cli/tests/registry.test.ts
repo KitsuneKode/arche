@@ -29,6 +29,7 @@ describe('capability registry', () => {
   it('defines the approved preset candidates', () => {
     expect(PRESETS.map((preset) => preset.id)).toEqual([
       'typescript-fullstack',
+      'next-app',
       'rust-api',
       'rust-fullstack',
       'convex-product',
@@ -36,6 +37,8 @@ describe('capability registry', () => {
       'solana-web',
       'solana-mobile',
       'solana-product',
+      'tui-app',
+      'tanstack-start',
       'customize',
       'experiments',
     ])
@@ -44,6 +47,7 @@ describe('capability registry', () => {
   it('marks graduated presets stable and keeps customize/experiments honest', () => {
     const stableIds = [
       'typescript-fullstack',
+      'next-app',
       'rust-api',
       'rust-fullstack',
       'convex-product',
@@ -51,6 +55,8 @@ describe('capability registry', () => {
       'solana-web',
       'solana-mobile',
       'solana-product',
+      'tui-app',
+      'tanstack-start',
     ]
     for (const id of stableIds) {
       expect(PRESETS.find((preset) => preset.id === id)?.status).toBe('stable')

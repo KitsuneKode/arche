@@ -34,9 +34,11 @@ Scaffolding my-project...
 | Family                                                   | Description                      | Transforms / bundles    |
 | -------------------------------------------------------- | -------------------------------- | ----------------------- |
 | fullstack                                                | Monorepo (Next + Express + tRPC) | Full pipeline + bundles |
-| next                                                     | Standalone Next.js               | Stub template           |
-| backend                                                  | API-only                         | Stub template           |
-| rust, solana, convex, worker, lib, cli, mobile, polyglot | Specialized stubs                | Copy manifest only      |
+| next                                                     | Standalone Next.js               | First-class baseline    |
+| tanstack                                                 | TanStack Start (Vite + Nitro)    | Copy manifest only      |
+| tui                                                      | Terminal UI (OpenTUI + React)    | Copy manifest only      |
+| backend                                                  | API-only                         | Baseline service stub   |
+| rust, solana, convex, worker, lib, cli, mobile, polyglot | Specialized templates            | Copy manifest only      |
 
 ## Status
 

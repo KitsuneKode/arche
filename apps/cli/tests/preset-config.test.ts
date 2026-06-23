@@ -36,6 +36,42 @@ describe('preset config defaults', () => {
     })
   })
 
+  it('maps next-app to the standalone next family', () => {
+    expect(projectDefaultsForPreset('next-app')).toMatchObject({
+      family: 'next',
+      backend: 'none',
+      database: 'none',
+      orm: 'none',
+      bundles: [],
+      includeDocker: false,
+      includeCi: false,
+    })
+  })
+
+  it('maps tui-app to the tui family', () => {
+    expect(projectDefaultsForPreset('tui-app')).toMatchObject({
+      family: 'tui',
+      backend: 'none',
+      database: 'none',
+      orm: 'none',
+      bundles: [],
+      includeDocker: false,
+      includeCi: false,
+    })
+  })
+
+  it('maps tanstack-start to the tanstack family', () => {
+    expect(projectDefaultsForPreset('tanstack-start')).toMatchObject({
+      family: 'tanstack',
+      backend: 'none',
+      database: 'none',
+      orm: 'none',
+      bundles: [],
+      includeDocker: false,
+      includeCi: false,
+    })
+  })
+
   it('maps Rust fullstack to a fullstack monorepo with Rust API ownership', () => {
     expect(projectDefaultsForPreset('rust-fullstack')).toMatchObject({
       family: 'fullstack',
