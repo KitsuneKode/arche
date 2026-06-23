@@ -1,6 +1,6 @@
 {
   "name": "@kitsunekode/arche",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Arche — scaffold personal project vaults, TypeScript monorepos, Rust services, and Solana app foundations",
   "keywords": [
     "better-auth",
