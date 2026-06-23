@@ -49,7 +49,7 @@
     "clean": "find . -name node_modules -o -name .next -o -name .turbo -o -name dist -type d -prune | xargs rm -rf",
     "check-types": "turbo run check-types",
     "check-types:affected": "turbo run check-types --affected",
-    "test": "bun test --path-ignore-patterns 'apps/cli/src/templates/**'",
+    "test": "bun test",
     "dev:web": "turbo run dev --filter=@arche-template/web",
     "dev:server": "turbo run dev --filter=@arche-template/server",
     "dev:worker": "turbo run dev --filter=@arche-template/worker",
