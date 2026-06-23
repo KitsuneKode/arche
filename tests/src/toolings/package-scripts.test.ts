@@ -28,7 +28,7 @@ describe('root package.json scripts', () => {
 describe('bunfig.toml test discovery', () => {
   it('ignores embedded CLI template unit tests', () => {
     const bunfig = readFileSync(join(repoRoot, 'bunfig.toml'), 'utf8')
-    expect(bunfig).toContain('path-ignore-patterns')
+    expect(bunfig).toContain('pathIgnorePatterns')
     expect(bunfig).toContain('apps/cli/src/templates')
   })
 })

@@ -4,4 +4,4 @@ linker = "isolated"
 [test]
 # Template trees are scaffold snapshots, not workspace packages — their unit tests
 # duplicate live packages and cannot resolve deps from the monorepo install graph.
-path-ignore-patterns = ["**/apps/cli/src/templates/**"]
+pathIgnorePatterns = ["apps/cli/src/templates/**"]
