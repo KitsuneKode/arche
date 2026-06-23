@@ -53,7 +53,7 @@
 - `bun run format:check` - Check formatting.
 - `bun run repo:doctor` - Audit stale scaffolding, broken exports, placeholder files, and doc drift.
 - `bun run repo:doctor:strict` - Fail on warnings and errors for CI or pre-release checks.
-- `bun run repo:doctor:ci` - Alias for strict doctor (matches CI).
+- `bun run check:cli` / `bun run check:web` - Fast inner loop for CLI or web workspace changes.
 - `bun run verify:generated` - Fast generated-project structure verification for the preset matrix.
 
 ## Database
