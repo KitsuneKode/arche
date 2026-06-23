@@ -13,6 +13,7 @@
 
 - scope migration from `@arche-template/*` to the root package name, including package metadata, imports, Turbo filters, Dockerfiles, and config files
 - repo redundancy and drift auditing
+- sync of canonical workspace `AGENTS.md` into the fullstack template (`sync-template-agents.ts`)
 - staged secret scan for Husky (`gitleaks-staged.sh`; requires gitleaks CLI)
 - static OG export from dynamic route (`export-og-image.ts`; `bun run brand:export-og`)
 - start-fresh cleanup automation
@@ -28,6 +29,8 @@
   `bun toolings/scripts/rename-scope.ts --from @arche-template --to @acme`
 - audit stale scaffolding and drift:
   `bun run repo:doctor`
+- keep fullstack template AGENTS.md in sync:
+  `bun run agents:sync:check`, `bun run agents:sync`
 - strip template baggage from a cloned project:
   `bun run template:clean:dry`, `bun run template:clean`
 - inspect replacement behavior:

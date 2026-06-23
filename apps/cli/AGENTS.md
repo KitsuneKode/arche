@@ -8,33 +8,20 @@ the fullstack combo matrix (`e2e-scaffold.test.ts` + `verify:generated --combo-m
 
 ## Read First
 
-- `src/index.ts` — entry, arg parsing, prompts
-- `src/lib/scaffold.ts` — pipeline orchestrator
-- `src/lib/generators/` — per-feature transforms
-- `src/types/schemas.ts` — Zod schemas + compatibility checks
-- `src/registry/` — preset candidates, support status, capability validation
-- `src/render/` — workspace and generated context renderers
+- `src/index.ts`, `src/lib/scaffold.ts`, `src/types/schemas.ts`
+- `src/lib/generators/`, `src/registry/`, `src/render/`
 
 ## Scaffold Pipeline
 
-Copy template → update package.json → family transform → addon/bundle transforms → rename scope → template cleanup → generate env/docker/CI/deployment/agent context → git init → install
+Copy template → package.json → family transform → bundles → rename scope → cleanup → env/docker/CI/agent context → git → install
 
 ## Owns
 
-- CLI prompts and arg parsing
-- Template copy and customization
-- Family transforms
-- Bundle/addon transforms
-- Generated files (Docker, CI, env, deployment, agent-docs, showcase)
-- Preset registry and support-status truthfulness (`packages/registry`)
+CLI prompts, template copy, family/bundle transforms, generated output (Docker, CI, env, agent-docs), preset registry truthfulness.
 
 ## Context Output
 
-- Generate one canonical `AGENTS.md`.
-- Generate `CLAUDE.md` as a symlink to `AGENTS.md`.
-- Generate scoped internal context under `.docs/` and planning guidance under
-  `.plans/`.
-- Do not generate duplicate `CONTEXT.md` instruction/context surfaces.
+One canonical `AGENTS.md`; `CLAUDE.md` symlink; scoped `.docs/` and `.plans/` when generated. No duplicate `CONTEXT.md`.
 
 ## Quick Commands
 
@@ -44,20 +31,11 @@ Copy template → update package.json → family transform → addon/bundle tran
 
 ## Rust presets (`rust-api`, `rust-fullstack`)
 
-- Template: `src/templates/rust/` (module-first Axum: `routes → handler → service → repository`)
-- `rust-api`: copies template to project root; `rust-fullstack`: copies into `services/api` via `applyRustServiceApiScaffold()` in `generators/rust.ts`
-- SQLx migrations run on startup when `DATABASE_URL` is set (`migrate` feature on sqlx)
-- CI: `renderRustCi()` — fmt, clippy, `cargo test`; postgres adds optional `sqlx prepare --check`
-- Verify: `bun run verify:generated -- --preset=rust-api,rust-fullstack --run=cargo-check`
+Template: `src/templates/rust/` (Axum module-first). `rust-fullstack` nests API under services/api via `generators/rust.ts`. Verify: `bun run verify:generated -- --preset=rust-api,rust-fullstack --run=cargo-check`
 
 ## Solana presets (`solana-*`)
 
-- Generator: `generators/solana.ts` (string scaffold, not template copy)
-- Anchor 0.32 Counter program, `packages/solana-config` + `packages/solana-client` (IDL stub + `@coral-xyz/anchor`)
-- Web: wallet adapter page; mobile: Expo + MWA protocol dep (not Expo Router yet)
-- CI: `renderSolanaCi()` — TS lint/typecheck + `anchor build` job (no `repo:doctor`)
-- Public doc: `docs/solana-development.md`; per-project `docs/solana-getting-started.md`
-- Verify: `bun test apps/cli/tests/solana-preset.test.ts`; optional `--run=anchor-build`
+Generator: `generators/solana.ts` (string scaffold). Anchor Counter + solana-config/solana-client workspaces when selected; wallet web page; Expo mobile stub. CI: `renderSolanaCi()`. Doc: `docs/solana-development.md`. Verify: `bun test apps/cli/tests/solana-preset.test.ts`
 
 ## When to Update
 
