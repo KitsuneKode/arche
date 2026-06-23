@@ -7,7 +7,6 @@ export interface PresetVerificationEvidence {
   generatedInstall: boolean
   generatedLint: boolean
   generatedTypecheck: boolean
-  generatedTest: boolean
   generatedBuild: boolean
   docs: boolean
   agentContext: boolean
@@ -15,7 +14,8 @@ export interface PresetVerificationEvidence {
   rustQualityGates: boolean
   solanaProgram: boolean
   convexBackend: boolean
-  deployment: boolean
+  tui: boolean
+  runtimeSmoke: boolean
 }
 
 const NONE: PresetVerificationEvidence = {
@@ -25,7 +25,6 @@ const NONE: PresetVerificationEvidence = {
   generatedInstall: false,
   generatedLint: false,
   generatedTypecheck: false,
-  generatedTest: false,
   generatedBuild: false,
   docs: false,
   agentContext: false,
@@ -33,7 +32,8 @@ const NONE: PresetVerificationEvidence = {
   rustQualityGates: false,
   solanaProgram: false,
   convexBackend: false,
-  deployment: false,
+  tui: false,
+  runtimeSmoke: false,
 }
 
 export const PRESET_VERIFICATION_MATRIX = {
@@ -48,6 +48,18 @@ export const PRESET_VERIFICATION_MATRIX = {
     generatedBuild: true,
     docs: true,
     agentContext: true,
+  },
+  'next-app': {
+    ...NONE,
+    structure: true,
+    bun: true,
+    generatedInstall: true,
+    generatedLint: true,
+    generatedTypecheck: true,
+    generatedBuild: true,
+    docs: true,
+    agentContext: true,
+    runtimeSmoke: true,
   },
   'rust-api': {
     ...NONE,
@@ -131,6 +143,29 @@ export const PRESET_VERIFICATION_MATRIX = {
     agentContext: true,
     solanaProgram: true,
   },
+  'tui-app': {
+    ...NONE,
+    structure: true,
+    bun: true,
+    generatedInstall: true,
+    generatedTypecheck: true,
+    generatedBuild: true,
+    docs: true,
+    agentContext: true,
+    tui: true,
+  },
+  'tanstack-start': {
+    ...NONE,
+    structure: true,
+    bun: true,
+    generatedInstall: true,
+    generatedLint: true,
+    generatedTypecheck: true,
+    generatedBuild: true,
+    docs: true,
+    agentContext: true,
+    runtimeSmoke: true,
+  },
   customize: NONE,
   experiments: NONE,
 } satisfies Record<PresetId, PresetVerificationEvidence>
@@ -142,14 +177,14 @@ export const VERIFICATION_MATRIX_COLUMNS = [
   { key: 'generatedInstall' as const, label: 'Install' },
   { key: 'generatedLint' as const, label: 'Lint' },
   { key: 'generatedTypecheck' as const, label: 'Typecheck' },
-  { key: 'generatedTest' as const, label: 'Test' },
   { key: 'generatedBuild' as const, label: 'Build' },
   { key: 'docs' as const, label: 'Docs' },
   { key: 'agentContext' as const, label: 'Agent context' },
   { key: 'cargoWorkspace' as const, label: 'Rust' },
   { key: 'solanaProgram' as const, label: 'Solana' },
   { key: 'convexBackend' as const, label: 'Convex' },
-  { key: 'deployment' as const, label: 'Deploy' },
+  { key: 'tui' as const, label: 'TUI' },
+  { key: 'runtimeSmoke' as const, label: 'Runtime smoke' },
 ]
 
 const JS_MONOREPO_STABLE_KEYS: (keyof PresetVerificationEvidence)[] = [
@@ -161,6 +196,17 @@ const JS_MONOREPO_STABLE_KEYS: (keyof PresetVerificationEvidence)[] = [
   'generatedBuild',
   'docs',
   'agentContext',
+]
+
+const TUI_STABLE_KEYS: (keyof PresetVerificationEvidence)[] = [
+  'structure',
+  'bun',
+  'generatedInstall',
+  'generatedTypecheck',
+  'generatedBuild',
+  'docs',
+  'agentContext',
+  'tui',
 ]
 
 function hasEvidence(
@@ -180,6 +226,18 @@ export function presetHasStableEvidence(preset: PresetId): boolean {
 
   if (preset === 'typescript-fullstack') {
     return hasEvidence(evidence, [...JS_MONOREPO_STABLE_KEYS, 'pnpm'])
+  }
+
+  if (preset === 'next-app') {
+    return hasEvidence(evidence, JS_MONOREPO_STABLE_KEYS)
+  }
+
+  if (preset === 'tui-app') {
+    return hasEvidence(evidence, TUI_STABLE_KEYS)
+  }
+
+  if (preset === 'tanstack-start') {
+    return hasEvidence(evidence, JS_MONOREPO_STABLE_KEYS) && evidence.runtimeSmoke
   }
 
   if (preset === 'rust-api') {
