@@ -80,7 +80,7 @@ jobs:
         run: bunx turbo run lint check-types ${{ steps.turbo-mode.outputs.affected }}
 
       - name: Tests
-        run: bun test
+        run: bun run test
 
       - name: Build
         env:

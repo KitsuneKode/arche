@@ -23,4 +23,8 @@ describe('CI workflow scaffold verification', () => {
     )
     expect(comboStep).not.toContain('SCAFFOLD_E2E:')
   })
+
+  it('runs tests via bun run test so template path ignores apply', () => {
+    expect(ciWorkflow).toContain('run: bun run test')
+  })
 })
