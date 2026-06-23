@@ -1,0 +1,18 @@
+{
+  "ignorePatterns": ["next-env.d.ts", ".next/**", "dist/**"],
+  "plugins": ["typescript", "import", "react", "react-hooks"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "rules": {
+    "no-console": "off",
+    "import/no-unassigned-import": "off",
+    "typescript/no-unused-vars": ["error", { "args": "none", "varsIgnorePattern": "^_" }],
+    "import/default": "error",
+    "react/jsx-no-target-blank": "error",
+    "react-in-jsx-scope": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  }
+}

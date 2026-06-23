@@ -14,6 +14,8 @@ export const FamilySchema = z.enum([
   'worker',
   'lib',
   'cli',
+  'tui',
+  'tanstack',
   'mobile',
   'polyglot',
 ])
@@ -27,6 +29,7 @@ export type PackageManager = z.infer<typeof PackageManagerSchema>
 
 export const PresetSchema = z.enum([
   'typescript-fullstack',
+  'next-app',
   'rust-api',
   'rust-fullstack',
   'convex-product',
@@ -34,6 +37,8 @@ export const PresetSchema = z.enum([
   'solana-web',
   'solana-mobile',
   'solana-product',
+  'tui-app',
+  'tanstack-start',
   'customize',
   'experiments',
 ])
@@ -205,6 +210,8 @@ export const FAMILY_LABELS: Record<Family, string> = {
   worker: 'Background job worker',
   lib: 'Generic TypeScript package',
   cli: 'CLI package',
+  tui: 'Terminal UI app (OpenTUI)',
+  tanstack: 'TanStack Start full-stack app',
   mobile: 'Expo mobile app',
   polyglot: 'Multi-language monorepo',
 }

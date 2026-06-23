@@ -70,6 +70,8 @@ function defaultDeploymentForFamily(family: Family): ProjectConfig['deployment']
     case 'worker':
     case 'lib':
     case 'cli':
+    case 'tui':
+    case 'tanstack':
     case 'mobile':
       return 'none'
   }
