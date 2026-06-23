@@ -4,12 +4,20 @@
     ".env.example",
     ".oxlintrc.json",
     "AGENTS.md",
+    "README.md",
+    "app/api/health/route.ts",
+    "app/error.tsx",
     "app/layout.tsx",
+    "app/loading.tsx",
+    "app/not-found.tsx",
     "app/page.tsx",
     "app/styles.css",
+    "components/highlight-card.tsx",
+    "env.ts",
     "next.config.js",
     "next-env.d.ts",
     "package.json",
+    "public/.gitkeep",
     "tsconfig.json"
   ]
 }
