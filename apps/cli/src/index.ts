@@ -23,6 +23,7 @@ import { resolveDestinationDir, sanitizeProjectName } from './lib/slug'
 import { startMcpServer } from './mcp'
 import { packageManagerMenuOptions } from './registry/capabilities'
 import { presetMenuOptions, projectDefaultsForPreset } from './registry/preset-config'
+import { PRESETS } from './registry/presets'
 import type { Bundle, CLIArgs, Family, Preset, ProjectConfig } from './types/schemas'
 import {
   BUNDLE_LABELS,
@@ -89,6 +90,23 @@ function normalizeArgv(argv: string[]): string[] {
   return argv
 }
 
+function formatFamiliesHelp(): string {
+  const pad = Math.max(...FamilySchema.options.map((family) => family.length)) + 2
+  return FamilySchema.options
+    .map((family) => {
+      const suffix = family === 'fullstack' ? ' (default)' : ''
+      return `  ${family.padEnd(pad)}${FAMILY_LABELS[family]}${suffix}`
+    })
+    .join('\n')
+}
+
+function formatPresetHint(): string {
+  const stableIds = PRESETS.filter((preset) => preset.status === 'stable').map(
+    (preset) => preset.id,
+  )
+  return [...stableIds, 'customize'].join(', ')
+}
+
 function printHelp(): void {
   console.log(`
 ${pc.cyan('arche')} / ${pc.cyan(PKG_NAME)} v${PKG_VERSION}
@@ -99,24 +117,14 @@ ${pc.bold('Usage:')}
   create-arche [project-name] [family] [options]
 
 ${pc.bold('Families:')}
-  fullstack    Full-stack TypeScript monorepo (default)
-  next        Standalone Next.js app
-  backend     API-only service
-  rust        Rust API service
-  solana      Solana program
-  convex      Next.js + Convex
-  worker      Background job worker
-  lib         Generic TypeScript package
-  cli         CLI package
-  mobile      Expo mobile app
-  polyglot    Multi-language monorepo
+${formatFamiliesHelp()}
 
 ${pc.bold('Options:')}
   --yes              Skip prompts, use defaults
   --dir=<path>       Output parent directory (default: current directory)
   --output=<path>    Alias for --dir
   --family=<name>    Project family (or pass as second positional argument)
-  --preset=<name>    Starting point: typescript-fullstack, rust-api, rust-fullstack, solana-program, customize
+  --preset=<name>    Starting point: ${formatPresetHint()}
   --pm=<pm>          Package manager: bun (default), pnpm (stable), npm (experimental)
   --bundle=<b>       Feature bundle: product, realtime, growth, infra, ai
   --git              Initialize git repository (default: yes)
