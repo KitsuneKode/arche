@@ -1,0 +1,12 @@
+{
+  "plugins": ["typescript", "import"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "rules": {
+    "no-console": "off",
+    "typescript/no-unused-vars": ["error", { "args": "none", "varsIgnorePattern": "^_" }],
+    "import/default": "error"
+  }
+}
