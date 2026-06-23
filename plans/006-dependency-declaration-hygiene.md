@@ -1,0 +1,155 @@
+# Plan 006: Declare dependencies where they are imported; remove undeclared root runtime deps
+
+> **Executor instructions**: Follow step by step, verifying each. This plan
+> changes the install graph — do the steps IN ORDER (add to consumers first,
+> remove from root last) so the tree never breaks. Honor STOP conditions.
+> Update this plan's row in `plans/README.md` when done.
+>
+> **Drift check (run first)**: `git diff --stat d199cac..HEAD -- package.json apps/web/package.json apps/server/package.json packages/common/package.json packages/backend-common/package.json`
+> If any changed since `d199cac`, re-run the import-site greps in "Current
+> state" before editing; on mismatch, STOP.
+
+## Status
+
+- **Priority**: P2
+- **Effort**: M
+- **Risk**: MED
+- **Depends on**: none (but if Plan 005 is in flight, sequence the `package.json` edits to avoid conflicts)
+- **Category**: tech-debt / dependencies
+- **Planned at**: commit `d199cac`, 2026-06-23
+
+## Why this matters
+
+Several runtime dependencies are declared at the repo root but imported only by child workspaces, while those children do not declare them — they currently resolve only because Bun hoists root deps. With the isolated linker (`bunfig.toml`) this is fragile and breaks under stricter installs, publishing, or any tooling that reads per-package manifests. Making each package declare what it imports (and removing the unused root entries) is correct hygiene a senior engineer expects, and prevents "works on my machine" install drift.
+
+## Current state
+
+Import sites (verified at `d199cac`):
+
+- `@t3-oss/env-nextjs` — imported by `apps/web/env.ts`. `apps/web/package.json` does **not** declare it. Declared at root `package.json:71`.
+- `@t3-oss/env-core` — imported by `apps/server/env.ts`, `packages/backend-common/src/env.ts`, `packages/common/src/env/client.ts`. Declared at root `package.json:70`. NOT declared in `packages/common/package.json` (deps: only `zod`, `:25-27`) or `packages/backend-common/package.json` (deps `:30-37` have no `@t3-oss/*`). Verify whether `apps/server/package.json` declares it (it may already).
+- `compression` — imported only by `apps/server/src/app.ts`; `apps/server/package.json` already declares it. Root declares `compression` (`package.json:72`) and `@types/compression` (`:81`) — redundant at root.
+- `express-rate-limit` — imported only by `apps/server/src/app.ts`; declared by `apps/server`. Root declares it (`package.json:73`) — redundant at root.
+
+Root manifest deps block:
+
+```69:89:package.json
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.11",
+    "@t3-oss/env-nextjs": "^0.13.11",
+    "compression": "^1.7.5",
+    "express-rate-limit": "^8.5.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@arche-template/typescript-config": "workspace:*",
+    "@changesets/cli": "^2.31.0",
+    "@commitlint/cli": "^21.0.1",
+    "@commitlint/config-conventional": "^21.0.1",
+    "@types/compression": "^1.7.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
+    "oxfmt": "^0.50.0",
+    "oxlint": "^1.65.0",
+    "sharp": "^0.34.5",
+    "turbo": "^2.9.14",
+    "typescript": "6.0.3"
+  },
+```
+
+KEEP at root (do NOT remove):
+
+- `zod` — widely used; removing risks undeclared transitive importers. Leave it (low harm).
+- `sharp` — imported by the root-run script `toolings/scripts/export-brand-assets.ts` (no per-package manifest there), so it must stay at root.
+- All devDependencies except `@types/compression` (changesets, commitlint, husky, lint-staged, oxfmt, oxlint, turbo, typescript, typescript-config) are root tooling — keep.
+
+## Commands you will need
+
+| Purpose        | Command                                                                            | Expected                          |
+| -------------- | ---------------------------------------------------------------------------------- | --------------------------------- |
+| Install        | `bun install`                                                                      | exit 0, lockfile updates          |
+| Frozen install | `bun install --frozen-lockfile`                                                    | exit 0 (after lockfile committed) |
+| Typecheck all  | `bunx turbo run check-types`                                                       | exit 0                            |
+| Build all      | `bunx turbo run build`                                                             | exit 0                            |
+| Tests          | `bun test`                                                                         | pass                              |
+| Find importers | use the editor search for `@t3-oss/env-core` etc. (avoid `rg` over `node_modules`) | confirms sites                    |
+
+## Scope
+
+**In scope**:
+
+- `apps/web/package.json`, `apps/server/package.json`, `packages/common/package.json`, `packages/backend-common/package.json` (add declared deps)
+- root `package.json` (remove the 4 redundant runtime deps + `@types/compression`)
+- `bun.lock` (regenerated by `bun install`)
+
+**Out of scope**:
+
+- Root `zod` and `sharp` (keep).
+- Template files under `apps/cli/src/templates/**` (their manifests are separate; not part of the live install graph).
+- Any source `.ts` import statements — only manifests change.
+
+## Git workflow
+
+- Branch: `advisor/006-dependency-declaration-hygiene`
+- Conventional commits, e.g. `chore(deps): declare deps in consuming workspaces; drop redundant root deps`.
+- Do NOT push/PR unless instructed.
+
+## Steps
+
+### Step 1: Add declared deps to the consuming workspaces
+
+Use the exact versions currently resolved (match root: `@t3-oss/env-core@^0.13.11`, `@t3-oss/env-nextjs@^0.13.11`). Prefer the package manager so the lockfile stays consistent:
+
+- `bun add --cwd apps/web @t3-oss/env-nextjs@^0.13.11`
+- `bun add --cwd packages/common @t3-oss/env-core@^0.13.11`
+- `bun add --cwd packages/backend-common @t3-oss/env-core@^0.13.11`
+- For `apps/server`: first check `apps/server/package.json` for `@t3-oss/env-core`; if absent, `bun add --cwd apps/server @t3-oss/env-core@^0.13.11`.
+
+**Verify**: each target `package.json` now lists the dep; `bun install` exits 0.
+
+### Step 2: Typecheck/build BEFORE removing root deps
+
+**Verify**: `bunx turbo run check-types` → exit 0; `bunx turbo run build` → exit 0. (Root deps still present, so this must pass; it confirms the new declarations resolve.)
+
+### Step 3: Remove the redundant root runtime deps
+
+In root `package.json`, remove from `dependencies`: `@t3-oss/env-core`, `@t3-oss/env-nextjs`, `compression`, `express-rate-limit`. Remove from `devDependencies`: `@types/compression`. Keep `zod` in `dependencies` and `sharp` in `devDependencies`.
+
+Then `bun install` to refresh the lockfile.
+
+**Verify**: `bunx turbo run check-types` → exit 0; `bunx turbo run build` → exit 0; `bun test` → pass. If anything now fails with "cannot find module @t3-oss/..." or similar, a consumer that imports it was missed — add the declaration there (do not re-add to root).
+
+### Step 4: Confirm a clean frozen install
+
+**Verify**: `bun install --frozen-lockfile` → exit 0 (lockfile is consistent and committed).
+
+## Test plan
+
+- No new product tests; correctness is proven by `turbo check-types` + `turbo build` + `bun test` passing after the root deps are removed.
+- Optional guard: a `tests/src/toolings/` test that asserts every workspace importing `@t3-oss/*` declares it (parse each `package.json`, scan `env.ts`). Add only if the existing toolings tests make this straightforward.
+- Verification: `bun run ci:min` → exit 0.
+
+## Done criteria
+
+ALL must hold:
+
+- [ ] `apps/web`, `packages/common`, `packages/backend-common` (and `apps/server` if it was missing) declare `@t3-oss/env-*` they import
+- [ ] root `package.json` no longer lists `@t3-oss/env-core`, `@t3-oss/env-nextjs`, `compression`, `express-rate-limit`, `@types/compression`
+- [ ] root still lists `zod` and `sharp`
+- [ ] `bunx turbo run check-types` exits 0
+- [ ] `bunx turbo run build` exits 0
+- [ ] `bun test` passes
+- [ ] `bun install --frozen-lockfile` exits 0
+- [ ] `git status` shows only in-scope files + `bun.lock`
+- [ ] `plans/README.md` row updated
+
+## STOP conditions
+
+- After Step 3, a build/typecheck failure points at a module you cannot trace to a single consumer (the dependency may be needed at root by an untracked importer) — STOP and report; do not re-fatten root blindly.
+- `bun add --cwd <pkg>` cannot resolve the pinned version offline — report; do not hand-edit a guessed version into the lockfile.
+- Removing a root dep breaks a `toolings/scripts/*.ts` root-run script (it shouldn't for these four) — STOP.
+
+## Maintenance notes
+
+- The root manifest should hold only: workspaces config, scripts, and tooling devDeps (+ deps used by root-run scripts like `sharp`). New shared runtime deps belong in the workspace that imports them.
+- Reviewer: scan the diff for any source import that lost its declaration; the `--frozen-lockfile` install is the strongest signal that the graph is self-consistent.
