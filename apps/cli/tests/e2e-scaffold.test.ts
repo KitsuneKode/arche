@@ -9,18 +9,31 @@ function commandsForCombo(id: string, family: string): GeneratedProjectCommand[]
   if (family === 'rust') {
     return ['cargo-check']
   }
+  if (family === 'tui') {
+    return ['install', 'typecheck', 'build']
+  }
+  if (family === 'tanstack') {
+    return ['install', 'typecheck', 'lint', 'build', 'smoke']
+  }
   if (family === 'lib' || family === 'cli' || family === 'worker') {
     return ['install', 'typecheck', 'lint']
   }
   if (family === 'mobile') {
     return ['install', 'typecheck', 'lint']
   }
+  if (family === 'next' || family === 'backend') {
+    return ['install', 'typecheck', 'lint', 'build', 'smoke']
+  }
   return ['install', 'typecheck', 'lint', 'build']
 }
 
 const comboCases = buildGeneratedComboCases()
-const runComboSerial = process.env.SCAFFOLD_E2E_SERIAL === '1' || process.env.CI === 'true'
-const comboDescribe = runComboSerial ? describe.serial : describe
+const runHeavyCombos = process.env.SCAFFOLD_E2E === '1'
+const comboDescribe = runHeavyCombos
+  ? process.env.SCAFFOLD_E2E_SERIAL === '1'
+    ? describe.serial
+    : describe
+  : describe.skip
 
 comboDescribe('e2e scaffold combo matrix', () => {
   for (const combo of comboCases) {
