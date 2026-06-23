@@ -59,5 +59,9 @@ export function renderGitignore(config: ProjectConfig): string {
     blocks.push(``, `# Solana / Anchor`, `target/`, `.anchor/`)
   }
 
+  if (config.family === 'tanstack') {
+    blocks.push(``, `# TanStack Start / Nitro`, `.output/`, `.nitro/`, `.tanstack/`)
+  }
+
   return blocks.join('\n') + '\n'
 }
