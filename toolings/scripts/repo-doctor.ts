@@ -1,6 +1,8 @@
 #!/usr/bin/env bun
 import { access } from 'fs/promises'
 import { basename, dirname, relative, resolve } from 'path'
+import { syncTemplateAgents } from './sync-template-agents'
+import { syncWebCore } from './sync-web-core'
 
 type Severity = 'error' | 'warn' | 'info'
 
@@ -333,6 +335,80 @@ async function checkDocPathDrift(): Promise<Finding[]> {
   return findings
 }
 
+function countNonEmptyLines(text: string): number {
+  return text.split('\n').filter((line) => line.trim().length > 0).length
+}
+
+function duplicatesCiLadder(text: string): boolean {
+  return text.includes('### Minimum ladder') || text.includes('bun run ci:min:affected')
+}
+
+export async function checkAgentsDocBudget(): Promise<Finding[]> {
+  const findings: Finding[] = []
+  const globs = [
+    'AGENTS.md',
+    'apps/*/AGENTS.md',
+    'packages/*/AGENTS.md',
+    'toolings/*/AGENTS.md',
+    'tests/AGENTS.md',
+  ] as const
+
+  for (const globPattern of globs) {
+    const files = await collectFiles(globPattern)
+    for (const path of files) {
+      const text = await Bun.file(path).text()
+      const lineCount = countNonEmptyLines(text)
+      const isRoot = path === 'AGENTS.md'
+      const lineLimit = isRoot ? 45 : 40
+
+      if (lineCount > lineLimit) {
+        findings.push({
+          severity: 'warn',
+          code: 'agents-md-too-long',
+          path,
+          message: `AGENTS.md has ${lineCount} non-empty lines (budget: ${lineLimit}).`,
+          suggestion:
+            'Trim to navigation + invariants; link to docs/ instead of restating shared content.',
+        })
+      }
+
+      if (duplicatesCiLadder(text)) {
+        findings.push({
+          severity: 'warn',
+          code: 'agents-md-duplicates-ci-ladder',
+          path,
+          message: 'Restates the CI ladder instead of linking docs/ci.md.',
+          suggestion: 'Replace the ladder block with a one-line pointer to docs/ci.md.',
+        })
+      }
+    }
+  }
+
+  return findings
+}
+
+export async function checkWebCoreSync(): Promise<Finding[]> {
+  const drifted = await syncWebCore({ check: true })
+  return drifted.map((path) => ({
+    severity: 'warn' as const,
+    code: 'web-core-drift',
+    path,
+    message: 'Web template file differs from canonical _web-core source.',
+    suggestion: 'Edit apps/cli/src/templates/_web-core/, then run `bun run web-core:sync`.',
+  }))
+}
+
+export async function checkTemplateAgentsSync(): Promise<Finding[]> {
+  const drifted = await syncTemplateAgents({ check: true })
+  return drifted.map((path) => ({
+    severity: 'warn' as const,
+    code: 'template-agents-drift',
+    path,
+    message: 'Template AGENTS.md differs from the live workspace file.',
+    suggestion: 'Edit the live AGENTS.md, then run `bun run agents:sync`.',
+  }))
+}
+
 export async function collectRepoDoctorFindings(): Promise<Finding[]> {
   return dedupeFindings(
     [
@@ -343,6 +419,9 @@ export async function collectRepoDoctorFindings(): Promise<Finding[]> {
       ...(await checkPackageExports()),
       ...(await checkDocPathDrift()),
       ...(await checkActiveDeployDocLinks()),
+      ...(await checkAgentsDocBudget()),
+      ...(await checkTemplateAgentsSync()),
+      ...(await checkWebCoreSync()),
     ].sort((a, b) => {
       const severityDiff = severityRank(a.severity) - severityRank(b.severity)
       if (severityDiff !== 0) return severityDiff
