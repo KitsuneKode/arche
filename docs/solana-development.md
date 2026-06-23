@@ -4,12 +4,12 @@ Arche generates Solana + Anchor monorepos from presets `solana-program`, `solana
 
 ## Presets
 
-| Preset           | Output                                                                               |
-| ---------------- | ------------------------------------------------------------------------------------ |
-| `solana-program` | `programs/core`, `packages/solana-config`, `packages/solana-client`, `tests/core.ts` |
-| `solana-web`     | Program + packages + `apps/web` (wallet adapter)                                     |
-| `solana-mobile`  | Program + packages + `apps/mobile` (Expo + MWA deps)                                 |
-| `solana-product` | Web + mobile + program                                                               |
+| Preset           | Output                                                                          |
+| ---------------- | ------------------------------------------------------------------------------- |
+| `solana-program` | programs/core, solana-config + solana-client packages, Anchor integration tests |
+| `solana-web`     | Program + packages + web app (wallet adapter)                                   |
+| `solana-mobile`  | Program + packages + Expo mobile app (MWA deps)                                 |
+| `solana-product` | Web + mobile + program                                                          |
 
 ```sh
 bun run dev:cli -- my-dapp --yes --preset=solana-web --dir=../projects
@@ -17,13 +17,13 @@ bun run dev:cli -- my-dapp --yes --preset=solana-web --dir=../projects
 
 ## Generated layout
 
-- `programs/core/src/lib.rs` — Anchor program (Counter: `initialize`, `increment`)
-- `packages/solana-config` — cluster + program id constants
-- `packages/solana-client` — `createCoreProgram()` using `@coral-xyz/anchor` and a checked-in IDL stub
-- `docs/solana-getting-started.md` — project-local quick start (also see this doc for toolchain links)
+- programs/core/src/lib.rs — Anchor program (Counter: `initialize`, `increment`)
+- solana-config package — cluster + program id constants
+- solana-client package — `createCoreProgram()` using `@coral-xyz/anchor` and a checked-in IDL stub
+- `docs/solana-development.md` — Solana toolchain and quick start (also see this doc for toolchain links)
 - `.github/workflows/ci.yml` — TypeScript lint/typecheck + `anchor build` job
 
-After `anchor build`, copy `target/idl/*.json` into `packages/solana-client/src/idl/` for typed clients in apps.
+After `anchor build`, copy target/idl JSON into the solana-client package idl folder for typed clients in apps.
 
 ## Prerequisites
 
@@ -39,7 +39,7 @@ solana-test-validator          # separate terminal
 bun install
 anchor keys list
 bun run anchor:build           # compile program + emit IDL
-bun run anchor:test            # Anchor test runner (tests/core.ts)
+bun run anchor:test            # Anchor test runner (integration tests)
 bun run dev                    # web/mobile when included
 ```
 

@@ -73,8 +73,8 @@ Rust service family.
 Solana + Anchor family (Anchor 0.32+).
 
 - Presets: `solana-program`, `solana-web`, `solana-mobile`, `solana-product`
-- Layout: `programs/core`, `packages/solana-config`, `packages/solana-client` (Anchor TS client), optional `apps/web` / `apps/mobile`
-- Scripts: `anchor:build`, `anchor:test`; generated `docs/solana-getting-started.md`
+- Layout: programs/core, solana-config + solana-client packages (Anchor TS client), optional web / mobile apps
+- Scripts: `anchor:build`, `anchor:test`; generated getting started in `docs/solana-development.md`
 - References: [Anchor book](https://book.anchor-lang.com/), [Solana docs](https://solana.com/docs)
 
 ## `worker`
