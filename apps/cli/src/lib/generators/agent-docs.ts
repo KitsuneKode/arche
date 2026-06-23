@@ -27,9 +27,9 @@ function keyDirs(config: ProjectConfig): string[] {
     }
     if (includeWorker) dirs.push('`apps/worker` — Background job processing')
   } else if (family === 'next') {
-    dirs.push('`app` — Next.js App Router pages')
-    dirs.push('`components` — React components')
-    if (config.presets.includes('auth')) dirs.push('`lib/auth` — Auth configuration')
+    dirs.push('`app` — Next.js App Router pages and boundaries')
+    dirs.push('`components` — Reusable React components')
+    dirs.push('`env.ts` — Validated public environment variables')
   } else if (family === 'backend') {
     dirs.push('`src` — API source')
   } else if (family === 'convex') {
@@ -50,6 +50,12 @@ function keyDirs(config: ProjectConfig): string[] {
   } else if (family === 'cli') {
     dirs.push('`src` — CLI source')
     dirs.push('`CHANGELOG.md` — Release notes')
+  } else if (family === 'tui') {
+    dirs.push('`src/index.tsx` — Renderer bootstrap')
+    dirs.push('`src/app.tsx` — Root TUI component')
+  } else if (family === 'tanstack') {
+    dirs.push('`src/routes` — File-based TanStack Router routes')
+    dirs.push('`src/routes/api/health.ts` — Deploy health endpoint')
   } else if (family === 'solana') {
     dirs.push('`programs/core` — Anchor program')
     dirs.push('`packages/solana-config` — Cluster and program constants')
@@ -149,7 +155,11 @@ function commandsForFamily(config: ProjectConfig, pm: string): string[] {
   return cmds
 }
 
-function agentPrompt(config: ProjectConfig): string[] {
+function packageManagerRun(pm: string): string {
+  return pm === 'bun' ? 'bun run' : pm === 'pnpm' ? 'pnpm' : 'npm run'
+}
+
+function agentPrompt(config: ProjectConfig, pm: string): string[] {
   const prompts: string[] = [
     'Before making changes, read the relevant files listed under Key Directories.',
     'Update the relevant .docs topic and this AGENTS.md when adding new endpoints, packages, or auth flows.',
@@ -164,7 +174,10 @@ function agentPrompt(config: ProjectConfig): string[] {
   }
 
   if (config.family === 'fullstack') {
-    prompts.push('Run `bun run lint`, `bun run check-types`, and `bun run build` before handoff.')
+    const run = packageManagerRun(pm)
+    prompts.push(
+      `Run \`${run} lint\`, \`${run} check-types\`, and \`${run} build\` before handoff.`,
+    )
     prompts.push(
       'Update SHOWCASE.mdx when showcase content exists and significant UX changes land.',
     )
@@ -194,11 +207,11 @@ function agentPrompt(config: ProjectConfig): string[] {
 
 export function buildRootAgentsMd(config: ProjectConfig): string {
   const name = sanitizeProjectName(config.projectName)
-  const dirs = keyDirs(config)
-  const cmds = commandsForFamily(config, config.packageManager ?? 'bun')
-  const prompts = agentPrompt(config)
-  const placements = placementGuide(config)
   const pm = config.packageManager ?? 'bun'
+  const dirs = keyDirs(config)
+  const cmds = commandsForFamily(config, pm)
+  const prompts = agentPrompt(config, pm)
+  const placements = placementGuide(config)
 
   return `---
 navigation:
@@ -227,7 +240,7 @@ ${pm} dev
 1. Use docs/README.md for public commands and user-facing docs.
 2. Use .docs/README.md for internal architecture and capability context.
 3. Load one task-specific .docs topic, not the whole tree.
-4. Load one matching .plans/active file only for approved in-flight work.
+4. Load one matching .plans/active file when present for approved in-flight work.
 5. Never treat .plans/archive as current behavior.
 
 ## Stack
@@ -259,7 +272,7 @@ ${cmds.join('\n')}
 
 ## Agent Protocol
 
-{/* These instructions are for AI agents modifying this project. */}
+<!-- These instructions are for AI agents modifying this project. -->
 
 - Use this file and the nearest workspace \`AGENTS.md\` — do not add \`.cursor/rules/\`, \`.claude/rules/\`, or duplicate instruction directories.
 
@@ -305,16 +318,9 @@ export function buildGeneratedArchitectureMd(config: ProjectConfig): string {
 
 See \`services/api/.env.example\` and \`apps/web/.env.example\` for required variables.
 
-## Where things go
+## Layering
 
-- Framework entrypoints stay thin.
-- Business logic belongs in services/use-cases.
-- Database access belongs in repositories/queries.
-- API contracts and validation belong in DTO/schema files.
-- Permission decisions belong in policies.
-- Response shaping belongs in mappers.
-- Use PATCH for partial updates. Use PUT only for full replacement.
-- Do not return raw database objects directly; map them into response DTOs.`
+See "Where Things Go" in AGENTS.md for layering rules.`
       : `A full-stack TypeScript monorepo scaffolded with @kitsunekode/arche.
 
 ## Architecture
@@ -348,28 +354,26 @@ See \`services/api/.env.example\` and \`apps/web/.env.example\` for required var
 
 See \`apps/server/.env.example\` and \`apps/web/.env.example\` for required variables.
 
-## Where things go
+## Layering
 
-- Framework entrypoints stay thin.
-- Business logic belongs in services/use-cases.
-- Database access belongs in repositories/queries.
-- API contracts and validation belong in DTO/schema files.
-- Permission decisions belong in policies.
-- Response shaping belongs in mappers.
-- Use PATCH for partial updates. Use PUT only for full replacement.
-- Do not return raw database objects directly; map them into response DTOs.`,
+See "Where Things Go" in AGENTS.md for layering rules.`,
     next: `A standalone Next.js application scaffolded with @kitsunekode/arche.
 
 ## Architecture
 
 - **Frontend**: Next.js (App Router)
-${config.presets.includes('auth') ? '- **Auth**: Better Auth\n' : ''}${config.presets.includes('docs') ? '- **Docs**: Fumadocs\n' : ''}- **Runtime**: Bun
+- **Env validation**: \`@t3-oss/env-nextjs\` in \`env.ts\`
+- **Boundaries**: \`app/error.tsx\`, \`app/loading.tsx\`, \`app/not-found.tsx\`
+- **Sample API**: \`GET /api/health\` Route Handler
+- **Runtime**: Bun
 
 ## Key Entry Points
 
 - App layout: \`app/layout.tsx\`
 - App pages: \`app/\` (App Router directories)
-${config.presets.includes('auth') ? '- Auth config: `lib/auth`\n' : ''}
+- Env validation: \`env.ts\`
+- Shared UI: \`components/\`
+
 ## Environment Variables
 
 See \`.env.example\` at the project root.`,
@@ -465,6 +469,24 @@ ${config.preset === 'solana-web' || config.preset === 'solana-product' ? '- **We
 
 - \`anchor build\` — Build the program
 - \`anchor test\` — Run Anchor tests when local validator tooling is available`,
+    tui: `A terminal UI application scaffolded with @kitsunekode/arche.
+
+## Architecture
+
+- **Renderer**: OpenTUI (\`@opentui/core\` + \`@opentui/react\`)
+- **UI**: React components with lowercase OpenTUI intrinsics (\`box\`, \`text\`, \`scrollbox\`)
+- **Runtime**: Bun
+
+## Key Entry Points
+
+- Renderer bootstrap: \`src/index.tsx\`
+- Root component: \`src/app.tsx\`
+
+## Commands
+
+- \`bun dev\` — Run the TUI directly with Bun
+- \`bun run build\` — Compile to \`dist/\`
+- \`bun run start\` — Run the compiled entrypoint`,
   }
 
   const description =
