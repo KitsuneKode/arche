@@ -46,16 +46,14 @@ export function LiveChat({ signedIn, userId }: { signedIn: boolean; userId?: str
         const optimisticId = `optimistic-${Date.now()}`
         queryClient.setQueryData(trpc.chat.list.queryKey(), (old) => {
           const list = old ?? []
-          return [
-            ...list,
-            {
-              id: optimisticId,
-              content,
-              senderId: userId ?? 'you',
-              createdAt: new Date(),
-              sender: { id: userId ?? 'you', name: 'You', image: null },
-            },
-          ]
+          const optimistic = {
+            id: optimisticId,
+            content,
+            senderId: userId ?? 'you',
+            createdAt: new Date(),
+            sender: { id: userId ?? 'you', name: 'You', image: null },
+          } as (typeof list)[number]
+          return [...list, optimistic]
         })
         return { previous, optimisticId }
       },

@@ -1,26 +1,15 @@
-import { Navbar } from '@/components/arche/navbar'
-import { HeroBlock, SiteFrame, SiteShell } from '@/components/arche/site-primitives'
-import { LiveDemo } from '@/components/live/live-demo'
-import { LiveDemoJsonLd } from '@/components/seo/live-demo-json-ld'
-import config from '@/env'
-import { buildPageMetadata } from '@/lib/seo'
-import { HydrateClient, prefetch, trpc } from '@/trpc/http-server'
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
-export const metadata = buildPageMetadata({
+import { LiveDemo } from '@/components/live/live-demo'
+import config from '@/env'
+import { HydrateClient, prefetch, trpc } from '@/trpc/server'
+
+export const metadata: Metadata = {
   title: 'Live stack demo — chat, posts, and proof run',
   description:
-    'Interactive TypeScript fullstack demo: tRPC, Prisma, Better Auth, public chat, draft posts, and real proof-run checks on arche.dev.',
-  path: '/live',
-  keywords: [
-    'tRPC',
-    'Better Auth',
-    'Prisma',
-    'live demo',
-    'fullstack TypeScript',
-    'Next.js',
-    'Express',
-  ],
-})
+    'Interactive fullstack demo: tRPC, Prisma, Better Auth, public chat, draft posts, and proof-run checks.',
+}
 
 async function isApiReachable() {
   try {
@@ -49,22 +38,24 @@ export default async function LivePage() {
   }
 
   return (
-    <SiteShell>
-      <LiveDemoJsonLd />
-      <Navbar />
+    <main className="shell">
+      <section className="hero">
+        <p className="eyebrow">Live sandbox</p>
+        <h1>
+          Try the stack <span style={{ color: 'var(--color-accent)' }}>live.</span>
+        </h1>
+        <p className="lede">
+          Chat, posts, and proof-run checks against your API — not illustrative snippets. Sign in to
+          unlock write access and optional challenges.
+        </p>
+        <div className="actions">
+          <Link href="/">← Back to home</Link>
+        </div>
+      </section>
 
-      <SiteFrame>
-        <HeroBlock eyebrow="Live sandbox" title="Try the stack" accent=" live." size="md">
-          Chat, posts, and proof-run checks against the demo API — not illustrative snippets. Sign
-          in to unlock write access and optional challenges.
-        </HeroBlock>
-
-        <section className="flex-1 bg-black p-6 md:p-16">
-          <HydrateClient>
-            <LiveDemo apiReachable={apiReachable} />
-          </HydrateClient>
-        </section>
-      </SiteFrame>
-    </SiteShell>
+      <HydrateClient>
+        <LiveDemo apiReachable={apiReachable} />
+      </HydrateClient>
+    </main>
   )
 }

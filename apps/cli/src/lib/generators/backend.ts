@@ -128,6 +128,7 @@ const HONO_EXPRESS_ARTIFACTS = [
   'src/vercel-handler.ts',
   'src/common/validate.ts',
   'src/modules/trpc/trpc.routes.ts',
+  'src/modules/chat/chat.routes.ts',
   'src/modules/admin/admin.routes.ts',
   'src/modules/admin/admin.controller.ts',
   'src/modules/admin/admin.service.ts',
@@ -506,6 +507,35 @@ async function detectServerDir(destinationDir: string): Promise<string> {
   return 'apps/server'
 }
 
+async function stripLiveDemoWeb(destinationDir: string): Promise<void> {
+  const livePaths = [
+    'apps/web/app/live',
+    'apps/web/app/(auth)',
+    'apps/web/components/live',
+    'apps/web/lib/live-feed',
+    'apps/web/lib/live-chat-sync.ts',
+    'apps/web/lib/live-chat-sync-policy.ts',
+    'apps/web/lib/proof-run',
+    'apps/web/lib/proof-run-storage.ts',
+    'apps/web/lib/client-mounted.ts',
+  ]
+  for (const relativePath of livePaths) {
+    await rm(join(destinationDir, relativePath), { recursive: true, force: true })
+  }
+  const homePage = join(destinationDir, 'apps/web/app/page.tsx')
+  try {
+    const content = await readFile(homePage, 'utf8')
+    const withoutLiveCta = content
+      .replace(/\s*<Link href="\/live"[^>]*>[\s\S]*?<\/Link>\s*/g, '\n')
+      .replace(/import Link from 'next\/link'\n/, '')
+    if (withoutLiveCta !== content) {
+      await writeFile(homePage, withoutLiveCta)
+    }
+  } catch {
+    // Web app not present
+  }
+}
+
 async function patchFullstackHomepageCopy(
   destinationDir: string,
   backend: ProjectConfig['backend'],
@@ -601,6 +631,7 @@ export async function applyBackendTransform(
     }
 
     await patchRootPackageForServiceApi(destinationDir)
+    await stripLiveDemoWeb(destinationDir)
 
     return
   }

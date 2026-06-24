@@ -1,7 +1,6 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import Link from 'next/link'
 
 import { ActivityDeck } from '@/components/live/activity-deck'
 import { ProofLadder } from '@/components/live/proof-ladder'
@@ -21,13 +20,8 @@ export function LiveDemo({ apiReachable }: { apiReachable: boolean }) {
         </p>
         <h2 className="mt-3 text-2xl font-bold text-white">Live demo needs a running API</h2>
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-zinc-400">
-          Set <code className="text-zinc-300">NEXT_PUBLIC_API_URL</code> to your Express host,
-          migrate the database, and run <code className="text-zinc-300">bun run db:seed</code>. See
-          the{' '}
-          <Link href="/docs/guides/live-demo" className="text-white underline">
-            live demo guide
-          </Link>
-          .
+          Set <code className="text-zinc-300">NEXT_PUBLIC_API_URL</code> to your API host, migrate
+          the database, and run <code className="text-zinc-300">bun run db:seed</code>.
         </p>
       </div>
     )
