@@ -10,7 +10,8 @@ hide content until JavaScript loads.
 
 **Architecture:** Keep `cacheComponents: true` (PPR) on `apps/web`. Prefer server
 components for static MDX embeds. Scope `motion` to `/` only. `/live` and `/play`
-use static shells with Suspense islands for tRPC hydration (not full-route async).
+use static shells with client islands under `(sandbox)` TRPC provider (no route-level
+`loading.tsx` or server prefetch that blocks PPR stream).
 
 **Tech stack:** Next.js App Router, React 19, fumadocs-mdx, Vercel `arche-landing`.
 
@@ -21,22 +22,22 @@ use static shells with Suspense islands for tRPC hydration (not full-route async
 
 ## Context — what was already fixed (2026-06-24)
 
-| Area                          | Commit                 | Status                                       |
-| ----------------------------- | ---------------------- | -------------------------------------------- |
-| Docs TOC `[object Object]`    | `053737f`, `91a1c4a`   | SSR TOC from MDX headings                    |
-| `/examples` static highlight  | `053737f`              | `'use cache'` on Shiki                       |
-| Blog index prerender          | `053737f`              | sync `getPublishedBlogSummariesSync`         |
-| `/families` table invisible   | `91a1c4a`              | removed motion stagger                       |
-| Matrix readability            | `91a1c4a`              | `summary` columns on marketing               |
-| `/live` CORS + prefetch       | `0b470dd` + Vercel env | API env on `arche-template-server`           |
-| MDX motion SSR blockers       | `1437811`              | server embeds, no opacity:0                  |
-| Motion scoped to `/`          | `1437811`              | `MotionRoot` on landing only                 |
-| Route loader pathname-only    | `1437811`              | no searchParams bailout                      |
-| Docs TOC crash (React #185)   | `1cb4947`              | props vs DOM split + stable snapshot         |
-| Docs error boundary           | `1cb4947`              | `app/docs/error.tsx`                         |
-| Docs sidebar SSR              | `1cb4947`              | server nav + `DocsSidebarLink`               |
-| `/live` PPR infinite skeleton | (this ship)            | sync shell + Suspense island + client health |
-| `/play` Relay showcase        | (this ship)            | chat + Stack Ping reference route            |
+| Area                          | Commit                          | Status                                           |
+| ----------------------------- | ------------------------------- | ------------------------------------------------ |
+| Docs TOC `[object Object]`    | `053737f`, `91a1c4a`            | SSR TOC from MDX headings                        |
+| `/examples` static highlight  | `053737f`                       | `'use cache'` on Shiki                           |
+| Blog index prerender          | `053737f`                       | sync `getPublishedBlogSummariesSync`             |
+| `/families` table invisible   | `91a1c4a`                       | removed motion stagger                           |
+| Matrix readability            | `91a1c4a`                       | `summary` columns on marketing                   |
+| `/live` CORS + prefetch       | `0b470dd` + Vercel env          | API env on `arche-template-server`               |
+| MDX motion SSR blockers       | `1437811`                       | server embeds, no opacity:0                      |
+| Motion scoped to `/`          | `1437811`                       | `MotionRoot` on landing only                     |
+| Route loader pathname-only    | `1437811`                       | no searchParams bailout                          |
+| Docs TOC crash (React #185)   | `1cb4947`                       | props vs DOM split + stable snapshot             |
+| Docs error boundary           | `1cb4947`                       | `app/docs/error.tsx`                             |
+| Docs sidebar SSR              | `1cb4947`                       | server nav + `DocsSidebarLink`                   |
+| `/live` PPR infinite skeleton | `9de01ab`, `dc10805`, `e9aaeb4` | sync shell + client health; no Suspense hydrator |
+| `/play` Relay showcase        | `9de01ab`, `e9aaeb4`            | chat + Stack Ping reference route                |
 
 ---
 
@@ -130,9 +131,12 @@ bun run --cwd apps/web build
 
 ## Task 5 — Production deploy checklist
 
-- [x] Push to `main` → Vercel `arche-landing` auto-deploy (`1cb4947`)
+- [x] Push to `main` → Vercel `arche-landing` auto-deploy (`1cb4947`, `e9aaeb4`)
 - [x] Hard-refresh smoke: `/docs/getting-started` (200, "Quick loop", no `[object Object]`),
       `/docs/guides/verification-and-presets`, `/examples`, `/blog`, `/families` (200)
+- [x] `/live` headless smoke (`e9aaeb4`): hero in first HTML (~28 KB), PROOF RUN hydrates
+      within 3s, no `Connection closed.`
+- [x] `/play` headless smoke: Relay hero + chat/ping panels hydrate within 3s
 - [ ] Confirm `api.arche.kitsunelabs.xyz/health` → `database: connected`
 - [ ] Smoke: `RUN_LIVE_DEMO_SMOKE=1 bun test apps/web` (if env configured)
 
