@@ -22,21 +22,10 @@ import { PackageManagerTabs } from '@/components/docs/package-manager-tabs'
 import { PresetRegistryTable } from '@/components/docs/preset-registry-table'
 import { VerificationMatrixTable } from '@/components/docs/verification-matrix-table'
 import { WorkflowSteps } from '@/components/docs/workflow-steps'
+import { extractTocTitle, slugifyHeadingText } from '@/lib/toc-title'
 
 function slugify(value: ReactNode): string {
-  const text =
-    typeof value === 'string'
-      ? value
-      : Array.isArray(value)
-        ? value.map((part) => (typeof part === 'string' ? part : '')).join('')
-        : String(value ?? '')
-
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
-    .replace(/-+/g, '-')
+  return slugifyHeadingText(extractTocTitle(value).trim())
 }
 
 function createHeading(level: 2 | 3 | 4) {
@@ -54,7 +43,7 @@ function createHeading(level: 2 | 3 | 4) {
           <a
             href={`#${id}`}
             className="docs-heading-anchor"
-            aria-label={`Link to section: ${id}`}
+            aria-label={`Link to section: ${extractTocTitle(children) || id}`}
           />
         ) : null}
         {children}

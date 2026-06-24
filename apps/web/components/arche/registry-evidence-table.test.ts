@@ -24,4 +24,15 @@ describe('RegistryEvidenceTable', () => {
   it('exports RegistryEvidenceTable component', () => {
     expect(typeof RegistryEvidenceTable).toBe('function')
   })
+
+  it('summary policy keeps graduation columns only', () => {
+    const productPresets = PRESETS.filter((p) => p.id !== 'customize' && p.id !== 'experiments')
+    const columns = columnsForPresets(productPresets, 'summary')
+    const columnKeys = columns.map((c) => c.key)
+
+    expect(columnKeys).toContain('generatedBuild')
+    expect(columnKeys).not.toContain('bun')
+    expect(columnKeys).not.toContain('docs')
+    expect(columns.length).toBeLessThanOrEqual(9)
+  })
 })

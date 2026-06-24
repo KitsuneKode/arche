@@ -2,12 +2,14 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { DocsPageBody, DocsPageHeader } from '@/components/docs/docs-page-header'
+import type { TocItem } from '@/components/docs/docs-toc'
 import { DocsPageJsonLd } from '@/components/seo/docs-page-json-ld'
 import { getCachedDocsMetadata } from '@/lib/content-cache'
 import { getMdxComponents } from '@/lib/get-mdx-components'
 import { DocsProse } from '@/lib/mdx-components'
 import { readingTimeFromText } from '@/lib/reading-time'
 import { source } from '@/lib/source'
+import { buildDocTocFromMdx } from '@/lib/toc-title'
 
 type Props = {
   params: Promise<{ slug?: string[] }>
@@ -31,6 +33,7 @@ export default async function DocsMdxPage({ params }: Props) {
 
   const MDX = page.data.body
   const readingTime = readingTimeFromText(page.data.title, page.data.description)
+  const tocItems: TocItem[] = buildDocTocFromMdx(page.data.info.fullPath)
 
   return (
     <div className="flex h-full flex-col">
@@ -45,7 +48,7 @@ export default async function DocsMdxPage({ params }: Props) {
         description={page.data.description}
         readingTime={readingTime}
       />
-      <DocsPageBody>
+      <DocsPageBody tocItems={tocItems}>
         <DocsProse>
           <MDX components={getMdxComponents()} />
         </DocsProse>

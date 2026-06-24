@@ -1,7 +1,3 @@
-'use client'
-
-import { m } from 'motion/react'
-
 import {
   devScaffoldCommand,
   formatSupportStatus,
@@ -28,22 +24,10 @@ function PresetTable({ rows }: { rows: typeof PUBLIC_PRESET_ROWS }) {
           <th className="px-6 py-4 font-medium">Best for</th>
         </tr>
       </thead>
-      <m.tbody
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-        }}
-      >
-        {rows.map((family, index) => (
-          <m.tr
+      <tbody>
+        {rows.map((family) => (
+          <tr
             key={family.id}
-            variants={{
-              hidden: { opacity: 0, y: 10 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            transition={{ duration: 0.2, delay: index * 0.02, ease: [0.23, 1, 0.32, 1] }}
             className="border-b border-zinc-800 transition-[background-color] duration-150 ease-out last:border-b-0 hover:bg-zinc-900/30"
           >
             <td className="border-r border-zinc-800 px-6 py-4 align-top">
@@ -81,9 +65,9 @@ function PresetTable({ rows }: { rows: typeof PUBLIC_PRESET_ROWS }) {
             <td className="px-6 py-4 align-top whitespace-normal text-zinc-400">
               {family.goodFor}
             </td>
-          </m.tr>
+          </tr>
         ))}
-      </m.tbody>
+      </tbody>
     </table>
   )
 }

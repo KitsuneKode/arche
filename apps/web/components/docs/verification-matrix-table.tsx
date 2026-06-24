@@ -10,10 +10,11 @@ export function VerificationMatrixTable() {
       variant="docs"
       caption={
         <>
-          Evidence recorded in the CLI registry. A preset becomes{' '}
+          Evidence recorded in the CLI registry. Columns with no check for a preset show{' '}
+          <span className="text-zinc-500">—</span>. A preset becomes{' '}
           <strong className="text-white">Stable</strong> when{' '}
           <code className="text-zinc-300">presetHasStableEvidence</code> passes for that
-          preset&apos;s route (not every column applies to every stack). See{' '}
+          preset&apos;s route. See{' '}
           <Link
             href="/docs/guides/verification-and-presets"
             className="text-white underline underline-offset-2"
