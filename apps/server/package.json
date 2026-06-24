@@ -24,23 +24,23 @@
     "@bull-board/api": "^7.1.5",
     "@bull-board/express": "^7.1.5",
     "@t3-oss/env-core": "^0.13.11",
-    "@trpc/server": "^11.17.0",
+    "@trpc/server": "catalog:",
     "bullmq": "^5.76.10",
     "compression": "^1.8.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "superjson": "^2.2.6",
-    "zod": "^4.1.11"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",
-    "@types/bun": "1.3.14",
+    "@types/bun": "catalog:",
     "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6"
   },
   "peerDependencies": {
-    "typescript": "^6.0.3"
+    "typescript": "catalog:"
   }
 }

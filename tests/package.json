@@ -17,9 +17,9 @@
     "@arche-template/trpc": "workspace:*"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "catalog:"
   },
   "peerDependencies": {
-    "typescript": "^6.0.3"
+    "typescript": "catalog:"
   }
 }

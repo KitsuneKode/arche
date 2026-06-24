@@ -1,12 +1,31 @@
 {
   "name": "arche-template",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*",
-    "toolings/*",
-    "tests/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*",
+      "toolings/*",
+      "tests/*"
+    ],
+    "catalog": {
+      "@types/bun": "1.3.14",
+      "@types/node": "^25.9.0",
+      "@trpc/client": "^11.17.0",
+      "@trpc/server": "^11.17.0",
+      "better-auth": "1.6.11",
+      "ioredis": "5.10.1",
+      "next": "^16.2.6",
+      "oxfmt": "^0.50.0",
+      "oxlint": "^1.65.0",
+      "react": "^19.2.6",
+      "react-dom": "^19.2.6",
+      "redis": "^5.12.0",
+      "turbo": "^2.9.14",
+      "typescript": "^6.0.3",
+      "zod": "^4.4.3"
+    }
+  },
   "scripts": {
     "agents:sync": "bun toolings/scripts/sync-template-agents.ts",
     "agents:sync:check": "bun toolings/scripts/sync-template-agents.ts --check",
@@ -18,6 +37,7 @@
     "brand:export-og": "bun toolings/scripts/export-og-image.ts",
     "build:vercel": "turbo run build:vercel",
     "brand:export": "bun toolings/scripts/export-brand-assets.ts",
+    "catalog:apply": "bun toolings/scripts/apply-workspace-catalog.ts",
     "ci": "bun run format:check && bunx turbo run lint check-types && bun test && bunx turbo run build && bun run pkg:check && bun run repo:doctor:strict",
     "ci:affected": "bun run format:check && bunx turbo run lint check-types --affected && bun test && bunx turbo run build --affected && bun run pkg:check && bun run repo:doctor:strict",
     "ci:min": "bun run format:check && bunx turbo run lint check-types && bun test && bunx turbo run build",
@@ -72,7 +92,7 @@
     "lint-staged": "lint-staged"
   },
   "dependencies": {
-    "zod": "^4.4.3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",
@@ -82,11 +102,11 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
     "only-allow": "^1.2.2",
-    "oxfmt": "^0.50.0",
-    "oxlint": "^1.65.0",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
     "sharp": "^0.34.5",
-    "turbo": "^2.9.14",
-    "typescript": "6.0.3"
+    "turbo": "catalog:",
+    "typescript": "catalog:"
   },
   "engines": {
     "node": ">=18"
