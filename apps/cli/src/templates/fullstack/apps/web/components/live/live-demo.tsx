@@ -9,12 +9,12 @@ import { useTRPC } from '@/trpc/client'
 
 export function LiveDemo() {
   const trpc = useTRPC()
-  const healthQuery = useApiReachable()
+  const health = useApiReachable()
   const sessionQuery = useQuery(trpc.auth.getSession.queryOptions())
   const signedIn = Boolean(sessionQuery.data?.user)
   const userId = sessionQuery.data?.user?.id
 
-  if (healthQuery.isPending) {
+  if (health.isPending) {
     return (
       <div className="card">
         <p className="eyebrow">Checking API…</p>
@@ -23,7 +23,7 @@ export function LiveDemo() {
     )
   }
 
-  if (!healthQuery.data) {
+  if (health.isConfirmedOffline) {
     return (
       <div className="card">
         <p className="eyebrow">API offline</p>
@@ -37,15 +37,24 @@ export function LiveDemo() {
   }
 
   return (
-    <div className="grid two">
-      <ProofLadder apiReachable signedIn={signedIn} userId={userId} />
-      <ActivityDeck
-        signedIn={signedIn}
-        userId={userId}
-        onSignedIn={() => {
-          void sessionQuery.refetch()
-        }}
-      />
+    <div className="space-y-4">
+      {health.seededOnline && health.isRefetching ? (
+        <p className="eyebrow">Re-checking API connection…</p>
+      ) : null}
+      <div className="grid two">
+        <ProofLadder
+          apiReachable={health.status.reachable || health.seededOnline}
+          signedIn={signedIn}
+          userId={userId}
+        />
+        <ActivityDeck
+          signedIn={signedIn}
+          userId={userId}
+          onSignedIn={() => {
+            void sessionQuery.refetch()
+          }}
+        />
+      </div>
     </div>
   )
 }

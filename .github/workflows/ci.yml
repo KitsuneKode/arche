@@ -23,10 +23,10 @@ env:
   NEXT_PUBLIC_SITE_DESCRIPTION: Personal scaffold CLI and project vault
 
 jobs:
-  ci:
-    name: Verify
+  verify-fast:
+    name: Verify (fast)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
         with:
@@ -59,7 +59,6 @@ jobs:
           bun-version-file: package.json
 
       - uses: actions/cache@v5
-        id: turbo-cache
         with:
           path: |
             ~/.bun/install/cache
@@ -90,11 +89,60 @@ jobs:
       - name: CLI package check
         run: bun run pkg:check
 
+  verify-scaffold:
+    name: Verify (scaffold)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ~/.bun/install/cache
+            .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('bun.lock', 'turbo.json') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
       - name: Verify fullstack combo matrix
         env:
           SCAFFOLD_E2E_SERIAL: '1'
         run: bun toolings/scripts/verify-generated-project.ts --combo-matrix --run=install,typecheck,lint,build
-        timeout-minutes: 25
+
+  verify-extras:
+    name: Verify (extras)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ~/.bun/install/cache
+            .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('bun.lock', 'turbo.json') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
       - name: Verify next-app with pnpm
         run: bun toolings/scripts/verify-generated-project.ts --preset=next-app --pm=pnpm --run=install,build

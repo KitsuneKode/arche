@@ -59,6 +59,7 @@
     "repo:doctor:strict": "bun toolings/scripts/repo-doctor.ts --strict",
     "verify:generated": "bun toolings/scripts/verify-generated-project.ts",
     "verify:generated:fullstack": "bun toolings/scripts/verify-generated-project.ts --preset=typescript-fullstack --pm=bun --run=install,typecheck,build",
+    "verify:generated:combo-fullstack": "bun toolings/scripts/verify-generated-project.ts --combo-matrix --combo-family=fullstack --run=install,typecheck,lint,build",
     "smoke:scaffold": "bun toolings/scripts/smoke-scaffold-manual.ts",
     "template:clean:dry": "bun toolings/scripts/template-cleanup.ts --dry-run",
     "template:clean": "bun toolings/scripts/template-cleanup.ts --yes",

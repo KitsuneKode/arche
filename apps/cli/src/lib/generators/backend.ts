@@ -510,14 +510,20 @@ async function detectServerDir(destinationDir: string): Promise<string> {
 async function stripLiveDemoWeb(destinationDir: string): Promise<void> {
   const livePaths = [
     'apps/web/app/live',
+    'apps/web/app/(sandbox)',
     'apps/web/app/(auth)',
     'apps/web/components/live',
+    'apps/web/components/play',
+    'apps/web/components/sandbox',
     'apps/web/lib/live-feed',
     'apps/web/lib/live-chat-sync.ts',
     'apps/web/lib/live-chat-sync-policy.ts',
     'apps/web/lib/proof-run',
     'apps/web/lib/proof-run-storage.ts',
     'apps/web/lib/client-mounted.ts',
+    'apps/web/lib/api-health.ts',
+    'apps/web/lib/use-api-reachable.ts',
+    'apps/web/lib/stack-ping.ts',
   ]
   for (const relativePath of livePaths) {
     await rm(join(destinationDir, relativePath), { recursive: true, force: true })

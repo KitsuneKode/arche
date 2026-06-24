@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = join(import.meta.dir, '../../..')
@@ -15,6 +15,8 @@ const FORBIDDEN_TEMPLATE_WEB_TESTS = [
   'apps/web/lib/proof-run/proof-run.test.ts',
 ]
 
+const FORBIDDEN_TEMPLATE_PATHS = ['apps/web/app/live/page.tsx', 'apps/web/app/live/layout.tsx']
+
 const REQUIRED_PATHS = [
   'apps/web/components/live/live-demo.tsx',
   'apps/web/components/live/activity-deck.tsx',
@@ -22,6 +24,9 @@ const REQUIRED_PATHS = [
   'apps/web/lib/live-feed/live-feed.ts',
   'apps/web/lib/proof-run/proof-run.ts',
   'apps/web/app/(sandbox)/live/page.tsx',
+  'apps/web/app/(sandbox)/layout.tsx',
+  'apps/web/components/sandbox/sandbox-api-bridge.tsx',
+  'apps/web/lib/api-health.ts',
   'apps/server/src/modules/chat/chat.routes.ts',
   'apps/server/src/modules/chat/chat.events.ts',
   'apps/server/src/modules/demo/demo.trpc.ts',
@@ -35,9 +40,21 @@ describe('fullstack template live demo parity', () => {
     })
   }
 
+  for (const relative of FORBIDDEN_TEMPLATE_PATHS) {
+    it(`does not include legacy ${relative}`, () => {
+      expect(existsSync(join(TEMPLATE, relative))).toBe(false)
+    })
+  }
+
   for (const relative of FORBIDDEN_TEMPLATE_WEB_TESTS) {
     it(`does not duplicate monorepo test ${relative}`, () => {
       expect(existsSync(join(TEMPLATE, relative))).toBe(false)
     })
   }
+
+  it('(sandbox)/live page does not use server health await or apiReachable prop', () => {
+    const source = readFileSync(join(TEMPLATE, 'apps/web/app/(sandbox)/live/page.tsx'), 'utf8')
+    expect(source).not.toContain('isApiReachable')
+    expect(source).not.toContain('apiReachable')
+  })
 })

@@ -10,6 +10,8 @@ import {
 import {
   PackageManagerSchema,
   PresetSchema,
+  FamilySchema,
+  type Family,
   type PackageManager,
   type Preset,
 } from '../../apps/cli/src/types/schemas'
@@ -22,6 +24,8 @@ interface CliOptions {
   json: boolean
   skipMissingTools: boolean
   comboMatrix: boolean
+  comboFamilies?: Family[]
+  comboIds?: string[]
 }
 
 const COMMANDS = [
@@ -77,12 +81,16 @@ Options:
   --json               Print JSON results.
   --no-skip-tools      Fail instead of skipping missing cargo/anchor/package-manager tools.
   --combo-matrix       Verify fullstack combo + standalone family matrix (install/typecheck/lint/build).
+  --combo-family=<ids> With --combo-matrix: comma-separated families (e.g. fullstack,next).
+  --combo-id=<ids>     With --combo-matrix: comma-separated combo case ids (e.g. fullstack-default).
   -h, --help           Show this message.
 
 Examples:
   bun run verify:generated
   bun run verify:generated -- --preset=typescript-fullstack --pm=bun,pnpm
   bun run verify:generated -- --preset=solana-product --run=cargo-check,anchor-build
+  bun run verify:generated:combo-fullstack
+  bun run verify:generated -- --combo-matrix --combo-family=fullstack --run=install,typecheck,build
 `)
     process.exit(0)
   }
@@ -104,6 +112,14 @@ Examples:
     }
     if (arg.startsWith('--run=')) {
       options.commands = parseCommandList(arg.slice('--run='.length))
+    }
+    if (arg.startsWith('--combo-family=')) {
+      options.comboFamilies = splitList(arg.slice('--combo-family='.length)).map((family) =>
+        FamilySchema.parse(family),
+      )
+    }
+    if (arg.startsWith('--combo-id=')) {
+      options.comboIds = splitList(arg.slice('--combo-id='.length))
     }
   }
 
@@ -166,7 +182,16 @@ async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2))
 
   if (options.comboMatrix) {
-    const comboCases = buildGeneratedComboCases()
+    let comboCases = buildGeneratedComboCases()
+    if (options.comboFamilies?.length) {
+      comboCases = comboCases.filter((testCase) => options.comboFamilies!.includes(testCase.family))
+    }
+    if (options.comboIds?.length) {
+      comboCases = comboCases.filter((testCase) => options.comboIds!.includes(testCase.id))
+    }
+    if (comboCases.length === 0) {
+      throw new Error('No combo cases matched --combo-family / --combo-id filters')
+    }
     const comboResults = []
 
     for (const testCase of comboCases) {

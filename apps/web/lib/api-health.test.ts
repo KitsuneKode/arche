@@ -5,7 +5,43 @@ process.env.NEXT_PUBLIC_SITE_URL = 'https://arche.kitsunelabs.xyz'
 process.env.NEXT_PUBLIC_APP_URL = 'https://arche.kitsunelabs.xyz'
 process.env.NEXT_PUBLIC_API_URL = 'https://api.arche.kitsunelabs.xyz'
 
-const { fetchApiHealth } = await import('@/lib/api-health')
+const { fetchApiHealth, probeApiHealth } = await import('@/lib/api-health')
+
+describe('probeApiHealth', () => {
+  it('returns reachable status with latency when database is connected', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ database: 'connected', status: 'OK' }), {
+        status: 200,
+      })) as typeof fetch
+
+    await expect(probeApiHealth()).resolves.toEqual(
+      expect.objectContaining({ reachable: true, database: 'connected' }),
+    )
+    globalThis.fetch = originalFetch
+  })
+
+  it('returns unreachable when health request fails', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async () => {
+      throw new Error('network')
+    }) as typeof fetch
+
+    await expect(probeApiHealth()).resolves.toEqual(expect.objectContaining({ reachable: false }))
+    globalThis.fetch = originalFetch
+  })
+
+  it('returns unreachable when database is not connected', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ database: 'disconnected' }), { status: 200 })) as typeof fetch
+
+    await expect(probeApiHealth()).resolves.toEqual(
+      expect.objectContaining({ reachable: false, database: 'disconnected' }),
+    )
+    globalThis.fetch = originalFetch
+  })
+})
 
 describe('fetchApiHealth', () => {
   it('returns true when health responds with connected database', async () => {
