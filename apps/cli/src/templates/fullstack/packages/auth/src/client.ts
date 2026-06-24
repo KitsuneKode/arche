@@ -10,5 +10,5 @@ import { createAuthClient } from 'better-auth/react' // make sure to import from
  * See: https://github.com/better-auth/better-auth/issues
  */
 export const authClient = createAuthClient({
-  baseURL: env.NEXT_PUBLIC_APP_URL,
+  baseURL: env.NEXT_PUBLIC_API_URL,
 }) as ReturnType<typeof createAuthClient>

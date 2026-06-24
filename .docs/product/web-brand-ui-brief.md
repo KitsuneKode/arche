@@ -35,10 +35,10 @@ Current promises the site may make:
 - Package scopes in generated monorepos derive from the project name.
 - CI/package/release foundations exist in this source repo.
 
-Claims the site must not make yet:
+Claims the site must not make:
 
-- No preset is `Stable` or `Production Ready` until the verification matrix
-  satisfies its graduation requirements.
+- Do not call a preset **Stable** unless `presetHasStableEvidence` passes in `packages/registry` (the site reads the same registry as the CLI).
+- Do not use **Production Ready** or similar adjectives — use matrix-backed support labels only.
 - Do not say remote Turborepo caching is enabled by default. The repo supports
   CI cache credentials; they are not an automatic generated-project promise.
 - Do not describe `.cursor/rules/` or `.claude/rules/` as generated context.
@@ -97,10 +97,13 @@ Primary job: move from interest to a correct local command.
 - Never present repository maintenance utilities as commands automatically
   available inside every generated scaffold unless they are generated there.
 
-### Examples / Showcase / Blog
+### Examples / Showcase / Blog / Live
 
 Secondary surfaces. They may demonstrate generated architecture, but must reuse
 the same vocabulary and support status rules rather than inventing claims.
+
+- **`/examples`** — static registry snippets; no live API calls.
+- **`/live`** — real proof-run ladder + relay lobby against a running API; demo-only, bounded, and honest when offline. Distinct from `/examples`.
 
 ### Design lab
 

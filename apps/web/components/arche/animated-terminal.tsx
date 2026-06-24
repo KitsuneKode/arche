@@ -4,23 +4,24 @@ import { m } from 'motion/react'
 import { useEffect, useReducer } from 'react'
 
 import { PrimaryLink } from '@/components/arche/site-primitives'
+import { CLI_VERSION } from '@/lib/cli-version'
 
-const terminalSteps = [
+/** Illustrative transcript of `bun run dev:cli -- … --yes --preset=typescript-fullstack` (non-interactive). */
+export const terminalSteps = [
   {
-    text: 'bun run dev:cli -- my-app --yes --preset=typescript-fullstack',
+    text: 'bun run dev:cli -- my-app --yes --preset=typescript-fullstack --dir=../projects',
     type: 'command',
     delay: 800,
   },
-  { text: '? Package manager', type: 'prompt', delay: 600 },
-  { text: '❯ bun (pnpm supported)', type: 'select', delay: 400 },
-  { text: '✔ Workspace scope renamed to @my-app/*', type: 'success', delay: 300 },
-  { text: '? Add Rust workspace foundations?', type: 'prompt', delay: 500 },
-  { text: '❯ Yes, cargo workspace + service slot', type: 'select', delay: 300 },
-  { text: '✔ AGENTS.md, .docs, .plans, CI, and env examples written', type: 'success', delay: 300 },
-  { text: '⠋ Validating generated project...', type: 'loading', delay: 800 },
-  { text: '✔ Scaffold ready for review gates', type: 'success', delay: 400 },
+  { text: '✔ Workspace scope renamed to @my-app/*', type: 'success', delay: 400 },
   {
-    text: 'Tip: --preset=convex-product for Next.js + Convex (no Express/Prisma)',
+    text: '✔ AGENTS.md, .docs, .plans, CI, and env examples written',
+    type: 'success',
+    delay: 400,
+  },
+  { text: '✔ Scaffold complete', type: 'success', delay: 400 },
+  {
+    text: 'Tip: pass --verify to run install/lint/build checks after scaffold',
     type: 'prompt',
     delay: 0,
   },
@@ -106,14 +107,17 @@ export function AnimatedTerminal() {
   }, [currentStep, isTyping])
 
   return (
-    <div className="relative z-20 flex w-full max-w-2xl flex-col gap-4 sm:flex-row">
+    <div
+      className="relative z-20 flex w-full max-w-2xl flex-col gap-4 sm:flex-row"
+      aria-label="Illustrative terminal output"
+    >
       <div className="group flex flex-1 flex-col overflow-hidden border border-zinc-800 bg-black shadow-[4px_4px_0_0_rgba(39,39,42,1)] transition-all duration-300 hover:shadow-[8px_8px_0_0_rgba(39,39,42,1)]">
         <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900 px-4 py-2 font-mono text-[10px] tracking-widest text-white uppercase">
           <div className="flex items-center gap-2">
             <div className="size-2 animate-pulse bg-amber-500" />
             Terminal
           </div>
-          <div className="opacity-50">v3.0.0</div>
+          <div className="opacity-50">v{CLI_VERSION}</div>
         </div>
 
         <div className="relative flex min-h-[220px] flex-col items-start bg-black p-4 text-left font-mono text-sm leading-relaxed md:p-6">
@@ -138,28 +142,14 @@ export function AnimatedTerminal() {
               className={`mt-2 ${
                 step.type === 'prompt'
                   ? 'text-zinc-400'
-                  : step.type === 'select'
-                    ? 'ml-2 border-l-2 border-white pl-4 font-semibold text-white'
-                    : step.type === 'success'
-                      ? 'text-green-400'
-                      : step.type === 'loading'
-                        ? 'text-blue-400'
-                        : 'text-white'
+                  : step.type === 'success'
+                    ? 'text-green-400'
+                    : 'text-white'
               }`}
             >
               {step.text}
             </m.div>
           ))}
-
-          {currentStep === 7 ? (
-            <m.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-              className="mt-4 inline-block text-blue-400"
-            >
-              ⠋
-            </m.div>
-          ) : null}
         </div>
       </div>
 

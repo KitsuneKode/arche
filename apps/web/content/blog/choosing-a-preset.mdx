@@ -10,7 +10,8 @@ A preset is a **commitment to a shape**, not a lifetime prison. Arche makes the 
 ## Decision flow
 
 1. **What runtime owns your core logic?**
-   - TypeScript/Node → `typescript-fullstack` or `convex-product`
+   - TypeScript/Node → `typescript-fullstack`, `next-app`, `convex-product`, or `tanstack-start`
+   - Terminal UI → `tui-app`
    - Rust services → `rust-api` or `rust-fullstack`
    - On-chain → Solana family
 2. **What surfaces do you ship?**
@@ -25,6 +26,9 @@ When in doubt, start with **`typescript-fullstack`** if you want the best-docume
 | Preset                 | Pick when…                                     |
 | ---------------------- | ---------------------------------------------- |
 | `typescript-fullstack` | Default SaaS / product API + Next.js           |
+| `next-app`             | Frontend-only Next.js without bundled API      |
+| `tanstack-start`       | Full-stack React without Next.js               |
+| `tui-app`              | Terminal UI with OpenTUI                       |
 | `rust-api`             | Service-first backend, minimal web             |
 | `rust-fullstack`       | Next.js UI + Axum API, Rust on the server      |
 | `convex-product`       | Convex backend, realtime, less Prisma/Neon ops |

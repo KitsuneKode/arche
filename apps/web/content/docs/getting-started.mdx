@@ -3,7 +3,7 @@ title: Getting started
 description: Run the CLI from source, pick a preset, and verify a generated workspace.
 ---
 
-Arche is a **scaffold CLI** and this repository is its source of truth. Use the published npm package (`@kitsunekode/arche`) for new projects, or `bun run dev:cli` when developing the CLI from this monorepo.
+Arche is a **scaffold CLI** and this repository is its source of truth. **Today:** run `bun run dev:cli` from this monorepo (release guarded). After npm publish, use `npx @kitsunekode/arche create`.
 
 <DocsQuickLinks />
 
@@ -19,9 +19,8 @@ Arche is a **scaffold CLI** and this repository is its source of truth. Use the 
   steps={[
     {
       title: 'Generate',
-      command:
-        'npx @kitsunekode/arche create my-app --yes --preset=typescript-fullstack --dir=../projects',
-      note: 'Use --dir to write outside your current working directory.',
+      command: 'bun run dev:cli -- my-app --yes --preset=typescript-fullstack --dir=../projects',
+      note: 'Use --dir to write outside your current working directory. After npm publish: npx @kitsunekode/arche create …',
     },
     {
       title: 'Enter',

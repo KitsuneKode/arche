@@ -55,6 +55,7 @@ bun run dev:cli -- my-app --yes --dry-run --dir=../projects
 | Preset                 | Current status      | Notes                                      |
 | ---------------------- | ------------------- | ------------------------------------------ |
 | `typescript-fullstack` | Stable              | TypeScript monorepo (Bun + pnpm verified)  |
+| `next-app`             | Stable              | Standalone Next.js with env + boundaries   |
 | `rust-api`             | Stable              | Module-first Axum API + SQLx + cargo-check |
 | `rust-fullstack`       | Stable              | Next.js + `services/api` live REST demo    |
 | `convex-product`       | Stable              | Next.js + Convex offline typecheck         |
@@ -62,6 +63,8 @@ bun run dev:cli -- my-app --yes --dry-run --dir=../projects
 | `solana-web`           | Stable              | Program + Next.js wallet adapter dApp      |
 | `solana-mobile`        | Stable              | Program + Expo mobile boundary             |
 | `solana-product`       | Stable              | Web + mobile + program monorepo            |
+| `tui-app`              | Stable              | OpenTUI terminal app starter               |
+| `tanstack-start`       | Stable              | TanStack Start + Nitro server output       |
 | `customize`            | Requires validation | Capability composition path                |
 | `experiments`          | Experimental        | Explicit opt-in unstable route             |
 

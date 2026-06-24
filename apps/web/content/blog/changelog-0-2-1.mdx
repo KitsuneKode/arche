@@ -10,6 +10,8 @@ tags:
   - presets
 ---
 
+> **Historical note (May 2026):** This post describes the 0.2.1 honesty release. The registry has since graduated eleven presets to **Stable** — see the live [Preset catalog](/docs/presets) and verification matrix for current labels.
+
 This release is mostly about **saying the right thing in public**: the CLI registry, the website, and generated `AGENTS.md` files now share one vocabulary for preset support.
 
 ## What changed
@@ -36,12 +38,12 @@ The new [Getting started](/docs/getting-started) page is the hub.
 
 ### Convex preset in registry
 
-`convex-product` is listed alongside TypeScript and Solana routes with its own capability set (web, convex, auth, deployment).
+`convex-product` is listed alongside TypeScript and Solana routes with capabilities **web** and **convex** (Better Auth stubs in generated output; not a separate capability flag).
 
 ## What did not change
 
 - **npm publish** is still guarded. Use source checkout commands until release gates clear.
-- No preset was promoted to **Stable** without new green columns—check the matrix on [Verification](/docs/guides/verification-and-presets).
+- At the time of this post, presets moved toward Stable only when `presetHasStableEvidence` passed — the live matrix on [Verification](/docs/guides/verification-and-presets) is authoritative today.
 
 ## Try it
 

@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT" />
   <img src="https://img.shields.io/badge/package%20manager-Bun-default?logo=bun" alt="Bun" />
   <img src="https://img.shields.io/badge/release-guarded-orange" alt="Release guarded" />
-  <img src="https://img.shields.io/badge/presets-requires%20validation-yellow" alt="Preset status" />
+  <img src="https://img.shields.io/badge/presets-matrix%20driven-emerald" alt="Preset status" />
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@
 
 Arche is KitsuneKode’s preset-led way to start real projects without re-wiring the boring parts: workspace shape, package-manager catalogs, agent context, deployment notes, and a reproducible `arche.json`. It began as a full-stack TypeScript template and is now a vault plus `@kitsunekode/arche` CLI.
 
-**Honest status:** foundations are implemented; preset promotion to “stable” waits on the [verification matrix](.docs/product/verification-matrix.md). No preset is marketed as production-ready until that matrix passes.
+**Honest status:** eleven presets are **Stable** when `presetHasStableEvidence` passes in [`packages/registry`](packages/registry/src/verification-matrix.ts); npm publish remains **release guarded** until the release workflow is unblocked. Nothing is marketed as production-ready without matrix evidence.
 
 ## Use the CLI (the fun part)
 
@@ -83,6 +83,7 @@ bun run dev:cli -- my-app --yes --dry-run --dir=../projects
 | Preset                 | Status              | Output today                          |
 | ---------------------- | ------------------- | ------------------------------------- |
 | `typescript-fullstack` | Stable              | Next.js + TypeScript API monorepo     |
+| `next-app`             | Stable              | Standalone Next.js App Router starter |
 | `rust-api`             | Stable              | Axum API, module-first layout         |
 | `rust-fullstack`       | Stable              | Next.js web + `services/api` Rust API |
 | `convex-product`       | Stable              | Next.js + Convex backend              |
@@ -90,6 +91,8 @@ bun run dev:cli -- my-app --yes --dry-run --dir=../projects
 | `solana-web`           | Stable              | Web dApp + wallet adapters            |
 | `solana-mobile`        | Stable              | Expo + mobile wallet boundary         |
 | `solana-product`       | Stable              | Web + mobile + program monorepo       |
+| `tui-app`              | Stable              | OpenTUI terminal app starter          |
+| `tanstack-start`       | Stable              | TanStack Start full-stack React app   |
 | `customize`            | Requires validation | Explicit composition                  |
 | `experiments`          | Experimental        | Opt-in unstable routes                |
 

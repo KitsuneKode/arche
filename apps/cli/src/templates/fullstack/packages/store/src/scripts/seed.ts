@@ -147,6 +147,23 @@ By separating these concerns, you get cheap, infinitely scalable serverless fron
     })
   }
 
+  const demoMessages = [
+    'Proof run online — relay channel open.',
+    'tRPC contract verified from the live demo.',
+    'Seed data loaded; try signing in to send a message.',
+  ]
+
+  for (const content of demoMessages) {
+    const existing = await prisma.message.findFirst({
+      where: { content, senderId: user.id },
+    })
+    if (!existing) {
+      await prisma.message.create({
+        data: { content, senderId: user.id },
+      })
+    }
+  }
+
   console.log('✅ Seeding complete!')
 }
 

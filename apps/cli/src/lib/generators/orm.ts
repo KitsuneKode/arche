@@ -574,16 +574,30 @@ export const postRouter = {
     })
   }),
   byId: publicProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
-    return db.query.post.findFirst({
+    const post = await db.query.post.findFirst({
       where: eq(postTable.id, input.id),
       with: { author: true },
     })
+    if (!post?.published) return null
+    return {
+      ...post,
+      author: post.author
+        ? { id: post.author.id, name: post.author.name, image: post.author.image }
+        : null,
+    }
   }),
   bySlug: publicProcedure.input(z.object({ slug: z.string() })).query(async ({ input }) => {
-    return db.query.post.findFirst({
+    const post = await db.query.post.findFirst({
       where: eq(postTable.slug, input.slug),
       with: { author: true },
     })
+    if (!post?.published) return null
+    return {
+      ...post,
+      author: post.author
+        ? { id: post.author.id, name: post.author.name, image: post.author.image }
+        : null,
+    }
   }),
   create: protectedProcedure
     .input(z.object({
@@ -762,13 +776,10 @@ export const userRouter = {
   getUser: publicProcedure.query(() => {
     return { id: '1', name: 'Bilbo' }
   }),
-  getAllUser: publicProcedure.query(async () => {
-    return db.query.user.findMany()
-  }),
-  createUser: protectedProcedure
-    .input(z.object({ email: z.string().email(), name: z.string().min(5) }))
-    .mutation(async (opts) => {
-      return db.query.user.findMany({
+  findUserByEmail: protectedProcedure
+    .input(z.object({ email: z.string().email() }))
+    .query(async (opts) => {
+      return db.query.user.findFirst({
         where: eq(user.email, opts.input.email),
       })
     }),

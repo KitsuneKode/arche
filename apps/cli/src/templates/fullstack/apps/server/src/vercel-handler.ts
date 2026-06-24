@@ -11,6 +11,10 @@ process.on('unhandledRejection', (reason) => {
   console.error('Unhandled Rejection:', reason?.constructor?.name, reason)
 })
 
+import { validateEnvironment } from '@arche-template/backend-common/validate-env'
+
+validateEnvironment('server')
+
 const { default: app } = await import('./app')
 
 export default app

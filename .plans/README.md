@@ -3,6 +3,10 @@
 Plans are for approved work, execution notes, and shipped outcomes. They are not
 general documentation and should not be loaded by default.
 
+## Active work
+
+No active trust-wave plans — shipped 2026-06-24. See [completed trust-wave orchestration](completed/2026-06-24-trust-wave-orchestration.md).
+
 ## Directories
 
 - `active/` - approved work that is not fully shipped.

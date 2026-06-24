@@ -5,19 +5,18 @@ description: Scaffold rust-api or rust-fullstack presets with Axum, Cargo worksp
 
 Arche ships two Rust routes:
 
-| Preset           | Shape                                       |
-| ---------------- | ------------------------------------------- |
-| `rust-api`       | Axum API + Cargo workspace, SQLx-ready      |
-| `rust-fullstack` | Next.js + Axum API, Clerk/JWT auth boundary |
+| Preset           | Shape                                            |
+| ---------------- | ------------------------------------------------ |
+| `rust-api`       | Axum API + Cargo workspace, SQLx-ready           |
+| `rust-fullstack` | Next.js + Axum API in `services/api`, SQLx-ready |
 
-Both are **Requires validation** in the registry.
+Check current support labels on [Preset catalog](/docs/presets). Both Rust presets are **Stable** when the verification matrix shows green for their route-specific columns.
 
 ## Scaffold API-only
 
-<PackageManagerTabs
-  bun="bun run dev:cli -- my-api --yes --preset=rust-api --dir=../projects"
-  pnpm="bun run dev:cli -- my-api --yes --preset=rust-api --pm=pnpm --dir=../projects"
-/>
+```bash
+bun run dev:cli -- my-api --yes --preset=rust-api --dir=../projects
+```
 
 ## Scaffold fullstack
 

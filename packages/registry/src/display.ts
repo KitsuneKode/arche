@@ -19,7 +19,7 @@ const DISPLAY_BY_ID: Record<
 > = {
   'typescript-fullstack': {
     shape: 'Next.js web + Express API + tRPC + Better Auth + Prisma',
-    goodFor: 'Default production app foundation',
+    goodFor: 'Default fullstack starting point',
   },
   'next-app': {
     shape: 'Standalone Next.js App Router with env validation and boundaries',
