@@ -21,7 +21,7 @@ const REQUIRED_PATHS = [
   'apps/web/components/live/live-chat.tsx',
   'apps/web/lib/live-feed/live-feed.ts',
   'apps/web/lib/proof-run/proof-run.ts',
-  'apps/web/app/live/page.tsx',
+  'apps/web/app/(sandbox)/live/page.tsx',
   'apps/server/src/modules/chat/chat.routes.ts',
   'apps/server/src/modules/chat/chat.events.ts',
   'apps/server/src/modules/demo/demo.trpc.ts',

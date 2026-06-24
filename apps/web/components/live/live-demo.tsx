@@ -5,15 +5,28 @@ import Link from 'next/link'
 
 import { ActivityDeck } from '@/components/live/activity-deck'
 import { ProofLadder } from '@/components/live/proof-ladder'
+import { useApiReachable } from '@/lib/use-api-reachable'
 import { useTRPC } from '@/trpc/client'
 
-export function LiveDemo({ apiReachable }: { apiReachable: boolean }) {
+export function LiveDemo() {
   const trpc = useTRPC()
+  const healthQuery = useApiReachable()
   const sessionQuery = useQuery(trpc.auth.getSession.queryOptions())
   const signedIn = Boolean(sessionQuery.data?.user)
   const userId = sessionQuery.data?.user?.id
 
-  if (!apiReachable) {
+  if (healthQuery.isPending) {
+    return (
+      <div className="border border-zinc-800 bg-black p-8">
+        <p className="font-mono text-[10px] tracking-widest text-zinc-500 uppercase">
+          Checking API…
+        </p>
+        <p className="mt-3 text-sm text-zinc-400">Probing the demo API health endpoint.</p>
+      </div>
+    )
+  }
+
+  if (!healthQuery.data) {
     return (
       <div className="border border-zinc-800 bg-black p-8">
         <p className="font-mono text-[10px] tracking-widest text-amber-400 uppercase">
@@ -27,7 +40,11 @@ export function LiveDemo({ apiReachable }: { apiReachable: boolean }) {
           <Link href="/docs/guides/live-demo" className="text-white underline">
             live demo guide
           </Link>
-          .
+          . You can still try{' '}
+          <Link href="/play" className="text-white underline">
+            Relay
+          </Link>{' '}
+          for chat and latency checks when the API returns.
         </p>
       </div>
     )
@@ -35,7 +52,7 @@ export function LiveDemo({ apiReachable }: { apiReachable: boolean }) {
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-      <ProofLadder apiReachable={apiReachable} />
+      <ProofLadder apiReachable signedIn={signedIn} userId={userId} />
       <ActivityDeck
         signedIn={signedIn}
         userId={userId}

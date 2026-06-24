@@ -8,7 +8,7 @@ const publicCopyFiles = [
   'layout.tsx',
   'page.tsx',
   'families/page.tsx',
-  'live/page.tsx',
+  '(sandbox)/live/page.tsx',
   '../components/live/live-demo.tsx',
   '../components/live/proof-ladder.tsx',
   '../components/arche/animated-terminal.tsx',

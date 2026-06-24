@@ -48,15 +48,24 @@ describe('/live SEO', () => {
   })
 
   it('live page wires the same metadata contract', () => {
-    const source = readFileSync(join(appRoot, 'live/page.tsx'), 'utf8')
+    const source = readFileSync(join(appRoot, '(sandbox)/live/page.tsx'), 'utf8')
     expect(source).toContain('Live stack demo — chat, posts, and proof run')
     expect(source).toContain('LiveDemoJsonLd')
-    expect(source).toContain('LiveDemo apiReachable')
-    expect(source).toContain('isApiReachable')
+    expect(source).toContain('<LiveDemo />')
+    expect(source).toContain('LiveSandboxHydrator')
+    expect(source).not.toContain('isApiReachable')
+  })
+
+  it('play page wires relay metadata and hydrator', () => {
+    const source = readFileSync(join(appRoot, '(sandbox)/play/page.tsx'), 'utf8')
+    expect(source).toContain('Relay — live chat and stack ping')
+    expect(source).toContain('PlayJsonLd')
+    expect(source).toContain('prefetchChat')
+    expect(source).toContain('PlayPanels')
   })
 
   it('includes live opengraph image route files', () => {
-    const ogRoute = join(appRoot, 'live/opengraph-image.tsx')
+    const ogRoute = join(appRoot, '(sandbox)/live/opengraph-image.tsx')
     const ogImage = join(appRoot, '../lib/og/routes/live-opengraph.image.tsx')
     expect(readFileSync(ogRoute, 'utf8')).toContain('live-opengraph')
     expect(readFileSync(ogImage, 'utf8')).toContain('Live sandbox')

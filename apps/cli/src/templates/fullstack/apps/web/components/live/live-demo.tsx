@@ -4,32 +4,41 @@ import { useQuery } from '@tanstack/react-query'
 
 import { ActivityDeck } from '@/components/live/activity-deck'
 import { ProofLadder } from '@/components/live/proof-ladder'
+import { useApiReachable } from '@/lib/use-api-reachable'
 import { useTRPC } from '@/trpc/client'
 
-export function LiveDemo({ apiReachable }: { apiReachable: boolean }) {
+export function LiveDemo() {
   const trpc = useTRPC()
+  const healthQuery = useApiReachable()
   const sessionQuery = useQuery(trpc.auth.getSession.queryOptions())
   const signedIn = Boolean(sessionQuery.data?.user)
   const userId = sessionQuery.data?.user?.id
 
-  if (!apiReachable) {
+  if (healthQuery.isPending) {
     return (
-      <div className="border border-zinc-800 bg-black p-8">
-        <p className="font-mono text-[10px] tracking-widest text-amber-400 uppercase">
-          API offline
-        </p>
-        <h2 className="mt-3 text-2xl font-bold text-white">Live demo needs a running API</h2>
-        <p className="mt-4 max-w-xl text-sm leading-relaxed text-zinc-400">
-          Set <code className="text-zinc-300">NEXT_PUBLIC_API_URL</code> to your API host, migrate
-          the database, and run <code className="text-zinc-300">bun run db:seed</code>.
+      <div className="card">
+        <p className="eyebrow">Checking API…</p>
+        <p className="lede">Probing the API health endpoint.</p>
+      </div>
+    )
+  }
+
+  if (!healthQuery.data) {
+    return (
+      <div className="card">
+        <p className="eyebrow">API offline</p>
+        <h2>Live demo needs a running API</h2>
+        <p className="lede">
+          Set <code>NEXT_PUBLIC_API_URL</code> to your API host, migrate the database, and run{' '}
+          <code>bun run db:seed</code>.
         </p>
       </div>
     )
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-      <ProofLadder apiReachable={apiReachable} />
+    <div className="grid two">
+      <ProofLadder apiReachable signedIn={signedIn} userId={userId} />
       <ActivityDeck
         signedIn={signedIn}
         userId={userId}

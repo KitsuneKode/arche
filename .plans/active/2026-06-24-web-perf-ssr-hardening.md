@@ -9,8 +9,8 @@ useful HTML on first paint, shrink client bundles, and remove motion patterns th
 hide content until JavaScript loads.
 
 **Architecture:** Keep `cacheComponents: true` (PPR) on `apps/web`. Prefer server
-components for static MDX embeds. Scope `motion` to `/` only. Leave `/live`
-client-heavy by design (tRPC, auth, proof ladder).
+components for static MDX embeds. Scope `motion` to `/` only. `/live` and `/play`
+use static shells with Suspense islands for tRPC hydration (not full-route async).
 
 **Tech stack:** Next.js App Router, React 19, fumadocs-mdx, Vercel `arche-landing`.
 
@@ -21,20 +21,22 @@ client-heavy by design (tRPC, auth, proof ladder).
 
 ## Context — what was already fixed (2026-06-24)
 
-| Area                         | Commit                 | Status                               |
-| ---------------------------- | ---------------------- | ------------------------------------ |
-| Docs TOC `[object Object]`   | `053737f`, `91a1c4a`   | SSR TOC from MDX headings            |
-| `/examples` static highlight | `053737f`              | `'use cache'` on Shiki               |
-| Blog index prerender         | `053737f`              | sync `getPublishedBlogSummariesSync` |
-| `/families` table invisible  | `91a1c4a`              | removed motion stagger               |
-| Matrix readability           | `91a1c4a`              | `summary` columns on marketing       |
-| `/live` CORS + prefetch      | `0b470dd` + Vercel env | API env on `arche-template-server`   |
-| MDX motion SSR blockers      | `1437811`              | server embeds, no opacity:0          |
-| Motion scoped to `/`         | `1437811`              | `MotionRoot` on landing only         |
-| Route loader pathname-only   | `1437811`              | no searchParams bailout              |
-| Docs TOC crash (React #185)  | `1cb4947`              | props vs DOM split + stable snapshot |
-| Docs error boundary          | `1cb4947`              | `app/docs/error.tsx`                 |
-| Docs sidebar SSR             | `1cb4947`              | server nav + `DocsSidebarLink`       |
+| Area                          | Commit                 | Status                                       |
+| ----------------------------- | ---------------------- | -------------------------------------------- |
+| Docs TOC `[object Object]`    | `053737f`, `91a1c4a`   | SSR TOC from MDX headings                    |
+| `/examples` static highlight  | `053737f`              | `'use cache'` on Shiki                       |
+| Blog index prerender          | `053737f`              | sync `getPublishedBlogSummariesSync`         |
+| `/families` table invisible   | `91a1c4a`              | removed motion stagger                       |
+| Matrix readability            | `91a1c4a`              | `summary` columns on marketing               |
+| `/live` CORS + prefetch       | `0b470dd` + Vercel env | API env on `arche-template-server`           |
+| MDX motion SSR blockers       | `1437811`              | server embeds, no opacity:0                  |
+| Motion scoped to `/`          | `1437811`              | `MotionRoot` on landing only                 |
+| Route loader pathname-only    | `1437811`              | no searchParams bailout                      |
+| Docs TOC crash (React #185)   | `1cb4947`              | props vs DOM split + stable snapshot         |
+| Docs error boundary           | `1cb4947`              | `app/docs/error.tsx`                         |
+| Docs sidebar SSR              | `1cb4947`              | server nav + `DocsSidebarLink`               |
+| `/live` PPR infinite skeleton | (this ship)            | sync shell + Suspense island + client health |
+| `/play` Relay showcase        | (this ship)            | chat + Stack Ping reference route            |
 
 ---
 

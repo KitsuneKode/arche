@@ -57,7 +57,15 @@ function applyResults(
   writeProofRunProgress(passedRungIds(results))
 }
 
-export function ProofLadder({ apiReachable }: { apiReachable: boolean }) {
+export function ProofLadder({
+  apiReachable,
+  signedIn: signedInProp,
+  userId: userIdProp,
+}: {
+  apiReachable: boolean
+  signedIn?: boolean
+  userId?: string
+}) {
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const [states, setStates] = useState<Record<string, UiRungState>>({})
@@ -66,8 +74,12 @@ export function ProofLadder({ apiReachable }: { apiReachable: boolean }) {
   const runChecksRef = useRef<(() => Promise<void>) | null>(null)
   const bootedRef = useRef(false)
 
-  const sessionQuery = useQuery(trpc.auth.getSession.queryOptions())
-  const signedIn = Boolean(sessionQuery.data?.user)
+  const sessionQuery = useQuery({
+    ...trpc.auth.getSession.queryOptions(),
+    enabled: signedInProp === undefined,
+  })
+  const signedIn = signedInProp ?? Boolean(sessionQuery.data?.user)
+  const userId = userIdProp ?? sessionQuery.data?.user?.id
   const sendMutation = useMutation(trpc.chat.send.mutationOptions())
   const createPostMutation = useMutation(trpc.post.create.mutationOptions())
   const sendMessageRef = useRef(sendMutation.mutateAsync)
@@ -127,12 +139,12 @@ export function ProofLadder({ apiReachable }: { apiReachable: boolean }) {
   }, [])
 
   useEffect(() => {
-    const userId = sessionQuery.data?.user?.id ?? null
-    if (userId && userId !== lastSignedInUserId.current) {
-      lastSignedInUserId.current = userId
+    const nextUserId = userId ?? null
+    if (nextUserId && nextUserId !== lastSignedInUserId.current) {
+      lastSignedInUserId.current = nextUserId
       void runChecksRef.current?.()
     }
-  }, [sessionQuery.data?.user?.id])
+  }, [userId])
 
   const completedCount = useMemo(
     () => Object.values(states).filter((state) => state === 'pass').length,
