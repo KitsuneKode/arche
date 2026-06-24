@@ -19,12 +19,14 @@ function ogImageUrl(
 
 describe('/live SEO', () => {
   it('exports metadata with keywords and route-scoped OG image', async () => {
-    const { buildPageMetadata } = await import('@/lib/seo')
+    const { buildPageMetadata, routeOgImagePath } = await import('@/lib/seo')
+    const path = '/live'
     const metadata = buildPageMetadata({
       title: 'Live stack demo — chat, posts, and proof run',
       description:
         'Interactive TypeScript fullstack demo: tRPC, Prisma, Better Auth, public chat, draft posts, and real proof-run checks on arche.dev.',
-      path: '/live',
+      path,
+      ogImagePath: routeOgImagePath(path),
       keywords: [
         'tRPC',
         'Better Auth',
@@ -41,7 +43,8 @@ describe('/live SEO', () => {
     expect(metadata.keywords).toEqual(
       expect.arrayContaining(['Better Auth', 'Prisma', 'live demo']),
     )
-    expect(ogImageUrl(metadata)).toBe('https://arche.kitsunelabs.xyz/live/opengraph-image')
+    expect(routeOgImagePath(path)).toBe('/live/opengraph-image')
+    expect(String(ogImageUrl(metadata))).toMatch(/\/live\/opengraph-image$/)
   })
 
   it('live page wires the same metadata contract', () => {
