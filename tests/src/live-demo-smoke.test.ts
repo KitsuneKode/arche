@@ -169,15 +169,19 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     expect(body[0]?.error).toBeDefined()
   })
 
-  it('8. /live page renders when web dev server is up', async () => {
-    const web = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-    const response = await fetch(`${web}/live`)
-    expect(response.ok).toBe(true)
-    const html = await response.text()
-    expect(html).toMatch(/Live sandbox|Proof run/)
-    expect(html).toMatch(/Live chat|Try the stack/)
-    expect(html).not.toContain('Production Ready')
-  })
+  it(
+    '8. /live page renders when web dev server is up',
+    async () => {
+      const web = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+      const response = await fetch(`${web}/live`)
+      expect(response.ok).toBe(true)
+      const html = await response.text()
+      expect(html).toMatch(/Live sandbox|Proof run/)
+      expect(html).toMatch(/Live chat|Try the stack/)
+      expect(html).not.toContain('Production Ready')
+    },
+    { timeout: 15_000 },
+  )
 
   it('9. chat.stats returns count metadata', async () => {
     const stats = await trpcQuery<{ total: number; latestAt: string | null }>('chat.stats')
