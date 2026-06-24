@@ -1,10 +1,8 @@
 import Link from 'next/link'
-import { Suspense } from 'react'
 
 import { Navbar } from '@/components/arche/navbar'
 import { HeroBlock, SiteFrame, SiteShell } from '@/components/arche/site-primitives'
 import { LiveDemo } from '@/components/live/live-demo'
-import { LiveDemoFallback } from '@/components/sandbox/live-demo-fallback'
 import { LiveSandboxHydrator } from '@/components/sandbox/live-sandbox-hydrator'
 import { LiveDemoJsonLd } from '@/components/seo/live-demo-json-ld'
 import { buildPageMetadata } from '@/lib/seo'
@@ -42,11 +40,9 @@ export default function LivePage() {
         </HeroBlock>
 
         <section className="flex-1 bg-black p-6 md:p-16">
-          <Suspense fallback={<LiveDemoFallback />}>
-            <LiveSandboxHydrator>
-              <LiveDemo />
-            </LiveSandboxHydrator>
-          </Suspense>
+          <LiveSandboxHydrator>
+            <LiveDemo />
+          </LiveSandboxHydrator>
         </section>
       </SiteFrame>
     </SiteShell>

@@ -60,7 +60,7 @@ describe('/live SEO', () => {
     const source = readFileSync(join(appRoot, '(sandbox)/play/page.tsx'), 'utf8')
     expect(source).toContain('Relay — live chat and stack ping')
     expect(source).toContain('PlayJsonLd')
-    expect(source).toContain('prefetchChat')
+    expect(source).toContain('LiveSandboxHydrator')
     expect(source).toContain('PlayPanels')
   })
 

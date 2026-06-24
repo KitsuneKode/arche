@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
 
-import { HydrateClient, prefetch, trpc } from '@/trpc/server'
+import { HydrateClient } from '@/trpc/server'
 
-export async function LiveSandboxHydrator({ children }: { children: ReactNode }) {
-  await prefetch(trpc.auth.getSession.queryOptions())
+export function LiveSandboxHydrator({ children }: { children: ReactNode }) {
   return <HydrateClient>{children}</HydrateClient>
 }

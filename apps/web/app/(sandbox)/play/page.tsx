@@ -1,10 +1,8 @@
 import Link from 'next/link'
-import { Suspense } from 'react'
 
 import { Navbar } from '@/components/arche/navbar'
 import { HeroBlock, SiteFrame, SiteShell, StatusPill } from '@/components/arche/site-primitives'
 import { PlayPanels } from '@/components/play/play-panels'
-import { LiveDemoFallback } from '@/components/sandbox/live-demo-fallback'
 import { LiveSandboxHydrator } from '@/components/sandbox/live-sandbox-hydrator'
 import { PlayJsonLd } from '@/components/seo/play-json-ld'
 import { buildPageMetadata } from '@/lib/seo'
@@ -41,11 +39,9 @@ export default function PlayPage() {
         </section>
 
         <section className="flex-1 bg-black p-6 md:p-16">
-          <Suspense fallback={<LiveDemoFallback label="Loading Relay…" />}>
-            <LiveSandboxHydrator prefetchChat>
-              <PlayPanels />
-            </LiveSandboxHydrator>
-          </Suspense>
+          <LiveSandboxHydrator>
+            <PlayPanels />
+          </LiveSandboxHydrator>
         </section>
       </SiteFrame>
     </SiteShell>
