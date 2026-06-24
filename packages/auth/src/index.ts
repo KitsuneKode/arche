@@ -1,3 +1,4 @@
+import { isDemoAutoSignInEnabled } from '@arche-template/backend-common/demo-policy'
 import { prisma } from '@arche-template/store'
 import { betterAuth } from 'better-auth'
 export { fromNodeHeaders, toNodeHandler } from 'better-auth/node'
@@ -10,7 +11,7 @@ export const auth = betterAuth({
   trustedOrigins: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [],
   emailAndPassword: {
     enabled: true,
-    autoSignIn: process.env.NODE_ENV !== 'production' || process.env.DEMO_AUTO_SIGN_IN === 'true',
+    autoSignIn: isDemoAutoSignInEnabled(),
   },
   plugins: [], // make sure this is the last plugin in the array
   socialProviders: {

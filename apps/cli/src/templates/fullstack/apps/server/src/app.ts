@@ -9,6 +9,7 @@ import { securityHeaders } from './common/middleware/security-headers'
 import { tracingMiddleware } from './common/middleware/tracing'
 import { adminRoutes } from './modules/admin/admin.routes'
 import { authRoutes } from './modules/auth/auth.routes'
+import { chatRoutes } from './modules/chat/chat.routes'
 import { healthRoutes } from './modules/health/health.routes'
 import { rootRoutes } from './modules/root/root.routes'
 import { trpcRoutes } from './modules/trpc/trpc.routes'
@@ -27,10 +28,14 @@ app.use(
   }),
 )
 
-if (isRedisEnabled()) {
+const bullBoardEnabled =
+  isRedisEnabled() && (env.NODE_ENV !== 'production' || process.env.ENABLE_BULL_BOARD === 'true')
+
+if (bullBoardEnabled) {
   app.use('/admin/queues', adminRoutes)
 }
 app.use('/api/auth', authRoutes)
+app.use('/api/chat', chatRoutes)
 
 app.use(express.json({ limit: '1mb' }))
 app.use('/api/trpc', apiRateLimit, trpcRoutes)

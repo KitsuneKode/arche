@@ -43,3 +43,22 @@ Railway CLI: `npx @railway/cli login` then deploy from dashboard or `railway up`
 - `GET /health` → `200`, `database: connected`
 
 120s timeout per request (Render cold start).
+
+## Live demo integration smoke
+
+Exercises tRPC, auth, chat, posts, and SSE against a running API (not run in CI by default):
+
+```bash
+RUN_LIVE_DEMO_SMOKE=1 \
+  NEXT_PUBLIC_API_URL=https://api.arche.kitsunelabs.xyz \
+  NEXT_PUBLIC_APP_URL=https://arche.kitsunelabs.xyz \
+  bun test tests/src/live-demo-smoke.test.ts
+```
+
+Also check the web route:
+
+```bash
+curl -sS -o /dev/null -w "%{http_code}\n" https://arche.kitsunelabs.xyz/live
+```
+
+Requires `DEMO_AUTO_SIGN_IN=true` on the API for auth-gated tests to pass in production.

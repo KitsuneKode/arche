@@ -1,17 +1,39 @@
+import { toPublicUser } from '../common/public-dto.js'
 import { postPolicy } from './post.policy'
 import { postRepository } from './post.repository'
 
+type PostWithAuthor = NonNullable<Awaited<ReturnType<typeof postRepository.findById>>>
+
+function toPublicAuthor(author: PostWithAuthor['author']) {
+  return toPublicUser(author)
+}
+
+function toPublicPost(post: PostWithAuthor | null) {
+  if (!post || !post.published) return null
+  return {
+    ...post,
+    author: toPublicAuthor(post.author),
+  }
+}
+
 export const postService = {
   listPublished() {
-    return postRepository.findPublishedMany()
+    return postRepository.findPublishedMany().then((posts) =>
+      posts.map((post) => ({
+        ...post,
+        author: toPublicAuthor(post.author),
+      })),
+    )
   },
 
-  getById(id: string) {
-    return postRepository.findById(id)
+  async getById(id: string) {
+    const post = await postRepository.findById(id)
+    return toPublicPost(post)
   },
 
-  getBySlug(slug: string) {
-    return postRepository.findBySlug(slug)
+  async getBySlug(slug: string) {
+    const post = await postRepository.findBySlug(slug)
+    return toPublicPost(post)
   },
 
   async create(

@@ -13,6 +13,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@arche-template/backend-common": "workspace:*",
     "@arche-template/common": "workspace:*",
     "@arche-template/store": "workspace:*",
     "better-auth": "^1.6.11"

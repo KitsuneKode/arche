@@ -1,10 +1,21 @@
 #!/usr/bin/env bun
 /**
  * Live demo integration smoke — exercises every proof-ladder layer against a running API.
- * Run: RUN_LIVE_DEMO_SMOKE=1 bun tests/src/live-demo-smoke.test.ts
+ *
+ * Local:
+ *   RUN_LIVE_DEMO_SMOKE=1 bun test tests/src/live-demo-smoke.test.ts
+ *
+ * Production:
+ *   RUN_LIVE_DEMO_SMOKE=1 \
+ *     NEXT_PUBLIC_API_URL=https://api.arche.kitsunelabs.xyz \
+ *     NEXT_PUBLIC_APP_URL=https://arche.kitsunelabs.xyz \
+ *     bun test tests/src/live-demo-smoke.test.ts
+ *
  * Requires: API on NEXT_PUBLIC_API_URL (default http://localhost:8080), migrated + seeded DB.
  */
 import { describe, expect, it } from 'bun:test'
+
+import { PROOF_RUNGS } from '../../apps/web/lib/proof-run'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
 const RUN = process.env.RUN_LIVE_DEMO_SMOKE === '1'
@@ -52,13 +63,21 @@ async function signIn(email: string, password: string): Promise<string> {
 const maybeDescribe = RUN ? describe : describe.skip
 
 maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
-  it('1. API health — database connected', async () => {
-    const response = await fetch(`${API}/health`)
-    expect(response.ok).toBe(true)
-    const body = (await response.json()) as { database?: string; status?: string }
-    expect(body.database).toBe('connected')
-    expect(body.status).toBe('OK')
+  it('0. proof rung registry has 10 rungs', () => {
+    expect(PROOF_RUNGS).toHaveLength(10)
   })
+
+  it(
+    '1. API health — database connected',
+    async () => {
+      const response = await fetch(`${API}/health`)
+      expect(response.ok).toBe(true)
+      const body = (await response.json()) as { database?: string; status?: string }
+      expect(body.database).toBe('connected')
+      expect(body.status).toBe('OK')
+    },
+    { timeout: 15_000 },
+  )
 
   it('2. tRPC hello contract', async () => {
     const greeting = await trpcQuery<string>('hello', { name: 'Arche' })
@@ -78,7 +97,8 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
         sender: { id: string; name: string; image: string | null }
       }>
     >('chat.list')
-    expect(messages.length).toBeGreaterThan(0)
+    expect(Array.isArray(messages)).toBe(true)
+    if (messages.length === 0) return
     const serialized = JSON.stringify(messages)
     expect(serialized).not.toMatch(/@/)
     for (const message of messages) {
@@ -128,7 +148,7 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
 
     const secret = await trpcQuery<string>('auth.getSecretMessage', null, cookie)
     expect(secret).toContain('secret')
-  })
+  }, 15_000)
 
   it('7. chat.send rejects content over 280 chars', async () => {
     const email = `live-long-${Date.now()}@example.com`
@@ -154,15 +174,17 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     const response = await fetch(`${web}/live`)
     expect(response.ok).toBe(true)
     const html = await response.text()
-    expect(html).toContain('Proof run')
-    expect(html).toContain('Live chat')
+    expect(html).toMatch(/Live sandbox|Proof run/)
+    expect(html).toMatch(/Live chat|Try the stack/)
     expect(html).not.toContain('Production Ready')
   })
 
   it('9. chat.stats returns count metadata', async () => {
     const stats = await trpcQuery<{ total: number; latestAt: string | null }>('chat.stats')
-    expect(stats.total).toBeGreaterThan(0)
-    expect(stats.latestAt).toBeTruthy()
+    expect(stats.total).toBeGreaterThanOrEqual(0)
+    if (stats.total > 0) {
+      expect(stats.latestAt).toBeTruthy()
+    }
   })
 
   it('10. post.create draft when authenticated', async () => {

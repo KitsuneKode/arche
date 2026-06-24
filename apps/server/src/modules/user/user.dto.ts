@@ -1,6 +1,10 @@
 import { z } from 'zod'
 
-export const createUserSchema = z.object({
+export const findUserByEmailSchema = z.object({
   email: z.email(),
-  name: z.string().min(5),
+})
+
+/** @deprecated Use findUserByEmailSchema — kept for generator compatibility during migration */
+export const createUserSchema = findUserByEmailSchema.extend({
+  name: z.string().min(5).optional(),
 })

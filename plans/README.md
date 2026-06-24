@@ -2,8 +2,9 @@
 
 Advisory plans for the Arche scaffolding CLI monorepo. Each plan is **self-contained** and executor-ready: a model with zero context from the planning session can follow it. Plans never run unless you execute them.
 
-- **Base commit (all plans stamped at)**: `d199cac`
-- **Authoring date**: 2026-06-23
+- **Base commit (plans 001–019)**: `d199cac`
+- **Base commit (plans 020+)**: `9958c37`
+- **Authoring date**: 2026-06-23 (001–019), 2026-06-24 (020+)
 - **How to execute**: drive the whole set via **[000 — execution roadmap](000-execution-roadmap.md)** (subagent orchestration, dependency/file-collision ordering, verification gates, fix-issues loop). To run a single plan standalone, read it top-to-bottom, run its drift check first, follow steps in order, honor STOP conditions. Update the **Status** column here when done.
 - **Verification ladder referenced by plans**: `bun run ci:min` (format:check → turbo lint check-types → bun test → turbo build). Per-package fast loops noted inside plans.
 
@@ -55,7 +56,27 @@ Within a theme, ascending. Across themes, the low-risk hygiene/context wins (001
 | 018 | [TanStack Start family + preset](018-tanstack-start-family.md)                                             | DIR   | P2       | L        | MED  | 013               | DONE   |
 | 019 | [Architecture completion final gate](019-architecture-completion-gate.md)                                  | meta  | P0       | S        | LOW  | 013–018           | DONE   |
 
+**Plans 020–023 shipped** via [trust-wave orchestration](../.plans/completed/2026-06-24-trust-wave-orchestration.md) (2026-06-24).
+
+**Plans 024–025** — live sandbox deployment hardening (2026-06-24, base `e125e4c`).
+
+| #   | Plan                                                                           | Theme | Priority | Effort | Risk | Depends on | Status |
+| --- | ------------------------------------------------------------------------------ | ----- | -------- | ------ | ---- | ---------- | ------ |
+| 024 | [Production live demo auth + smoke alignment](024-live-demo-production-env.md) | dx    | P1       | S      | LOW  | —          | DONE   |
+| 025 | [LiveFeed sync seam](025-live-feed-sync-seam.md)                               | arch  | P2       | M      | MED  | —          | DONE   |
+
+| #   | Plan (shipped)       | Location                                                                                                                    | Status |
+| --- | -------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 020 | Content truthfulness | [`.plans/completed/2026-06-24-trust-content-truthfulness.md`](../.plans/completed/2026-06-24-trust-content-truthfulness.md) | DONE   |
+| 021 | Matrix table         | [`.plans/completed/2026-06-24-trust-matrix-table.md`](../.plans/completed/2026-06-24-trust-matrix-table.md)                 | DONE   |
+| 022 | Landing primitives   | [`.plans/completed/2026-06-24-trust-landing-primitives.md`](../.plans/completed/2026-06-24-trust-landing-primitives.md)     | DONE   |
+| 023 | Template security    | [`.plans/completed/2026-06-24-trust-template-security.md`](../.plans/completed/2026-06-24-trust-template-security.md)       | DONE   |
+
 Status values: `TODO` → `IN PROGRESS` → `DONE` (or `BLOCKED` / `STALE`).
+
+## Wave 2 (020+) — DONE
+
+Shipped 2026-06-24. See **[trust-wave orchestration](../.plans/completed/2026-06-24-trust-wave-orchestration.md)** and four child plans in `.plans/completed/`. Historical numbering 020–023 preserved in filenames.
 
 ## Plan 009 Phase 2 — resolved
 

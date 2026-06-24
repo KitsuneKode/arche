@@ -1,3 +1,4 @@
+import { isDemoAutoSignInEnabled } from '@arche-template/backend-common/demo-policy'
 import { prisma } from '@arche-template/store'
 import { betterAuth } from 'better-auth'
 export { fromNodeHeaders, toNodeHandler } from 'better-auth/node'
@@ -7,9 +8,10 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  trustedOrigins: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [],
   emailAndPassword: {
     enabled: true,
-    autoSignIn: false, // defaults to true in Better Auth; explicitly opting out
+    autoSignIn: isDemoAutoSignInEnabled(),
   },
   plugins: [], // make sure this is the last plugin in the array
   socialProviders: {

@@ -24,7 +24,7 @@
     },
     "apps/cli": {
       "name": "@kitsunekode/arche",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "bin": {
         "arche": "dist/index.js",
         "create-arche": "dist/index.js",
@@ -140,6 +140,7 @@
     "packages/auth": {
       "name": "@arche-template/auth",
       "dependencies": {
+        "@arche-template/backend-common": "workspace:*",
         "@arche-template/common": "workspace:*",
         "@arche-template/store": "workspace:*",
         "better-auth": "^1.6.11",

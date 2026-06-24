@@ -76,6 +76,30 @@ When enabling queues: `ENABLE_REDIS=true`, `REDIS_URL=<upstash-rediss-url>`. Do 
 
 Secrets belong only on **arche-api**, never on **arche**.
 
+## Custom domain (arche.kitsunelabs.xyz)
+
+When using custom domains instead of `*.vercel.app`, mirror the same variable **names** with your public origins:
+
+**arche** (web at `https://arche.kitsunelabs.xyz`):
+
+```env
+NEXT_PUBLIC_APP_URL=https://arche.kitsunelabs.xyz
+NEXT_PUBLIC_SITE_URL=https://arche.kitsunelabs.xyz
+NEXT_PUBLIC_API_URL=https://api.arche.kitsunelabs.xyz
+# Leave NEXT_PUBLIC_ENABLE_CHAT_SSE unset on Vercel (chat uses polling).
+# Set NEXT_PUBLIC_ENABLE_CHAT_SSE=true only when the API is a long-lived host (Render Docker).
+```
+
+**arche-api** (API at `https://api.arche.kitsunelabs.xyz`):
+
+```env
+BETTER_AUTH_URL=https://api.arche.kitsunelabs.xyz
+FRONTEND_URL=https://arche.kitsunelabs.xyz
+DEMO_AUTO_SIGN_IN=true
+```
+
+`DEMO_AUTO_SIGN_IN=true` is required for the `/live` proof run: sign-up must issue a session so rungs 7–10 unlock without a second sign-in step.
+
 ## Deployment protection
 
 `arche-api` may return **401** when Vercel Deployment Protection is on. For smoke tests, add `VERCEL_PROTECTION_BYPASS` or disable protection on the API project. See [deploy-smoke.md](./deploy-smoke.md).

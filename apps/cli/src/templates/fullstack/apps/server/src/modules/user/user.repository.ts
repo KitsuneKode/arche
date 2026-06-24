@@ -6,7 +6,7 @@ export const userRepository = {
   },
 
   findByEmail(email: string) {
-    return prisma.user.findMany({
+    return prisma.user.findFirst({
       where: { email },
     })
   },

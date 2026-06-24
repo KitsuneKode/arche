@@ -5,10 +5,6 @@ export const userService = {
     return { id: '1', name: 'Bilbo' }
   },
 
-  listAll() {
-    return userRepository.findAll()
-  },
-
   findByEmail(email: string) {
     return userRepository.findByEmail(email)
   },

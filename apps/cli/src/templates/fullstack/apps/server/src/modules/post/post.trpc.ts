@@ -1,4 +1,5 @@
 import type { TRPCRouterRecord } from '@trpc/server'
+import { withAppErrors } from '../common/trpc-errors.js'
 import { protectedProcedure, publicProcedure } from '../trpc/trpc.js'
 import { createPostSchema, postIdSchema, postSlugSchema, updatePostSchema } from './post.dto'
 import { postService } from './post.service'
@@ -18,9 +19,13 @@ export const postRouter = {
 
   update: protectedProcedure
     .input(updatePostSchema)
-    .mutation(({ ctx, input }) => postService.update(ctx.session.user.id, input)),
+    .mutation(({ ctx, input }) =>
+      withAppErrors(() => postService.update(ctx.session.user.id, input)),
+    ),
 
   delete: protectedProcedure
     .input(postIdSchema)
-    .mutation(({ ctx, input }) => postService.delete(ctx.session.user.id, input.id)),
+    .mutation(({ ctx, input }) =>
+      withAppErrors(() => postService.delete(ctx.session.user.id, input.id)),
+    ),
 } satisfies TRPCRouterRecord
