@@ -692,6 +692,24 @@ async function applyGeneratedCleanup(
     await removePath('SHOWCASE.mdx')
   }
 
+  if (targets.has('live')) {
+    await removePath('apps/web/app/live')
+    await removePath('apps/web/app/(auth)')
+    await removePath('apps/web/components/live')
+    await removePath('apps/web/lib/proof-run-storage.ts')
+    const homePage = join(destinationDir, 'apps/web/app/page.tsx')
+    if (await pathExists(homePage)) {
+      const content = await readFile(homePage, 'utf8')
+      const withoutLiveCta = content
+        .replace(/\s*<Link href="\/live"[^>]*>[\s\S]*?<\/Link>\s*/g, '\n')
+        .replace(/import Link from 'next\/link'\n/, '')
+      if (withoutLiveCta !== content) {
+        await writeFile(homePage, withoutLiveCta)
+        removed.push('apps/web/app/page.tsx (live CTA removed)')
+      }
+    }
+  }
+
   return removed
 }
 

@@ -100,6 +100,8 @@ DEMO_AUTO_SIGN_IN=true
 
 `DEMO_AUTO_SIGN_IN=true` is required for the `/live` proof run: sign-up must issue a session so rungs 7–10 unlock without a second sign-in step.
 
+`FRONTEND_URL` must match the **exact** public web origin. If it still points at an old host (for example `https://stack.kitsunelabs.xyz` while the site is `https://arche.kitsunelabs.xyz`), browser calls to `/health`, auth, and tRPC fail CORS — the proof ladder shows "Network error" even when server-side smoke tests pass.
+
 ## Deployment protection
 
 `arche-api` may return **401** when Vercel Deployment Protection is on. For smoke tests, add `VERCEL_PROTECTION_BYPASS` or disable protection on the API project. See [deploy-smoke.md](./deploy-smoke.md).

@@ -17,7 +17,18 @@ function getUrl() {
 /** HTTP tRPC proxy for RSC prefetch and client hydration. */
 export const trpc = createTRPCOptionsProxy({
   client: createTRPCClient<AppRouter>({
-    links: [httpLink({ url: getUrl(), transformer: SuperJSON })],
+    links: [
+      httpLink({
+        url: getUrl(),
+        transformer: SuperJSON,
+        fetch(url, options) {
+          return fetch(url, {
+            ...options,
+            credentials: 'include',
+          })
+        },
+      }),
+    ],
   }),
   queryClient: getQueryClient,
 })

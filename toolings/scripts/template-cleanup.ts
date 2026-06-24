@@ -2,7 +2,7 @@
 import { access, mkdir, rm } from 'fs/promises'
 import { dirname, resolve } from 'path'
 
-type CleanupTarget = 'showcase' | 'seed' | 'worker' | 'tests' | 'readme'
+type CleanupTarget = 'showcase' | 'seed' | 'worker' | 'tests' | 'readme' | 'live'
 type ActionType = 'remove' | 'write'
 
 interface CleanupAction {
@@ -19,6 +19,7 @@ interface CleanupOptions {
 }
 
 const DEFAULT_TARGETS: CleanupTarget[] = ['showcase', 'seed', 'worker', 'tests', 'readme']
+const ALL_TARGETS: CleanupTarget[] = [...DEFAULT_TARGETS, 'live']
 
 const STARTER_LAYOUT = `import { Suspense } from 'react'
 import { Toaster } from 'sonner'
@@ -558,7 +559,7 @@ function parseTargets(argv: string[]): CleanupTarget[] {
     throw new Error('At least one cleanup target is required when using --remove=')
   }
 
-  const invalid = selected.filter((entry) => !DEFAULT_TARGETS.includes(entry))
+  const invalid = selected.filter((entry) => !ALL_TARGETS.includes(entry))
   if (invalid.length > 0) {
     throw new Error(`Unknown cleanup target(s): ${invalid.join(', ')}`)
   }
@@ -575,7 +576,7 @@ Strip the template showcase and optional workspaces from a cloned project.
 Options:
   --dry-run               Preview changes without writing files
   --yes                   Apply changes without confirmation prompt
-  --remove=a,b,c          Choose from showcase,seed,worker,tests,readme
+  --remove=a,b,c          Choose from showcase,seed,worker,tests,readme,live
   -h, --help              Show this message
 
 Examples:
@@ -591,6 +592,23 @@ Examples:
     yes: argv.includes('--yes'),
     targets: parseTargets(argv),
   }
+}
+
+function buildLiveDemoActions(): CleanupAction[] {
+  return [
+    { type: 'remove', path: 'apps/web/app/live', description: 'Remove live proof-run route' },
+    { type: 'remove', path: 'apps/web/app/(auth)', description: 'Remove demo auth routes' },
+    {
+      type: 'remove',
+      path: 'apps/web/components/live',
+      description: 'Remove live demo components',
+    },
+    {
+      type: 'remove',
+      path: 'apps/web/lib/proof-run-storage.ts',
+      description: 'Remove proof-run localStorage helper',
+    },
+  ]
 }
 
 function buildShowcaseActions(): CleanupAction[] {
@@ -704,6 +722,10 @@ async function detectProjectName(): Promise<string> {
 
 export async function buildCleanupPlan(targets: CleanupTarget[]): Promise<CleanupAction[]> {
   const actions: CleanupAction[] = []
+
+  if (targets.includes('live')) {
+    actions.push(...buildLiveDemoActions())
+  }
 
   if (targets.includes('showcase')) {
     actions.push(...buildShowcaseActions())

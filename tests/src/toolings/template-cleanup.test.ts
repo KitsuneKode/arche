@@ -31,4 +31,12 @@ describe('template-cleanup', () => {
     // Showcase removal also rewrites the web AGENTS.md
     expect(paths).toContain('apps/web/AGENTS.md')
   })
+
+  it('plans live demo removal when requested', async () => {
+    const actions = await buildCleanupPlan(['live'])
+    const paths = actions.map((action) => action.path)
+    expect(paths).toContain('apps/web/app/live')
+    expect(paths).toContain('apps/web/components/live')
+    expect(paths).toContain('apps/web/lib/proof-run-storage.ts')
+  })
 })

@@ -61,7 +61,7 @@ export const DeploymentSchema = z
 export type DeploymentMode = z.infer<typeof DeploymentSchema>
 
 export const CleanupTargetSchema = z
-  .enum(['showcase', 'seed', 'worker', 'tests', 'readme'])
+  .enum(['showcase', 'seed', 'worker', 'tests', 'readme', 'live'])
   .describe('Template sections that can be removed')
 export type CleanupTarget = z.infer<typeof CleanupTargetSchema>
 
