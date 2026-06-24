@@ -44,3 +44,24 @@ Generated repos include agent maps—not extra attack surface, but **do not past
 ## Reporting
 
 This is a personal/template project. For production apps you ship, follow your own disclosure process.
+
+## Demo endpoints (`/live`)
+
+The live sandbox (proof run, chat, posts) is **intentionally public** for evaluation. Treat it as demo-only.
+
+| Procedure               | Auth | Public data                                        | Notes                                 |
+| ----------------------- | ---- | -------------------------------------------------- | ------------------------------------- |
+| `hello`                 | No   | Greeting string                                    | Harmless contract check               |
+| `post.list`             | No   | Published posts only                               | Drafts filtered server-side           |
+| `post.create`           | Yes  | —                                                  | Draft only; max title/content lengths |
+| `chat.list`             | No   | Messages + redacted sender (`id`, `name`, `image`) | No email in JSON                      |
+| `chat.stats`            | No   | Message count + latest timestamp                   | Activity strip metadata               |
+| `chat.send`             | Yes  | —                                                  | Max 280 chars; visible to all readers |
+| `GET /api/chat/stream`  | No   | SSE `message` events                               | Heartbeat every 30s; rate limited     |
+| `auth.getSession`       | No   | Session user or null                               | No secrets                            |
+| `auth.getSecretMessage` | Yes  | Protected string                                   | Proof-run only                        |
+| `user.findUserByEmail`  | Yes  | Self email only                                    | Returns public user shape             |
+
+**SSE:** One-way push from the API after `chat.send`. Clients invalidate `chat.list` on events; polling is the fallback when the stream drops (e.g. cold starts).
+
+**Before production:** remove `/live`, demo auth pages, and seed chat messages—or restrict these procedures behind admin policy. Run `template-cleanup --remove=live` on generated projects.

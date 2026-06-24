@@ -22,5 +22,6 @@ describe('route discovery controls', () => {
     const urls = buildSitemapEntries('https://arche.test').map((entry) => entry.url)
     expect(urls).not.toContain('https://arche.test/__design-lab')
     expect(urls).not.toContain('https://arche.test/showcase')
+    expect(urls).toContain('https://arche.test/live')
   })
 })

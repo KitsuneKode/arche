@@ -15,4 +15,18 @@ export const chatRepository = {
       include: { sender: true },
     })
   },
+
+  async getStats() {
+    const [total, latest] = await Promise.all([
+      prisma.message.count(),
+      prisma.message.findFirst({
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true },
+      }),
+    ])
+    return {
+      total,
+      latestAt: latest?.createdAt?.toISOString() ?? null,
+    }
+  },
 }

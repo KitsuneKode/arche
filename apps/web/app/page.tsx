@@ -4,7 +4,13 @@ import { AnimatedTerminal } from '@/components/arche/animated-terminal'
 import { ArchitectureGraph } from '@/components/arche/architecture-graph'
 import { FeatureGrid } from '@/components/arche/feature-grid'
 import { Navbar } from '@/components/arche/navbar'
-import { PrimaryLink, SiteFrame, SiteShell, StatusPill } from '@/components/arche/site-primitives'
+import {
+  PrimaryLink,
+  SiteFrame,
+  SiteShell,
+  StatusPill,
+  GridBackdrop,
+} from '@/components/arche/site-primitives'
 import { buildPageMetadata } from '@/lib/seo'
 
 export const metadata: Metadata = buildPageMetadata({
@@ -22,7 +28,7 @@ export default function LandingPage() {
 
       <SiteFrame>
         <section className="relative overflow-hidden border-b border-zinc-800 bg-black p-6 md:p-16">
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:24px_24px]" />
+          <GridBackdrop />
           <div className="pointer-events-none absolute top-0 right-0 h-80 w-80 translate-x-1/2 -translate-y-1/2 bg-amber-500/10 blur-3xl" />
 
           <div className="relative z-10 grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
@@ -49,12 +55,34 @@ export default function LandingPage() {
 
               <div className="flex flex-wrap gap-3">
                 <PrimaryLink href="/docs/getting-started">Read the docs</PrimaryLink>
+                <PrimaryLink href="/live" variant="outline">
+                  See it live
+                </PrimaryLink>
                 <PrimaryLink href="/families" variant="outline">
                   Compare presets
                 </PrimaryLink>
               </div>
             </div>
             <AnimatedTerminal />
+          </div>
+        </section>
+
+        <section className="border-b border-zinc-800 bg-zinc-950 px-6 py-16 md:px-16">
+          <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div className="max-w-2xl">
+              <p className="mb-3 font-mono text-[10px] tracking-widest text-amber-400 uppercase">
+                Demo API on arche.dev
+              </p>
+              <h2 className="mb-4 text-3xl leading-tight font-bold tracking-tight text-balance text-white md:text-4xl">
+                Try the live stack
+              </h2>
+              <ul className="space-y-2 text-lg leading-relaxed font-medium text-pretty text-zinc-400">
+                <li>Real tRPC + Prisma + Better Auth against a running API</li>
+                <li>Public chat feed; sign in to post and create draft notes</li>
+                <li>Proof run verifies health, contracts, and auth in one view</li>
+              </ul>
+            </div>
+            <PrimaryLink href="/live">Open live demo</PrimaryLink>
           </div>
         </section>
 

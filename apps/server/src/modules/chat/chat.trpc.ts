@@ -6,6 +6,8 @@ import { chatService } from './chat.service'
 export const chatRouter = {
   list: publicProcedure.query(() => chatService.listMessages()),
 
+  stats: publicProcedure.query(() => chatService.getStats()),
+
   send: protectedProcedure
     .input(sendMessageSchema)
     .mutation(({ ctx, input }) => chatService.sendMessage(ctx.session.user.id, input.content)),

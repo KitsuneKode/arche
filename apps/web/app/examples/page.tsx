@@ -31,8 +31,12 @@ export default function ExamplesPage() {
             </h1>
 
             <p className="mt-6 text-lg leading-relaxed font-medium text-pretty text-zinc-400">
-              Illustrative snippets aligned with Arche presets—not a live sandbox. For full flows,
-              start with{' '}
+              Illustrative snippets aligned with Arche presets—not a live sandbox. For live API
+              calls, use{' '}
+              <Link href="/live" className="text-white underline underline-offset-4">
+                /live
+              </Link>
+              . For full flows, start with{' '}
               <Link
                 href="/docs/getting-started"
                 className="text-white underline underline-offset-4"

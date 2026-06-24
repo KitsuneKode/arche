@@ -10,6 +10,7 @@
     "guides/package-managers",
     "guides/scaffold-lifecycle",
     "guides/showcase-and-portfolio",
+    "guides/live-demo",
     "---Walkthroughs---",
     "guides/walkthrough-typescript-fullstack",
     "guides/walkthrough-convex-product",

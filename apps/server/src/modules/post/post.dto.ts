@@ -4,9 +4,9 @@ export const postIdSchema = z.object({ id: z.string() })
 export const postSlugSchema = z.object({ slug: z.string() })
 
 export const createPostSchema = z.object({
-  title: z.string().min(1),
-  content: z.string().min(1),
-  slug: z.string().min(1),
+  title: z.string().min(1).max(120),
+  content: z.string().min(1).max(2000),
+  slug: z.string().min(1).max(80),
   published: z.boolean().optional(),
 })
 

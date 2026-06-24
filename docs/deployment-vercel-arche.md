@@ -56,6 +56,8 @@ NEXT_PUBLIC_SITE_URL=https://arche-kitsunekode.vercel.app
 NEXT_PUBLIC_API_URL=https://arche-api-kitsunekode.vercel.app
 NEXT_PUBLIC_SITE_NAME=Arche
 NEXT_PUBLIC_SITE_DESCRIPTION=Preset-led scaffold CLI and project vault for TypeScript, Rust, and Solana — by KitsuneKode.
+# Live demo: polling on Vercel (serverless). Set true only when API is a long-lived host (Render Docker).
+# NEXT_PUBLIC_ENABLE_CHAT_SSE=false
 ```
 
 Set on **arche-api** (Production + Preview):
@@ -67,6 +69,7 @@ BETTER_AUTH_SECRET=<32+-char-secret>
 BETTER_AUTH_URL=https://arche-api-kitsunekode.vercel.app
 FRONTEND_URL=https://arche-kitsunekode.vercel.app
 ENABLE_REDIS=false
+DEMO_AUTO_SIGN_IN=true
 ```
 
 When enabling queues: `ENABLE_REDIS=true`, `REDIS_URL=<upstash-rediss-url>`. Do not deploy `apps/worker` on Vercel.

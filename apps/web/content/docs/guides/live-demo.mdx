@@ -1,0 +1,70 @@
+---
+title: Live proof run
+description: What /live proves, how to run it locally, and how to harden before production.
+---
+
+The **Live demo** route (`/live`) is a bounded sandbox on arche.dev and in generated fullstack scaffolds. It runs real checks against your API—health, tRPC, Prisma reads, session probes, live chat, posts, and optional challenges—not illustrative snippets.
+
+## Activity deck
+
+The right column has three tabs:
+
+| Tab   | Signed out              | Signed in                              |
+| ----- | ----------------------- | -------------------------------------- |
+| Chat  | Read public feed        | Compose; updates via SSE (~2s)         |
+| Posts | Read published articles | Create a short draft note              |
+| You   | Sign in / sign up       | Session info, proof progress, sign out |
+
+Chat uses `GET /api/chat/stream` (Server-Sent Events) with polling fallback when SSE is unavailable.
+
+## What it proves
+
+| Rung               | Layer   | Check                                 |
+| ------------------ | ------- | ------------------------------------- |
+| Shell              | Web     | Page renders                          |
+| API                | Express | `GET /health` → `database: connected` |
+| Contract           | tRPC    | `hello` query                         |
+| Datastore          | Prisma  | `post.list` returns seeded posts      |
+| Live chat feed     | Chat    | `chat.list` (senders redacted)        |
+| Session            | Auth    | `auth.getSession` (guest OK)          |
+| Authenticated send | Chat    | `chat.send` after sign-in             |
+| Secret             | Auth    | `auth.getSecretMessage` after sign-in |
+| Challenge: arche   | Chat    | Message containing `arche`            |
+| Challenge: post    | Posts   | `post.create` draft after sign-in     |
+
+Progress is stored in `localStorage` (`arche:proof-run:v1`) so repeat visits remember completed rungs. Motion respects `prefers-reduced-motion`.
+
+## Requirements
+
+- **Web:** `NEXT_PUBLIC_API_URL` pointing at your API origin
+- **API:** migrated database and seed data (`bun run db:seed`)
+- **Auth:** Better Auth configured with email/password for demo sign-in
+- **Marketing demo:** `DEMO_AUTO_SIGN_IN=true` on the API (or local dev) so sign-up does not require a second sign-in step
+
+If the API is unreachable, the page shows an honest offline state—no fake green checks.
+
+## Local development
+
+```bash
+bun dev          # web + API (see root package.json)
+bun run db:migrate
+bun run db:seed
+```
+
+Open [http://localhost:3000/live](http://localhost:3000/live). Use the **You** tab to sign in and unlock write access and challenges.
+
+Generated scaffolds include the same module under `apps/web/app/live/` with CSS-only styling (no Tailwind required).
+
+## vs `/examples`
+
+- **`/examples`** — static code snippets from the registry; no network calls.
+- **`/live`** — live network checks against a running API; chat and posts are demo-only and public-read.
+
+## Removing before production
+
+The live demo is for evaluation and local onboarding. Before shipping a product surface:
+
+1. Run `bun toolings/scripts/template-cleanup.ts --remove=live --yes` on a generated project, or
+2. Delete `apps/web/app/live`, `apps/web/app/(auth)`, and `apps/web/components/live` manually.
+
+See [Security](/docs/operations/security) for the demo endpoint table and hardening notes.

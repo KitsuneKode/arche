@@ -4,7 +4,7 @@ import { BLOG_CATEGORIES, getBlogFrontmatter } from '@/lib/blog'
 import { blogSource } from '@/lib/blog-source'
 import { source } from '@/lib/source'
 
-const PUBLIC_ROUTES = ['', '/families', '/examples', '/blog', '/rss.xml'] as const
+const PUBLIC_ROUTES = ['', '/families', '/live', '/examples', '/blog', '/rss.xml'] as const
 
 /** Pure sitemap builder — safe in tests and inside `use cache` at runtime. */
 export function buildSitemapEntries(base: string): MetadataRoute.Sitemap {

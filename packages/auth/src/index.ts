@@ -7,9 +7,10 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  trustedOrigins: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [],
   emailAndPassword: {
     enabled: true,
-    autoSignIn: false, // defaults to true in Better Auth; explicitly opting out
+    autoSignIn: process.env.NODE_ENV !== 'production' || process.env.DEMO_AUTO_SIGN_IN === 'true',
   },
   plugins: [], // make sure this is the last plugin in the array
   socialProviders: {
