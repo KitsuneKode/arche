@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
-import { appendPing, bestPingMs } from '@/lib/stack-ping'
+import { appendPing, bestPingMs, hotStreak, pingTier } from '@/lib/stack-ping'
 
 describe('stack-ping', () => {
   it('appendPing keeps newest first and limits history', () => {
@@ -23,5 +23,23 @@ describe('stack-ping', () => {
       ]),
     ).toBe(45)
     expect(bestPingMs([])).toBeNull()
+  })
+
+  it('pingTier buckets latency', () => {
+    expect(pingTier(50)).toBe('excellent')
+    expect(pingTier(150)).toBe('good')
+    expect(pingTier(250)).toBe('fair')
+    expect(pingTier(400)).toBe('slow')
+  })
+
+  it('hotStreak counts consecutive fast pings from newest', () => {
+    expect(
+      hotStreak([
+        { ms: 80, at: 'a' },
+        { ms: 120, at: 'b' },
+        { ms: 400, at: 'c' },
+      ]),
+    ).toBe(2)
+    expect(hotStreak([{ ms: 500, at: 'a' }])).toBe(0)
   })
 })

@@ -69,10 +69,27 @@ async function exportCliIcon(): Promise<void> {
   console.log(`Wrote ${join(cliAssets, 'icon.png')}`)
 }
 
+async function exportWebIcons(): Promise<void> {
+  const webPublic = join(ROOT, 'apps/web/public')
+  const faviconSvg = join(webPublic, 'favicon.svg')
+  const svg = readFileSync(faviconSvg)
+  const background = { r: 9, g: 9, b: 11, alpha: 1 } as const
+  await sharp(svg, { density: 300 })
+    .resize(32, 32, { fit: 'contain', background })
+    .png()
+    .toFile(join(webPublic, 'favicon.ico'))
+  await sharp(svg, { density: 300 })
+    .resize(180, 180, { fit: 'contain', background })
+    .png()
+    .toFile(join(webPublic, 'apple-touch-icon.png'))
+  console.log('Wrote apps/web/public/favicon.ico and apple-touch-icon.png')
+}
+
 async function main(): Promise<void> {
   await exportStaticAssets()
   await exportOgAndSocial()
   await exportCliIcon()
+  await exportWebIcons()
 }
 
 if (import.meta.main) {

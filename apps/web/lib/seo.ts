@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { env } from '@/env'
+import { SITE_ICONS } from '@/lib/site-icons'
 
 export const OG_IMAGE_WIDTH = 1200
 export const OG_IMAGE_HEIGHT = 630
@@ -145,6 +146,14 @@ export function buildRootLayoutMetadata(): Metadata {
       images: [ogImage],
     },
     robots: { index: true, follow: true },
+    icons: {
+      icon: [
+        { url: SITE_ICONS.faviconIco, sizes: '32x32', type: 'image/x-icon' },
+        { url: SITE_ICONS.faviconSvg, type: 'image/svg+xml' },
+      ],
+      apple: [{ url: SITE_ICONS.appleTouchIcon, sizes: '180x180', type: 'image/png' }],
+    },
+    manifest: SITE_ICONS.manifest,
   }
 }
 

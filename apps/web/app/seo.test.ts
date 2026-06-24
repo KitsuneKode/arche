@@ -48,4 +48,25 @@ describe('site SEO metadata', () => {
       ),
     ).toEqual(['Home', 'Documentation', 'Walkthroughs', 'Rust walkthrough'])
   })
+
+  it('emits cache-busted favicon and manifest URLs from root layout metadata', async () => {
+    const { buildRootLayoutMetadata } = await import('@/lib/seo')
+    const { SITE_ICON_VERSION } = await import('@/lib/site-icons')
+
+    const metadata = buildRootLayoutMetadata()
+    const icons = metadata.icons
+    expect(icons).toBeDefined()
+    if (!icons || typeof icons === 'string') return
+
+    const iconEntries = Array.isArray(icons.icon) ? icons.icon : icons.icon ? [icons.icon] : []
+    const iconUrls = iconEntries.map((entry) => (typeof entry === 'string' ? entry : entry.url))
+    expect(iconUrls).toContain(`/favicon.ico?v=${SITE_ICON_VERSION}`)
+    expect(iconUrls).toContain(`/favicon.svg?v=${SITE_ICON_VERSION}`)
+
+    const appleEntries = Array.isArray(icons.apple) ? icons.apple : icons.apple ? [icons.apple] : []
+    const appleUrls = appleEntries.map((entry) => (typeof entry === 'string' ? entry : entry.url))
+    expect(appleUrls).toContain(`/apple-touch-icon.png?v=${SITE_ICON_VERSION}`)
+
+    expect(metadata.manifest).toBe(`/site.webmanifest?v=${SITE_ICON_VERSION}`)
+  })
 })

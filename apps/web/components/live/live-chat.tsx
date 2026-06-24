@@ -1,73 +1,12 @@
 'use client'
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useState } from 'react'
-
-import { useChatStream } from '@/components/live/use-chat-stream'
+import { useLiveChat } from '@/components/live/use-live-chat'
 import { formatRelativeTime, formatUtcClockTime, useClientMounted } from '@/lib/client-mounted'
-import { DEFAULT_POLL_INTERVAL_MS } from '@/lib/live-feed'
-import { useTRPC } from '@/trpc/client'
-
-function deriveChatStats(messages: Array<{ createdAt: Date | string }> | undefined) {
-  if (!messages?.length) return null
-  const latest = messages[messages.length - 1]!
-  const latestAt =
-    latest.createdAt instanceof Date ? latest.createdAt.toISOString() : String(latest.createdAt)
-  return { total: messages.length, latestAt }
-}
 
 export function LiveChat({ signedIn, userId }: { signedIn: boolean; userId?: string }) {
   const mounted = useClientMounted()
-  const trpc = useTRPC()
-  const queryClient = useQueryClient()
-  const [draft, setDraft] = useState('')
-
-  const invalidateChat = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: trpc.chat.list.queryKey() })
-  }, [queryClient, trpc.chat.list])
-
-  const { mode, pollingFallback } = useChatStream(invalidateChat, signedIn || true)
-
-  const messagesQuery = useQuery({
-    ...trpc.chat.list.queryOptions(),
-    refetchInterval: () => {
-      if (typeof document !== 'undefined' && document.hidden) return false
-      return mode === 'poll' ? DEFAULT_POLL_INTERVAL_MS : false
-    },
-  })
-
-  const stats = deriveChatStats(messagesQuery.data)
-
-  const sendMutation = useMutation(
-    trpc.chat.send.mutationOptions({
-      onMutate: async ({ content }) => {
-        await queryClient.cancelQueries({ queryKey: trpc.chat.list.queryKey() })
-        const previous = queryClient.getQueryData(trpc.chat.list.queryKey())
-        const optimisticId = `optimistic-${Date.now()}`
-        queryClient.setQueryData(trpc.chat.list.queryKey(), (old) => {
-          const list = old ?? []
-          const optimistic = {
-            id: optimisticId,
-            content,
-            senderId: userId ?? 'you',
-            createdAt: new Date(),
-            sender: { id: userId ?? 'you', name: 'You', image: null },
-          } as (typeof list)[number]
-          return [...list, optimistic]
-        })
-        return { previous, optimisticId }
-      },
-      onError: (_err, _vars, context) => {
-        if (context?.previous) {
-          queryClient.setQueryData(trpc.chat.list.queryKey(), context.previous)
-        }
-      },
-      onSuccess: async () => {
-        setDraft('')
-        invalidateChat()
-      },
-    }),
-  )
+  const { draft, setDraft, messagesQuery, sendMutation, sendMessage, stats, pollingFallback } =
+    useLiveChat({ signedIn, userId })
 
   return (
     <div className="border border-zinc-800 bg-black">
@@ -120,9 +59,7 @@ export function LiveChat({ signedIn, userId }: { signedIn: boolean; userId?: str
           className="flex gap-2 border-t border-zinc-800 p-4"
           onSubmit={(event) => {
             event.preventDefault()
-            const content = draft.trim()
-            if (!content) return
-            sendMutation.mutate({ content })
+            sendMessage()
           }}
         >
           <input

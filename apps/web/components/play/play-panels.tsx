@@ -8,22 +8,15 @@ export function PlayPanels() {
   const healthQuery = useApiReachable()
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
+    <div className="grid items-stretch gap-8 lg:grid-cols-2">
       <RelayChat />
-      <div className="space-y-4">
-        <StackPing />
-        <div className="border border-zinc-800 bg-zinc-950/50 p-4 font-mono text-[10px] text-zinc-500">
-          <p className="tracking-widest text-zinc-400 uppercase">Stack signals</p>
-          <ul className="mt-3 space-y-1">
-            <li>tRPC · chat.list + auth.getSession</li>
-            <li>SSE with polling fallback</li>
-            <li>
-              API health:{' '}
-              {healthQuery.isPending ? 'checking…' : healthQuery.data ? 'connected' : 'offline'}
-            </li>
-          </ul>
-        </div>
-      </div>
+      <StackPing />
+      {healthQuery.isError || healthQuery.data === false ? (
+        <p className="font-mono text-[10px] text-amber-400/80 lg:col-span-2">
+          Demo API appears offline — chat and pings may fail until{' '}
+          <code className="text-zinc-400">NEXT_PUBLIC_API_URL</code> is reachable.
+        </p>
+      ) : null}
     </div>
   )
 }
