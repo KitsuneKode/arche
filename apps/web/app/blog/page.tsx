@@ -3,7 +3,7 @@ import { Metadata } from 'next'
 import { BlogIndexShell } from '@/components/blog/blog-index-shell'
 import { BlogPostFeed } from '@/components/blog/blog-post-feed'
 import { BlogJsonLd } from '@/components/seo/blog-json-ld'
-import { getPublishedBlogSummaries } from '@/lib/blog'
+import { getPublishedBlogSummariesSync } from '@/lib/blog'
 import { buildPageMetadata } from '@/lib/seo'
 
 export const metadata: Metadata = buildPageMetadata({
@@ -15,8 +15,8 @@ export const metadata: Metadata = buildPageMetadata({
   },
 })
 
-export default async function BlogPage() {
-  const posts = await getPublishedBlogSummaries()
+export default function BlogPage() {
+  const posts = getPublishedBlogSummariesSync()
 
   return (
     <BlogIndexShell activeCategory="all">

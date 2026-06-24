@@ -51,7 +51,8 @@ describe('/live SEO', () => {
     const source = readFileSync(join(appRoot, 'live/page.tsx'), 'utf8')
     expect(source).toContain('Live stack demo — chat, posts, and proof run')
     expect(source).toContain('LiveDemoJsonLd')
-    expect(source).toContain('chat.list.queryOptions')
+    expect(source).toContain('LiveDemo apiReachable')
+    expect(source).toContain('isApiReachable')
   })
 
   it('includes live opengraph image route files', () => {

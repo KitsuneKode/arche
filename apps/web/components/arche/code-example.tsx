@@ -1,5 +1,3 @@
-import { connection } from 'next/server'
-
 import { highlightCode } from '@/lib/highlight'
 
 import { CodeExampleClient, type CodeExampleItem } from '@/components/arche/code-example-client'
@@ -186,8 +184,6 @@ async function highlightSection(
 }
 
 export async function CodeExample() {
-  await connection()
-
   const sections = await Promise.all(exampleSections.map(highlightSection))
 
   return <CodeExampleSections sections={sections} />

@@ -6,7 +6,7 @@ import { ArticleShell } from '@/components/blog/article-shell'
 import { BlogPostArticleFooter } from '@/components/blog/blog-post-chrome'
 import { BlogPostJsonLd } from '@/components/blog/blog-post-json-ld'
 import { buildBlogPostMetadata, getBlogCategory, getBlogFrontmatter } from '@/lib/blog'
-import { readingTimeForBlogSlug } from '@/lib/blog-reading-time'
+import { readingTimeForBlogSlugSync } from '@/lib/blog-reading-time'
 import { blogSource } from '@/lib/blog-source'
 import { getMdxComponents } from '@/lib/get-mdx-components'
 
@@ -44,7 +44,7 @@ export default async function BlogPostPage({ params }: Props) {
   const data = getBlogFrontmatter(page)
   const MDX = page.data.body
   const category = getBlogCategory(page)
-  const readingTime = await readingTimeForBlogSlug(slug)
+  const readingTime = readingTimeForBlogSlugSync(slug)
 
   return (
     <SiteShell className="overflow-x-hidden">

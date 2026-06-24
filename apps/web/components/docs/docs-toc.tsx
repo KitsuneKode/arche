@@ -140,7 +140,8 @@ export function DocsTocRail({
     () => getProseHeadingsSnapshot(proseSelector),
     getServerProseHeadingsSnapshot,
   )
-  const items = itemsProp ?? domItems
+  const safePropItems = itemsProp?.filter((item) => item.title && item.title !== '[object Object]')
+  const items = safePropItems && safePropItems.length >= 2 ? safePropItems : domItems
 
   if (items.length < 2) return null
 

@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { Suspense } from 'react'
 
 import { CodeExample } from '@/components/arche/code-example'
 import { Navbar } from '@/components/arche/navbar'
@@ -12,7 +11,7 @@ export const metadata = buildPageMetadata({
   path: '/examples',
 })
 
-export default function ExamplesPage() {
+export default async function ExamplesPage() {
   return (
     <main className="min-h-screen bg-black font-sans text-white selection:bg-white selection:text-black">
       <Navbar />
@@ -56,15 +55,7 @@ export default function ExamplesPage() {
         </section>
 
         <section className="flex-1 bg-black p-6 md:p-16">
-          <Suspense
-            fallback={
-              <div className="border border-zinc-800 bg-black p-8 font-mono text-sm text-zinc-500">
-                Loading highlighted examples...
-              </div>
-            }
-          >
-            <CodeExample />
-          </Suspense>
+          <CodeExample />
         </section>
       </div>
     </main>

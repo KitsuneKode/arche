@@ -60,17 +60,22 @@ function toBlogPostSummary(page: BlogPage): BlogPostSummary {
   }
 }
 
+/** Build-time / RSC list for pages — keep synchronous so blog routes fully prerender. */
+export function getPublishedBlogSummariesSync(): BlogPostSummary[] {
+  return blogSource
+    .getPages()
+    .filter((page) => !getBlogFrontmatter(page).draft)
+    .map(toBlogPostSummary)
+    .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+}
+
 /** Cached published post metadata — serializable for RSS and list shells. */
 export async function getPublishedBlogSummaries(): Promise<BlogPostSummary[]> {
   'use cache'
   cacheLife('max')
   cacheTag('site-content', 'blog')
 
-  return blogSource
-    .getPages()
-    .filter((page) => !getBlogFrontmatter(page).draft)
-    .map(toBlogPostSummary)
-    .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+  return getPublishedBlogSummariesSync()
 }
 
 export function filterBlogSummariesByCategory(

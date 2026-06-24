@@ -6,7 +6,7 @@ import { BlogPostFeed } from '@/components/blog/blog-post-feed'
 import {
   BLOG_CATEGORIES,
   filterBlogSummariesByCategory,
-  getPublishedBlogSummaries,
+  getPublishedBlogSummariesSync,
 } from '@/lib/blog'
 import { isBlogCategory, type BlogCategory } from '@/lib/blog-source'
 import { buildPageMetadata } from '@/lib/seo'
@@ -62,7 +62,7 @@ export default async function BlogCategoryPage({ params }: Props) {
   const { category } = await params
   if (!isBlogCategory(category)) notFound()
 
-  const posts = filterBlogSummariesByCategory(await getPublishedBlogSummaries(), category)
+  const posts = filterBlogSummariesByCategory(getPublishedBlogSummariesSync(), category)
 
   return (
     <BlogIndexShell activeCategory={category}>
