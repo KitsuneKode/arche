@@ -1,7 +1,8 @@
 # Web perf & SSR hardening
 
 > **For agentic workers:** Execute tasks in order. Each task has verification gates.
-> Base commit: `91a1c4a`. Do not load `docs/archive/planning/` as current behavior.
+> Base commit: `1437811` (MDX SSR + motion scope). Docs crash fix + sidebar SSR shipped next.
+> Do not load `docs/archive/planning/` as current behavior.
 
 **Goal:** Make Arche marketing surfaces (docs, blog, examples, families) render
 useful HTML on first paint, shrink client bundles, and remove motion patterns that
@@ -28,6 +29,12 @@ client-heavy by design (tRPC, auth, proof ladder).
 | `/families` table invisible  | `91a1c4a`              | removed motion stagger               |
 | Matrix readability           | `91a1c4a`              | `summary` columns on marketing       |
 | `/live` CORS + prefetch      | `0b470dd` + Vercel env | API env on `arche-template-server`   |
+| MDX motion SSR blockers      | `1437811`              | server embeds, no opacity:0          |
+| Motion scoped to `/`         | `1437811`              | `MotionRoot` on landing only         |
+| Route loader pathname-only   | `1437811`              | no searchParams bailout              |
+| Docs TOC crash (React #185)  | (this ship)            | props vs DOM split + stable snapshot |
+| Docs error boundary          | (this ship)            | `app/docs/error.tsx`                 |
+| Docs sidebar SSR             | (this ship)            | server nav + `DocsSidebarLink`       |
 
 ---
 
@@ -112,10 +119,8 @@ bun run --cwd apps/web build
 
 ## Task 4 — Docs sidebar active state (optional follow-up)
 
-- [ ] Split `DocsSidebar` into `docs-sidebar-nav.tsx` (server, static links) +
-      `docs-sidebar-active.tsx` (client, highlights current path)
-- [ ] Pass `pathname` from layout via `headers().get('x-pathname')` middleware **only if**
-      needed; prefer `useSelectedLayoutSegment` in small client wrapper
+- [x] Split `DocsSidebar` into server component + `DocsSidebarLink` (client, `usePathname`)
+- [x] Sidebar sections extracted to `lib/docs-sidebar-sections.ts`
 
 **Verify:** View-source on `/docs/getting-started` shows sidebar link labels in HTML.
 
@@ -123,11 +128,19 @@ bun run --cwd apps/web build
 
 ## Task 5 — Production deploy checklist
 
-- [ ] Push to `main` → Vercel `arche-landing` auto-deploy
+- [x] Push to `main` → Vercel `arche-landing` auto-deploy
 - [ ] Hard-refresh: `/docs/getting-started`, `/docs/guides/verification-and-presets`,
-      `/examples`, `/blog`, `/families`
+      `/examples`, `/blog`, `/families` (post-deploy smoke)
 - [ ] Confirm `api.arche.kitsunelabs.xyz/health` → `database: connected`
 - [ ] Smoke: `RUN_LIVE_DEMO_SMOKE=1 bun test apps/web` (if env configured)
+
+### Docs TOC crash fix (P0, 2026-06-24)
+
+- [x] `DocsTocRailFromProps` — no DOM subscription when SSR `tocItems` provided
+- [x] `stableTocItems` cache for DOM scrape path (`lib/toc-snapshot.ts`)
+- [x] Removed remount `key` on `DocsTocRailInner`
+- [x] `app/docs/error.tsx` for graceful recovery
+- [x] Unit tests: `docs-toc.test.ts`, `toc-title.test.ts`
 
 ---
 

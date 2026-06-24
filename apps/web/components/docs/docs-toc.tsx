@@ -1,8 +1,9 @@
 'use client'
 
-import { useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 
 import { cn } from '@arche-template/ui/lib/utils'
+import { stableTocItems } from '@/lib/toc-snapshot'
 
 export type TocItem = {
   id: string
@@ -24,10 +25,22 @@ function subscribeToProseHeadings(proseSelector: string, onStoreChange: () => vo
   const prose = document.querySelector<HTMLElement>(proseSelector)
   if (!prose) return () => {}
 
-  const observer = new MutationObserver(onStoreChange)
+  let rafId = 0
+  const scheduleChange = () => {
+    if (rafId) return
+    rafId = requestAnimationFrame(() => {
+      rafId = 0
+      onStoreChange()
+    })
+  }
+
+  const observer = new MutationObserver(scheduleChange)
   observer.observe(prose, { childList: true, subtree: true, characterData: true })
 
-  return () => observer.disconnect()
+  return () => {
+    if (rafId) cancelAnimationFrame(rafId)
+    observer.disconnect()
+  }
 }
 
 function getProseHeadingsSnapshot(proseSelector: string): TocItem[] {
@@ -36,62 +49,48 @@ function getProseHeadingsSnapshot(proseSelector: string): TocItem[] {
   const prose = document.querySelector<HTMLElement>(proseSelector)
   if (!prose) return []
 
-  return collectHeadings(prose).filter((item) => item.id && item.title)
+  const items = collectHeadings(prose).filter((item) => item.id && item.title)
+  return stableTocItems(items)
 }
 
 function getServerProseHeadingsSnapshot(): TocItem[] {
   return []
 }
 
+function filterSafeTocItems(items?: TocItem[]): TocItem[] | undefined {
+  const filtered = items?.filter((item) => item.title && item.title !== '[object Object]')
+  return filtered && filtered.length >= 2 ? filtered : undefined
+}
+
 function DocsTocRailInner({ items, className }: { items: TocItem[]; className?: string }) {
-  const activeId = useSyncExternalStore(
-    (onStoreChange) => {
-      if (typeof document === 'undefined') return () => {}
+  const [activeId, setActiveId] = useState('')
 
-      let currentActiveId = ''
+  useEffect(() => {
+    if (typeof document === 'undefined') return
 
-      const observer = new IntersectionObserver(
-        (entries) => {
-          const visible = entries
-            .filter((entry) => entry.isIntersecting)
-            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-          const nextId = visible[0]?.target.id ?? ''
-          if (nextId !== currentActiveId) {
-            currentActiveId = nextId
-            onStoreChange()
-          }
-        },
-        { rootMargin: '-80px 0px -70% 0px', threshold: 0 },
-      )
+    let currentActiveId = ''
 
-      for (const item of items) {
-        const el = document.getElementById(item.id)
-        if (el) observer.observe(el)
-      }
-
-      return () => observer.disconnect()
-    },
-    () => {
-      if (typeof document === 'undefined') return ''
-
-      let activeElement: HTMLElement | null = null
-      let activeTop = Number.POSITIVE_INFINITY
-
-      for (const item of items) {
-        const el = document.getElementById(item.id)
-        if (!el) continue
-
-        const rect = el.getBoundingClientRect()
-        if (rect.top >= 0 && rect.bottom > 80 && rect.top < activeTop) {
-          activeElement = el
-          activeTop = rect.top
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+        const nextId = visible[0]?.target.id ?? ''
+        if (nextId !== currentActiveId) {
+          currentActiveId = nextId
+          setActiveId(nextId)
         }
-      }
+      },
+      { rootMargin: '-80px 0px -70% 0px', threshold: 0 },
+    )
 
-      return activeElement?.id ?? ''
-    },
-    () => '',
-  )
+    for (const item of items) {
+      const el = document.getElementById(item.id)
+      if (el) observer.observe(el)
+    }
+
+    return () => observer.disconnect()
+  }, [items])
 
   return (
     <nav
@@ -126,6 +125,28 @@ function DocsTocRailInner({ items, className }: { items: TocItem[]; className?: 
   )
 }
 
+function DocsTocRailFromProps({ items, className }: { items: TocItem[]; className?: string }) {
+  return <DocsTocRailInner items={items} className={className} />
+}
+
+function DocsTocRailFromDom({
+  className,
+  proseSelector,
+}: {
+  className?: string
+  proseSelector: string
+}) {
+  const domItems = useSyncExternalStore(
+    (onStoreChange) => subscribeToProseHeadings(proseSelector, onStoreChange),
+    () => getProseHeadingsSnapshot(proseSelector),
+    getServerProseHeadingsSnapshot,
+  )
+
+  if (domItems.length < 2) return null
+
+  return <DocsTocRailInner items={domItems} className={className} />
+}
+
 export function DocsTocRail({
   className,
   items: itemsProp,
@@ -135,21 +156,11 @@ export function DocsTocRail({
   items?: TocItem[]
   proseSelector?: string
 }) {
-  const domItems = useSyncExternalStore(
-    (onStoreChange) => subscribeToProseHeadings(proseSelector, onStoreChange),
-    () => getProseHeadingsSnapshot(proseSelector),
-    getServerProseHeadingsSnapshot,
-  )
-  const safePropItems = itemsProp?.filter((item) => item.title && item.title !== '[object Object]')
-  const items = safePropItems && safePropItems.length >= 2 ? safePropItems : domItems
+  const safePropItems = filterSafeTocItems(itemsProp)
 
-  if (items.length < 2) return null
+  if (safePropItems) {
+    return <DocsTocRailFromProps items={safePropItems} className={className} />
+  }
 
-  return (
-    <DocsTocRailInner
-      key={items.map((item) => item.id).join('|')}
-      items={items}
-      className={className}
-    />
-  )
+  return <DocsTocRailFromDom className={className} proseSelector={proseSelector} />
 }
