@@ -1,7 +1,6 @@
 'use client'
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@arche-template/ui/components/tabs'
-import { m } from 'motion/react'
 
 export type CodeExampleItem = {
   id: string
@@ -45,10 +44,7 @@ export function CodeExampleClient({ examples }: { examples: CodeExampleItem[] })
               </div>
 
               <div className="flex-1 overflow-x-auto bg-[#0d1117] p-6">
-                <m.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+                <div
                   className="highlighted-code [&_code]:text-sm [&_code]:leading-relaxed [&_pre]:!m-0 [&_pre]:!bg-transparent [&_pre]:!p-0"
                   dangerouslySetInnerHTML={{ __html: ex.highlightedHtml }}
                 />

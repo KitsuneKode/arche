@@ -3,6 +3,7 @@ import { Metadata } from 'next'
 import { AnimatedTerminal } from '@/components/arche/animated-terminal'
 import { ArchitectureGraph } from '@/components/arche/architecture-graph'
 import { FeatureGrid } from '@/components/arche/feature-grid'
+import { MotionRoot } from '@/components/arche/motion-root'
 import { Navbar } from '@/components/arche/navbar'
 import {
   PrimaryLink,
@@ -63,7 +64,9 @@ export default function LandingPage() {
                 </PrimaryLink>
               </div>
             </div>
-            <AnimatedTerminal />
+            <MotionRoot>
+              <AnimatedTerminal />
+            </MotionRoot>
           </div>
         </section>
 
@@ -88,7 +91,9 @@ export default function LandingPage() {
 
         <FeatureGrid />
 
-        <ArchitectureGraph />
+        <MotionRoot>
+          <ArchitectureGraph />
+        </MotionRoot>
 
         <section className="border-t border-zinc-800 bg-black px-6 py-16 md:px-16 md:py-24">
           <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">

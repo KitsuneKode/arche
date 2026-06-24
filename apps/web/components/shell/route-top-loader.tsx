@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@arche-template/ui/lib/utils'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 
 const INCREMENT_INTERVAL_MS = 160
@@ -10,8 +10,7 @@ const MAX_PROGRESS_BEFORE_COMPLETE = 88
 
 export function RouteTopLoader() {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const routeKey = `${pathname}?${searchParams.toString()}`
+  const routeKey = pathname
   const [progress, setProgress] = useState(0)
   const [visible, setVisible] = useState(false)
 

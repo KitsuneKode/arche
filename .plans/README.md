@@ -5,7 +5,10 @@ general documentation and should not be loaded by default.
 
 ## Active work
 
-No active trust-wave plans — shipped 2026-06-24. See [completed trust-wave orchestration](completed/2026-06-24-trust-wave-orchestration.md).
+- [Web perf & SSR hardening](active/2026-06-24-web-perf-ssr-hardening.md) — motion scope,
+  MDX SSR embeds, route loader. Base commit `91a1c4a`.
+
+Trust wave shipped 2026-06-24. See [completed trust-wave orchestration](completed/2026-06-24-trust-wave-orchestration.md).
 
 ## Directories
 

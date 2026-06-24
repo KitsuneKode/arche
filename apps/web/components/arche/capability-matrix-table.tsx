@@ -1,5 +1,3 @@
-'use client'
-
 import { CAPABILITIES, SUPPORT_LABELS, type SupportStatus } from '@arche-template/registry'
 
 export function CapabilityMatrixTable() {

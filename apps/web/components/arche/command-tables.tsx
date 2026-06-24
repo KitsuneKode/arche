@@ -1,7 +1,3 @@
-'use client'
-
-import { m } from 'motion/react'
-
 import { devScaffoldCommand } from '@/lib/presets-public'
 
 type CommandRow = { cmd: string; desc: string }
@@ -22,13 +18,9 @@ function CommandTableSection({
         <p className="mt-1 text-xs leading-relaxed text-pretty text-zinc-500">{subtitle}</p>
       </div>
       <div className="divide-y divide-zinc-800">
-        {commands.map((c, i) => (
-          <m.div
+        {commands.map((c) => (
+          <div
             key={c.cmd}
-            initial={{ opacity: 0, x: -10 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.03, duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
             className="flex flex-col gap-4 px-6 py-4 transition-colors hover:bg-zinc-900/30 lg:flex-row lg:items-start"
           >
             <div className="min-w-0 flex-1 border border-zinc-800 bg-zinc-900 px-3 py-2 font-mono text-xs leading-relaxed break-all text-white sm:text-sm">
@@ -38,7 +30,7 @@ function CommandTableSection({
             <div className="shrink-0 text-sm font-medium text-pretty text-zinc-400 lg:max-w-[14rem]">
               {c.desc}
             </div>
-          </m.div>
+          </div>
         ))}
       </div>
     </div>

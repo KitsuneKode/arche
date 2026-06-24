@@ -1,7 +1,3 @@
-'use client'
-
-import { m } from 'motion/react'
-
 const nodes = [
   {
     id: 'agents',
@@ -58,13 +54,9 @@ export function AgentContextMap() {
           <line x1="68%" y1="54%" x2="48%" y2="52%" stroke="currentColor" strokeWidth="1" />
           <line x1="48%" y1="52%" x2="42%" y2="82%" stroke="currentColor" strokeWidth="1" />
         </svg>
-        {nodes.map((node, index) => (
-          <m.div
+        {nodes.map((node) => (
+          <div
             key={node.id}
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.06, duration: 0.25 }}
             className="absolute max-w-[11rem] border border-zinc-700 bg-zinc-950/90 p-3 backdrop-blur-sm"
             style={{ left: node.x, top: node.y }}
           >
@@ -72,7 +64,7 @@ export function AgentContextMap() {
             <div className="mt-1 text-[11px] leading-snug text-pretty text-zinc-500">
               {node.role}
             </div>
-          </m.div>
+          </div>
         ))}
         <div className="absolute inset-x-4 bottom-4 z-10 border border-dashed border-zinc-700 bg-black/80 px-3 py-2 font-mono text-[10px] tracking-wide text-zinc-400 uppercase backdrop-blur-sm">
           Read root → nearest workspace AGENTS.md → one active plan
