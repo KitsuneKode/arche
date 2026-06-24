@@ -89,7 +89,7 @@ NEXT_PUBLIC_API_URL=https://arche.kitsunelabs.xyz
 API_UPSTREAM_URL=https://api.arche.kitsunelabs.xyz
 ```
 
-`API_UPSTREAM_URL` is **server-only** on the web project. Next.js rewrites `/api/*` and `/health` to the upstream host so the browser never cross-origin fetches the API. Local dev: omit `API_UPSTREAM_URL` and keep `NEXT_PUBLIC_API_URL` pointing at `http://localhost:8080` (or your API port).
+`API_UPSTREAM_URL` is **server-only** on the web project. Next.js rewrites `/api/*` and `/health` to the upstream host so the browser never cross-origin fetches the API. With this setup, `/live` chat uses **SSE by default** (no `NEXT_PUBLIC_ENABLE_CHAT_SSE` needed). Polling fallback remains if the stream drops. Local dev: omit `API_UPSTREAM_URL` and keep `NEXT_PUBLIC_API_URL` pointing at `http://localhost:8080` (or your API port).
 
 **arche-api** (upstream at `https://api.arche.kitsunelabs.xyz`):
 

@@ -70,6 +70,7 @@ describe('createLiveFeed', () => {
     feed.start()
     expect(feed.getMode()).toBe('sse')
     errorHandler?.()
+    expect(invalidations.length).toBe(1)
 
     return new Promise<void>((resolve) => {
       setTimeout(() => {
@@ -81,6 +82,6 @@ describe('createLiveFeed', () => {
   })
 
   it('uses default poll interval constant', () => {
-    expect(DEFAULT_POLL_INTERVAL_MS).toBe(3_000)
+    expect(DEFAULT_POLL_INTERVAL_MS).toBe(2_000)
   })
 })

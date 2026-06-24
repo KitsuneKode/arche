@@ -2,7 +2,7 @@ import { isChatSseEnabled } from '@/lib/live-chat-sync-policy'
 
 export type LiveFeedMode = 'sse' | 'poll'
 
-export const DEFAULT_POLL_INTERVAL_MS = 3_000
+export const DEFAULT_POLL_INTERVAL_MS = 2_000
 
 export function resolveLiveFeedMode(): LiveFeedMode {
   return isChatSseEnabled() ? 'sse' : 'poll'
@@ -87,6 +87,7 @@ export function createLiveFeed(options: CreateLiveFeedOptions): LiveFeedHandle {
     source.onerror = () => {
       source?.close()
       source = null
+      onInvalidate()
       startPoll()
     }
   }
