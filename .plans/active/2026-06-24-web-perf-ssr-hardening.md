@@ -32,9 +32,9 @@ client-heavy by design (tRPC, auth, proof ladder).
 | MDX motion SSR blockers      | `1437811`              | server embeds, no opacity:0          |
 | Motion scoped to `/`         | `1437811`              | `MotionRoot` on landing only         |
 | Route loader pathname-only   | `1437811`              | no searchParams bailout              |
-| Docs TOC crash (React #185)  | (this ship)            | props vs DOM split + stable snapshot |
-| Docs error boundary          | (this ship)            | `app/docs/error.tsx`                 |
-| Docs sidebar SSR             | (this ship)            | server nav + `DocsSidebarLink`       |
+| Docs TOC crash (React #185)  | `1cb4947`              | props vs DOM split + stable snapshot |
+| Docs error boundary          | `1cb4947`              | `app/docs/error.tsx`                 |
+| Docs sidebar SSR             | `1cb4947`              | server nav + `DocsSidebarLink`       |
 
 ---
 
@@ -128,9 +128,9 @@ bun run --cwd apps/web build
 
 ## Task 5 — Production deploy checklist
 
-- [x] Push to `main` → Vercel `arche-landing` auto-deploy
-- [ ] Hard-refresh: `/docs/getting-started`, `/docs/guides/verification-and-presets`,
-      `/examples`, `/blog`, `/families` (post-deploy smoke)
+- [x] Push to `main` → Vercel `arche-landing` auto-deploy (`1cb4947`)
+- [x] Hard-refresh smoke: `/docs/getting-started` (200, "Quick loop", no `[object Object]`),
+      `/docs/guides/verification-and-presets`, `/examples`, `/blog`, `/families` (200)
 - [ ] Confirm `api.arche.kitsunelabs.xyz/health` → `database: connected`
 - [ ] Smoke: `RUN_LIVE_DEMO_SMOKE=1 bun test apps/web` (if env configured)
 
