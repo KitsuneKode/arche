@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { Navbar } from '@/components/arche/navbar'
 import { HeroBlock, SiteFrame, SiteShell } from '@/components/arche/site-primitives'
 import { LiveDemo } from '@/components/live/live-demo'
-import { LiveSandboxHydrator } from '@/components/sandbox/live-sandbox-hydrator'
 import { LiveDemoJsonLd } from '@/components/seo/live-demo-json-ld'
 import { buildPageMetadata } from '@/lib/seo'
 
@@ -40,9 +39,7 @@ export default function LivePage() {
         </HeroBlock>
 
         <section className="flex-1 bg-black p-6 md:p-16">
-          <LiveSandboxHydrator>
-            <LiveDemo />
-          </LiveSandboxHydrator>
+          <LiveDemo />
         </section>
       </SiteFrame>
     </SiteShell>

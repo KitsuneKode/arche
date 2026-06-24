@@ -52,15 +52,13 @@ describe('/live SEO', () => {
     expect(source).toContain('Live stack demo — chat, posts, and proof run')
     expect(source).toContain('LiveDemoJsonLd')
     expect(source).toContain('<LiveDemo />')
-    expect(source).toContain('LiveSandboxHydrator')
     expect(source).not.toContain('isApiReachable')
   })
 
-  it('play page wires relay metadata and hydrator', () => {
+  it('play page wires relay metadata', () => {
     const source = readFileSync(join(appRoot, '(sandbox)/play/page.tsx'), 'utf8')
     expect(source).toContain('Relay — live chat and stack ping')
     expect(source).toContain('PlayJsonLd')
-    expect(source).toContain('LiveSandboxHydrator')
     expect(source).toContain('PlayPanels')
   })
 

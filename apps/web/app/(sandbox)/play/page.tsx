@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { Navbar } from '@/components/arche/navbar'
 import { HeroBlock, SiteFrame, SiteShell, StatusPill } from '@/components/arche/site-primitives'
 import { PlayPanels } from '@/components/play/play-panels'
-import { LiveSandboxHydrator } from '@/components/sandbox/live-sandbox-hydrator'
 import { PlayJsonLd } from '@/components/seo/play-json-ld'
 import { buildPageMetadata } from '@/lib/seo'
 
@@ -39,9 +38,7 @@ export default function PlayPage() {
         </section>
 
         <section className="flex-1 bg-black p-6 md:p-16">
-          <LiveSandboxHydrator>
-            <PlayPanels />
-          </LiveSandboxHydrator>
+          <PlayPanels />
         </section>
       </SiteFrame>
     </SiteShell>

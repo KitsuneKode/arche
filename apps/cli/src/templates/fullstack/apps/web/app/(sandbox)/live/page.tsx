@@ -1,10 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Suspense } from 'react'
 
 import { LiveDemo } from '@/components/live/live-demo'
-import { LiveDemoFallback } from '@/components/sandbox/live-demo-fallback'
-import { LiveSandboxHydrator } from '@/components/sandbox/live-sandbox-hydrator'
 
 export const metadata: Metadata = {
   title: 'Live stack demo — chat, posts, and proof run',
@@ -29,11 +26,7 @@ export default function LivePage() {
         </div>
       </section>
 
-      <Suspense fallback={<LiveDemoFallback />}>
-        <LiveSandboxHydrator>
-          <LiveDemo />
-        </LiveSandboxHydrator>
-      </Suspense>
+      <LiveDemo />
     </main>
   )
 }
