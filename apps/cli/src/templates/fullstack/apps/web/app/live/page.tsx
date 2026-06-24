@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 import { LiveDemo } from '@/components/live/live-demo'
 import config from '@/env'
-import { HydrateClient, prefetch, trpc } from '@/trpc/server'
+import { HydrateClient } from '@/trpc/server'
 
 export const metadata: Metadata = {
   title: 'Live stack demo — chat, posts, and proof run',
@@ -15,6 +15,7 @@ async function isApiReachable() {
   try {
     const response = await fetch(`${config.NEXT_PUBLIC_API_URL}/health`, {
       next: { revalidate: 0 },
+      signal: AbortSignal.timeout(3_000),
     })
     if (!response.ok) return false
     const body = (await response.json()) as { database?: string }
@@ -26,16 +27,6 @@ async function isApiReachable() {
 
 export default async function LivePage() {
   const apiReachable = await isApiReachable()
-
-  if (apiReachable) {
-    await Promise.all([
-      prefetch(trpc.hello.queryOptions({ name: 'Arche' })),
-      prefetch(trpc.post.list.queryOptions()),
-      prefetch(trpc.chat.list.queryOptions()),
-      prefetch(trpc.auth.getSession.queryOptions()),
-      prefetch(trpc.demo.capabilities.queryOptions()),
-    ])
-  }
 
   return (
     <main className="shell">

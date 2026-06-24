@@ -2,8 +2,8 @@
 
 Dashboard (KitsuneKode team):
 
-- Web: [arche](https://vercel.com/kitsunekode/arche)
-- API: [arche-api](https://vercel.com/kitsunekode/arche-api)
+- Web: [arche-landing](https://vercel.com/kitsunekode/arche-landing) → `https://arche.kitsunelabs.xyz`
+- API: [arche-template-server](https://vercel.com/kitsunekode/arche-template-server) → `https://api.arche.kitsunelabs.xyz`
 
 Production URLs:
 
