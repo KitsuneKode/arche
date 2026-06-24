@@ -5,13 +5,13 @@ import { createTRPCClient, httpLink } from '@trpc/client'
 import { createTRPCOptionsProxy, TRPCQueryOptions } from '@trpc/tanstack-react-query'
 import React, { cache } from 'react'
 import { SuperJSON } from 'superjson'
-import config from '@/env'
+import { apiPath } from '@/lib/api-origin'
 import { makeQueryClient } from './query-client'
 
 const getQueryClient = cache(makeQueryClient)
 
 function getUrl() {
-  return `${config.NEXT_PUBLIC_API_URL}/api/trpc`
+  return apiPath('/api/trpc', false)
 }
 
 /** HTTP tRPC proxy for RSC prefetch and client hydration. */

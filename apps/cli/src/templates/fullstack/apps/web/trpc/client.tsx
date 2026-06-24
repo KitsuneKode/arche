@@ -6,7 +6,7 @@ import { createTRPCClient, httpBatchLink, loggerLink } from '@trpc/client'
 import { createTRPCContext } from '@trpc/tanstack-react-query'
 import { useState } from 'react'
 import { SuperJSON } from 'superjson'
-import config from '@/env'
+import { apiPath } from '@/lib/api-origin'
 import { makeQueryClient } from './query-client'
 
 export const { TRPCProvider, useTRPC } = createTRPCContext<AppRouter>()
@@ -22,7 +22,7 @@ function getQueryClient() {
 }
 
 function getUrl() {
-  return `${config.NEXT_PUBLIC_API_URL}/api/trpc`
+  return apiPath('/api/trpc')
 }
 
 export function TRPCReactProvider(

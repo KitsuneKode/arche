@@ -80,22 +80,31 @@ Secrets belong only on **arche-api**, never on **arche**.
 
 When using custom domains instead of `*.vercel.app`, mirror the same variable **names** with your public origins:
 
-**arche** (web at `https://arche.kitsunelabs.xyz`):
+**arche** (web at `https://arche.kitsunelabs.xyz`) — **same-origin API proxy** (recommended):
 
 ```env
 NEXT_PUBLIC_APP_URL=https://arche.kitsunelabs.xyz
 NEXT_PUBLIC_SITE_URL=https://arche.kitsunelabs.xyz
-NEXT_PUBLIC_API_URL=https://api.arche.kitsunelabs.xyz
-# Leave NEXT_PUBLIC_ENABLE_CHAT_SSE unset on Vercel (chat uses polling).
-# Set NEXT_PUBLIC_ENABLE_CHAT_SSE=true only when the API is a long-lived host (Render Docker).
+NEXT_PUBLIC_API_URL=https://arche.kitsunelabs.xyz
+API_UPSTREAM_URL=https://api.arche.kitsunelabs.xyz
 ```
 
-**arche-api** (API at `https://api.arche.kitsunelabs.xyz`):
+`API_UPSTREAM_URL` is **server-only** on the web project. Next.js rewrites `/api/*` and `/health` to the upstream host so the browser never cross-origin fetches the API. Local dev: omit `API_UPSTREAM_URL` and keep `NEXT_PUBLIC_API_URL` pointing at `http://localhost:8080` (or your API port).
+
+**arche-api** (upstream at `https://api.arche.kitsunelabs.xyz`):
 
 ```env
-BETTER_AUTH_URL=https://api.arche.kitsunelabs.xyz
+BETTER_AUTH_URL=https://arche.kitsunelabs.xyz
 FRONTEND_URL=https://arche.kitsunelabs.xyz
 DEMO_AUTO_SIGN_IN=true
+```
+
+When using the proxy, set `BETTER_AUTH_URL` to the **web** origin (where browsers reach `/api/auth`), not the upstream API hostname.
+
+Legacy cross-origin (still supported if you skip `API_UPSTREAM_URL`):
+
+```env
+NEXT_PUBLIC_API_URL=https://api.arche.kitsunelabs.xyz
 ```
 
 `DEMO_AUTO_SIGN_IN=true` is required for the `/live` proof run: sign-up must issue a session so rungs 7–10 unlock without a second sign-in step.

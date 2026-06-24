@@ -1,9 +1,9 @@
-import config from '@/env'
+import { apiPath } from '@/lib/api-origin'
 
 import { isChatSseEnabled } from '@/lib/live-chat-sync-policy'
 
 export { isChatSseEnabled }
 
 export function chatStreamUrl() {
-  return `${config.NEXT_PUBLIC_API_URL}/api/chat/stream`
+  return apiPath('/api/chat/stream')
 }

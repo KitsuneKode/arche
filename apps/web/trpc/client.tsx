@@ -7,7 +7,7 @@ import { createTRPCContext } from '@trpc/tanstack-react-query'
 // ^-- to make sure we can mount the Provider from a server component
 import { useState } from 'react'
 import { SuperJSON } from 'superjson'
-import config from '@/env'
+import { apiPath } from '@/lib/api-origin'
 import { makeQueryClient } from './query-client'
 export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>()
 let browserQueryClient: QueryClient
@@ -37,11 +37,7 @@ function getQueryClient() {
  * @returns The complete URL for the tRPC API endpoint.
  */
 function getUrl() {
-  const base = (() => {
-    // if (typeof window !== 'undefined') return ''
-    return config.NEXT_PUBLIC_API_URL
-  })()
-  return `${base}/api/trpc`
+  return apiPath('/api/trpc')
 }
 
 /**

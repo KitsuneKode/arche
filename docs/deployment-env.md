@@ -8,6 +8,7 @@ Legend: **R** = required, **O** = optional, **—** = do not set, **auto** = pla
 | ------------------------------ | ------------------- | ------------------ | ---------------------- | ----------------------- | ----------------------- |
 | `NEXT_PUBLIC_APP_URL`          | R                   | —                  | —                      | —                       | —                       |
 | `NEXT_PUBLIC_API_URL`          | R                   | —                  | —                      | —                       | —                       |
+| `API_UPSTREAM_URL`             | O (server-only)     | —                  | —                      | —                       | —                       |
 | `NEXT_PUBLIC_SITE_URL`         | O                   | —                  | —                      | —                       | —                       |
 | `NEXT_PUBLIC_SITE_NAME`        | O                   | —                  | —                      | —                       | —                       |
 | `NEXT_PUBLIC_SITE_DESCRIPTION` | O                   | —                  | —                      | —                       | —                       |
@@ -27,7 +28,8 @@ Legend: **R** = required, **O** = optional, **—** = do not set, **auto** = pla
 
 - **Postgres / Redis:** always external URLs (Neon + Upstash recommended). Do not use Render-managed Postgres or Key Value for this template.
 - **Web project** must not receive `DATABASE_URL` or `BETTER_AUTH_SECRET` unless you also deploy the API on Vercel (Path A puts secrets on the **server** project only).
-- **`NEXT_PUBLIC_API_URL`** must match the public API origin (Path A: `*.vercel.app`; Path B: `*.onrender.com`; Path C: `*.up.railway.app` or custom domain).
+- **`NEXT_PUBLIC_API_URL`** — public API origin seen by the browser. With same-origin proxy, set equal to `NEXT_PUBLIC_APP_URL`; set **`API_UPSTREAM_URL`** (web project only) to the real API host.
+- **`API_UPSTREAM_URL`** — optional on Vercel web. Enables Next.js rewrites of `/api/*` and `/health` to the upstream API. Omit locally when `NEXT_PUBLIC_API_URL` points at `localhost:8080`.
 - **`ENABLE_REDIS=false`:** API-only, no `/admin/queues`, no worker. Omit `REDIS_URL` when disabled.
 - **OAuth** (optional on API): `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — both IDs required if either is set.
 

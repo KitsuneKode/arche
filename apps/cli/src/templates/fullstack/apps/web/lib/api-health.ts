@@ -1,4 +1,4 @@
-import config from '@/env'
+import { apiPath } from '@/lib/api-origin'
 
 export const API_HEALTH_CLIENT_TIMEOUT_MS = 3_000
 export const API_HEALTH_SERVER_TIMEOUT_MS = 10_000
@@ -25,10 +25,7 @@ function isConnectedDatabase(database: string | undefined): boolean {
 }
 
 export function getApiHealthFetchUrl(): string {
-  if (typeof window !== 'undefined') {
-    return '/api/demo-health'
-  }
-  return `${config.NEXT_PUBLIC_API_URL}/health`
+  return apiPath('/health')
 }
 
 export async function probeApiHealth(
@@ -37,10 +34,9 @@ export async function probeApiHealth(
   const timeoutMs = options.timeoutMs ?? API_HEALTH_CLIENT_TIMEOUT_MS
   const isClient = typeof window !== 'undefined'
   const started = isClient ? Date.now() : 0
-  const url = getApiHealthFetchUrl()
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(getApiHealthFetchUrl(), {
       signal: options.signal ?? AbortSignal.timeout(timeoutMs),
       cache: 'no-store',
     })
@@ -50,20 +46,9 @@ export async function probeApiHealth(
       return { reachable: false, latencyMs }
     }
 
-    const body = (await response.json()) as ApiHealthStatus & {
-      database?: string
-      status?: string
-    }
-
-    if (typeof body.reachable === 'boolean' && url === '/api/demo-health') {
-      return {
-        reachable: body.reachable,
-        database: body.database,
-        latencyMs: body.latencyMs ?? latencyMs,
-      }
-    }
-
+    const body = (await response.json()) as { database?: string; status?: string }
     const reachable = isConnectedDatabase(body.database)
+
     return {
       reachable,
       database: body.database,
