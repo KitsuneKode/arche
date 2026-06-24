@@ -2,6 +2,7 @@ import config from '@/env'
 
 export const API_HEALTH_CLIENT_TIMEOUT_MS = 3_000
 export const API_HEALTH_SERVER_TIMEOUT_MS = 10_000
+export const API_HEALTH_FIRST_PROBE_MS = 8_000
 
 /** @deprecated Use API_HEALTH_CLIENT_TIMEOUT_MS */
 export const API_HEALTH_TIMEOUT_MS = API_HEALTH_CLIENT_TIMEOUT_MS

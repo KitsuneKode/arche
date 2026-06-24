@@ -9,41 +9,31 @@ import { useTRPC } from '@/trpc/client'
 
 export function LiveDemo() {
   const trpc = useTRPC()
-  const health = useApiReachable()
+  const healthQuery = useApiReachable()
   const sessionQuery = useQuery(trpc.auth.getSession.queryOptions())
   const signedIn = Boolean(sessionQuery.data?.user)
   const userId = sessionQuery.data?.user?.id
 
-  if (health.isPending) {
-    return (
-      <div className="card">
-        <p className="eyebrow">Checking API…</p>
-        <p className="lede">Probing the API health endpoint.</p>
-      </div>
-    )
-  }
-
-  if (health.isConfirmedOffline) {
-    return (
-      <div className="card">
-        <p className="eyebrow">API offline</p>
-        <h2>Live demo needs a running API</h2>
-        <p className="lede">
-          Set <code>NEXT_PUBLIC_API_URL</code> to your API host, migrate the database, and run{' '}
-          <code>bun run db:seed</code>.
-        </p>
-      </div>
-    )
-  }
+  const apiReachable = healthQuery.data?.reachable === true
+  const stillChecking = !healthQuery.isFetched
+  const confirmedOffline =
+    healthQuery.isFetched && healthQuery.data?.reachable === false && !healthQuery.isFetching
 
   return (
     <div className="space-y-4">
-      {health.seededOnline && health.isRefetching ? (
-        <p className="eyebrow">Re-checking API connection…</p>
+      {stillChecking ? <p className="eyebrow">Connecting to demo API…</p> : null}
+      {confirmedOffline ? (
+        <div className="card">
+          <p className="eyebrow">API offline</p>
+          <p className="lede">
+            Set <code>NEXT_PUBLIC_API_URL</code> to your API host and ensure the health endpoint
+            returns <code>database: connected</code>.
+          </p>
+        </div>
       ) : null}
       <div className="grid two">
         <ProofLadder
-          apiReachable={health.status.reachable || health.seededOnline}
+          apiReachable={apiReachable || stillChecking}
           signedIn={signedIn}
           userId={userId}
         />

@@ -2,43 +2,15 @@
 
 import { useQuery } from '@tanstack/react-query'
 
-import { useSandboxApiSeed } from '@/components/sandbox/sandbox-api-context'
-import {
-  apiHealthQueryKey,
-  API_HEALTH_CLIENT_TIMEOUT_MS,
-  probeApiHealth,
-  type ApiHealthStatus,
-} from '@/lib/api-health'
+import { apiHealthQueryKey, API_HEALTH_FIRST_PROBE_MS, probeApiHealth } from '@/lib/api-health'
 
-export type ApiReachableState = {
-  status: ApiHealthStatus
-  isPending: boolean
-  isRefetching: boolean
-  isConfirmedOffline: boolean
-  seededOnline: boolean
-}
-
-export function useApiReachable(): ApiReachableState {
-  const seed = useSandboxApiSeed()
-  const query = useQuery({
+export function useApiReachable() {
+  return useQuery({
     queryKey: apiHealthQueryKey,
-    queryFn: () => probeApiHealth({ timeoutMs: API_HEALTH_CLIENT_TIMEOUT_MS }),
-    initialData: seed ?? undefined,
+    queryFn: () => probeApiHealth({ timeoutMs: API_HEALTH_FIRST_PROBE_MS }),
     staleTime: 30_000,
-    retry: 2,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1_000 * 2 ** attempt, 4_000),
+    refetchOnWindowFocus: true,
   })
-
-  const status = query.data ?? seed ?? { reachable: false }
-  const seededOnline = seed?.reachable === true
-  const clientSaysOffline = query.data?.reachable === false
-  const isConfirmedOffline =
-    clientSaysOffline && (!seededOnline || (!query.isPending && !query.isFetching))
-
-  return {
-    status,
-    isPending: query.isPending && !seed,
-    isRefetching: query.isFetching && !query.isPending,
-    isConfirmedOffline,
-    seededOnline,
-  }
 }

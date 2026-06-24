@@ -5,22 +5,22 @@ import { StackPing } from '@/components/play/stack-ping'
 import { useApiReachable } from '@/lib/use-api-reachable'
 
 export function PlayPanels() {
-  const health = useApiReachable()
-  const showOfflineBanner = health.isConfirmedOffline
+  const healthQuery = useApiReachable()
+  const confirmedOffline =
+    healthQuery.isFetched && healthQuery.data?.reachable === false && !healthQuery.isFetching
 
   return (
     <div className="grid items-stretch gap-8 lg:grid-cols-2">
-      <RelayChat />
-      <StackPing />
-      {showOfflineBanner ? (
-        <p className="font-mono text-[10px] text-amber-400/80 lg:col-span-2">
-          Demo API appears offline — chat and pings may fail until{' '}
-          <code className="text-zinc-400">NEXT_PUBLIC_API_URL</code> is reachable.
+      {healthQuery.isPending ? (
+        <p className="font-mono text-[10px] tracking-widest text-zinc-500 uppercase lg:col-span-2">
+          Connecting to demo API…
         </p>
       ) : null}
-      {health.seededOnline && health.isRefetching ? (
-        <p className="font-mono text-[10px] text-zinc-500 lg:col-span-2">
-          Re-checking API connection…
+      <RelayChat />
+      <StackPing />
+      {confirmedOffline ? (
+        <p className="font-mono text-[10px] text-amber-400/80 lg:col-span-2">
+          Demo API appears offline — chat and pings may fail until the API is reachable.
         </p>
       ) : null}
     </div>

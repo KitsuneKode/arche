@@ -22,23 +22,23 @@ use static shells with client islands under `(sandbox)` TRPC provider (no route-
 
 ## Context — what was already fixed (2026-06-24)
 
-| Area                          | Commit                          | Status                                                                                                     |
-| ----------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Docs TOC `[object Object]`    | `053737f`, `91a1c4a`            | SSR TOC from MDX headings                                                                                  |
-| `/examples` static highlight  | `053737f`                       | `'use cache'` on Shiki                                                                                     |
-| Blog index prerender          | `053737f`                       | sync `getPublishedBlogSummariesSync`                                                                       |
-| `/families` table invisible   | `91a1c4a`                       | removed motion stagger                                                                                     |
-| Matrix readability            | `91a1c4a`                       | `summary` columns on marketing                                                                             |
-| `/live` CORS + prefetch       | `0b470dd` + Vercel env          | API env on `arche-template-server`                                                                         |
-| MDX motion SSR blockers       | `1437811`                       | server embeds, no opacity:0                                                                                |
-| Motion scoped to `/`          | `1437811`                       | `MotionRoot` on landing only                                                                               |
-| Route loader pathname-only    | `1437811`                       | no searchParams bailout                                                                                    |
-| Docs TOC crash (React #185)   | `1cb4947`                       | props vs DOM split + stable snapshot                                                                       |
-| Docs error boundary           | `1cb4947`                       | `app/docs/error.tsx`                                                                                       |
-| Docs sidebar SSR              | `1cb4947`                       | server nav + `DocsSidebarLink`                                                                             |
-| `/live` PPR infinite skeleton | `9de01ab`, `dc10805`, `e9aaeb4` | sync shell + client health; no Suspense hydrator                                                           |
-| `/play` Relay showcase        | `9de01ab`, `e9aaeb4`            | chat + Stack Ping reference route                                                                          |
-| `/live` + `/play` health SSR  | 2026-06-25                      | `SandboxApiBridge` async island seeds API health (10s server probe); client refines with softer offline UX |
+| Area                          | Commit                          | Status                                                                                                         |
+| ----------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Docs TOC `[object Object]`    | `053737f`, `91a1c4a`            | SSR TOC from MDX headings                                                                                      |
+| `/examples` static highlight  | `053737f`                       | `'use cache'` on Shiki                                                                                         |
+| Blog index prerender          | `053737f`                       | sync `getPublishedBlogSummariesSync`                                                                           |
+| `/families` table invisible   | `91a1c4a`                       | removed motion stagger                                                                                         |
+| Matrix readability            | `91a1c4a`                       | `summary` columns on marketing                                                                                 |
+| `/live` CORS + prefetch       | `0b470dd` + Vercel env          | API env on `arche-template-server`                                                                             |
+| MDX motion SSR blockers       | `1437811`                       | server embeds, no opacity:0                                                                                    |
+| Motion scoped to `/`          | `1437811`                       | `MotionRoot` on landing only                                                                                   |
+| Route loader pathname-only    | `1437811`                       | no searchParams bailout                                                                                        |
+| Docs TOC crash (React #185)   | `1cb4947`                       | props vs DOM split + stable snapshot                                                                           |
+| Docs error boundary           | `1cb4947`                       | `app/docs/error.tsx`                                                                                           |
+| Docs sidebar SSR              | `1cb4947`                       | server nav + `DocsSidebarLink`                                                                                 |
+| `/live` PPR infinite skeleton | `9de01ab`, `dc10805`, `e9aaeb4` | sync shell + client health; no Suspense hydrator                                                               |
+| `/play` Relay showcase        | `9de01ab`, `e9aaeb4`            | chat + Stack Ping reference route                                                                              |
+| `/live` + `/play` health UX   | 2026-06-25                      | client health probe (8s first fetch, retries); demo renders immediately — no async RSC bridge (PPR blank slot) |
 
 ---
 

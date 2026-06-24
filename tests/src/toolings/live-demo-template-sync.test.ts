@@ -25,7 +25,6 @@ const REQUIRED_PATHS = [
   'apps/web/lib/proof-run/proof-run.ts',
   'apps/web/app/(sandbox)/live/page.tsx',
   'apps/web/app/(sandbox)/layout.tsx',
-  'apps/web/components/sandbox/sandbox-api-bridge.tsx',
   'apps/web/lib/api-health.ts',
   'apps/server/src/modules/chat/chat.routes.ts',
   'apps/server/src/modules/chat/chat.events.ts',

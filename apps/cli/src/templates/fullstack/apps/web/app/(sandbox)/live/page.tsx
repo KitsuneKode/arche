@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { LiveDemo } from '@/components/live/live-demo'
-import { SandboxApiBridge } from '@/components/sandbox/sandbox-api-bridge'
 
 export const metadata: Metadata = {
   title: 'Live stack demo — chat, posts, and proof run',
@@ -27,9 +26,7 @@ export default function LivePage() {
         </div>
       </section>
 
-      <SandboxApiBridge>
-        <LiveDemo />
-      </SandboxApiBridge>
+      <LiveDemo />
     </main>
   )
 }

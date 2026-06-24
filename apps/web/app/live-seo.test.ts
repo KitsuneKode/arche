@@ -51,7 +51,6 @@ describe('/live SEO', () => {
     const source = readFileSync(join(appRoot, '(sandbox)/live/page.tsx'), 'utf8')
     expect(source).toContain('Live stack demo — chat, posts, and proof run')
     expect(source).toContain('LiveDemoJsonLd')
-    expect(source).toContain('SandboxApiBridge')
     expect(source).toContain('<LiveDemo />')
     expect(source).not.toContain('isApiReachable')
   })
