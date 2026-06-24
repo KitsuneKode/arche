@@ -12,7 +12,7 @@ import {
 } from 'react'
 
 import { ProofComplete } from '@/components/live/proof-complete'
-import config from '@/env'
+import { getApiHealthFetchUrl } from '@/lib/api-health'
 import {
   passedRungIds,
   PROOF_RUNGS,
@@ -91,7 +91,7 @@ export function ProofLadder({
     const results = await runProofRungs({
       apiReachable,
       fetchHealth: async () => {
-        const response = await fetch(`${config.NEXT_PUBLIC_API_URL}/health`, {
+        const response = await fetch(getApiHealthFetchUrl(), {
           credentials: 'include',
         })
         const body = (await response.json()) as { database?: string }

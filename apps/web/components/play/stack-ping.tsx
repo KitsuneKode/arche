@@ -3,8 +3,7 @@
 import { cn } from '@arche-template/ui/lib/utils'
 import { useCallback, useMemo, useState } from 'react'
 
-import config from '@/env'
-import { API_HEALTH_TIMEOUT_MS } from '@/lib/api-health'
+import { API_HEALTH_TIMEOUT_MS, getApiHealthFetchUrl } from '@/lib/api-health'
 import {
   appendPing,
   bestPingMs,
@@ -83,14 +82,14 @@ export function StackPing() {
     const started = performance.now()
 
     try {
-      const response = await fetch(`${config.NEXT_PUBLIC_API_URL}/health`, {
+      const response = await fetch(getApiHealthFetchUrl(), {
         signal: AbortSignal.timeout(API_HEALTH_TIMEOUT_MS),
       })
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`)
       }
-      const body = (await response.json()) as { database?: string }
-      if (body.database !== 'connected') {
+      const body = (await response.json()) as { database?: string; reachable?: boolean }
+      if (body.reachable === false || (body.reachable !== true && body.database !== 'connected')) {
         throw new Error('database not connected')
       }
 

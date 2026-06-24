@@ -25,15 +25,24 @@ function isConnectedDatabase(database: string | undefined): boolean {
   return database === 'connected'
 }
 
+/** Browser: same-origin Vercel route. Server: upstream API (route handler, tests). */
+export function getApiHealthFetchUrl(): string {
+  if (typeof window !== 'undefined') {
+    return '/api/demo-health'
+  }
+  return `${config.NEXT_PUBLIC_API_URL}/health`
+}
+
 export async function probeApiHealth(
   options: ProbeApiHealthOptions = {},
 ): Promise<ApiHealthStatus> {
   const timeoutMs = options.timeoutMs ?? API_HEALTH_CLIENT_TIMEOUT_MS
   const isClient = typeof window !== 'undefined'
   const started = isClient ? Date.now() : 0
+  const url = getApiHealthFetchUrl()
 
   try {
-    const response = await fetch(`${config.NEXT_PUBLIC_API_URL}/health`, {
+    const response = await fetch(url, {
       signal: options.signal ?? AbortSignal.timeout(timeoutMs),
       cache: 'no-store',
     })
@@ -43,9 +52,20 @@ export async function probeApiHealth(
       return { reachable: false, latencyMs }
     }
 
-    const body = (await response.json()) as { database?: string; status?: string }
-    const reachable = isConnectedDatabase(body.database)
+    const body = (await response.json()) as ApiHealthStatus & {
+      database?: string
+      status?: string
+    }
 
+    if (typeof body.reachable === 'boolean' && url === '/api/demo-health') {
+      return {
+        reachable: body.reachable,
+        database: body.database,
+        latencyMs: body.latencyMs ?? latencyMs,
+      }
+    }
+
+    const reachable = isConnectedDatabase(body.database)
     return {
       reachable,
       database: body.database,
