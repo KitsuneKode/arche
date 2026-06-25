@@ -248,6 +248,7 @@ function buildConfig(args: Record<string, unknown>): ProjectConfig {
     runtime: 'bun',
     includeShowcase: false,
     includeWorker: args.includeWorker === true,
+    includeLiveDemo: false,
     bundles: (args.bundles as ProjectConfig['bundles']) ?? ['product'],
     presets: [],
     preset: args.preset as ProjectConfig['preset'],

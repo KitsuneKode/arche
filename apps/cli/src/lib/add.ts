@@ -94,6 +94,7 @@ function buildProjectConfig(
     includeCi: feature === 'ci' || (config?.choices?.includeCi as boolean) || false,
     includeShowcase: false,
     includeWorker: feature === 'worker',
+    includeLiveDemo: false,
     initializeGit: false,
     installDependencies: false,
     presets: [],

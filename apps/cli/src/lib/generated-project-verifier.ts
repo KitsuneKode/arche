@@ -507,6 +507,7 @@ function baseConfigForCombo(destinationDir: string, testCase: GeneratedComboCase
     deployment: testCase.family === 'fullstack' ? 'vercel-railway' : 'none',
     includeShowcase: false,
     includeWorker: false,
+    includeLiveDemo: false,
     includeDocker: testCase.family === 'fullstack',
     includeCi: testCase.family === 'fullstack',
     initializeGit: false,

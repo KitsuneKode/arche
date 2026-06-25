@@ -149,6 +149,7 @@ async function scaffoldPreset(preset: Preset, root: string): Promise<string> {
       deployment: 'vercel-railway',
       includeShowcase: false,
       includeWorker: false,
+      includeLiveDemo: false,
       includeDocker: true,
       includeCi: true,
       initializeGit: false,
