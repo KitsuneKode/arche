@@ -124,6 +124,7 @@ describe('applyDatabaseTransform', () => {
       expect(schema).toContain('model Verification')
       expect(schema).toContain('model Post')
       expect(schema).toContain('model Message')
+      expect(schema).toContain('model RelayRunScore')
     })
 
     it('rewrites store index with better-sqlite3 adapter', async () => {

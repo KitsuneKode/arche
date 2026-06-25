@@ -26,7 +26,7 @@ import { stripLiveDemoWeb, stripRelayLatticeFromProject } from './backend'
 // =============================================================================
 
 function drizzleSchemaPostgres(): string {
-  return `import { pgTable, text, boolean, timestamp } from 'drizzle-orm/pg-core'
+  return `import { pgTable, text, boolean, timestamp, integer } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 // ─── Better Auth models ─────────────────────────────────────────────────────
@@ -105,6 +105,15 @@ export const message = pgTable('message', {
     .references(() => user.id, { onDelete: 'cascade' }),
 })
 
+export const relayRunScore = pgTable('relay_run_score', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  score: integer('score').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
 // ─── Relations ──────────────────────────────────────────────────────────────
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -112,6 +121,7 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   posts: many(post),
   messages: many(message),
+  relayRunScores: many(relayRunScore),
 }))
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -128,6 +138,10 @@ export const postRelations = relations(post, ({ one }) => ({
 
 export const messageRelations = relations(message, ({ one }) => ({
   sender: one(user, { fields: [message.senderId], references: [user.id] }),
+}))
+
+export const relayRunScoreRelations = relations(relayRunScore, ({ one }) => ({
+  user: one(user, { fields: [relayRunScore.userId], references: [user.id] }),
 }))
 `
 }
@@ -212,6 +226,15 @@ export const message = sqliteTable('message', {
     .references(() => user.id, { onDelete: 'cascade' }),
 })
 
+export const relayRunScore = sqliteTable('relay_run_score', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  score: integer('score').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+})
+
 // ─── Relations ──────────────────────────────────────────────────────────────
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -219,6 +242,7 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   posts: many(post),
   messages: many(message),
+  relayRunScores: many(relayRunScore),
 }))
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -235,6 +259,10 @@ export const postRelations = relations(post, ({ one }) => ({
 
 export const messageRelations = relations(message, ({ one }) => ({
   sender: one(user, { fields: [message.senderId], references: [user.id] }),
+}))
+
+export const relayRunScoreRelations = relations(relayRunScore, ({ one }) => ({
+  user: one(user, { fields: [relayRunScore.userId], references: [user.id] }),
 }))
 `
 }
@@ -744,6 +772,97 @@ export const healthRepository = {
 `
 }
 
+function drizzleGameRepository(): string {
+  return `import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
+import { db, relayRunScore, user } from '@arche-template/store'
+
+const LEADERBOARD_LIMIT = 10
+
+export const gameRepository = {
+  async insertScore(userId: string, score: number) {
+    const [row] = await db
+      .insert(relayRunScore)
+      .values({ id: crypto.randomUUID(), userId, score })
+      .returning()
+    if (!row) throw new Error('Failed to insert score')
+    return row
+  },
+
+  findUserBest(userId: string) {
+    return db.query.relayRunScore.findFirst({
+      where: eq(relayRunScore.userId, userId),
+      orderBy: [desc(relayRunScore.score)],
+    })
+  },
+
+  async findLeaderboard(limit = LEADERBOARD_LIMIT) {
+    const grouped = await db
+      .select({
+        userId: relayRunScore.userId,
+        maxScore: sql<number>\`max(\${relayRunScore.score})\`,
+      })
+      .from(relayRunScore)
+      .groupBy(relayRunScore.userId)
+      .orderBy(desc(sql\`max(\${relayRunScore.score})\`))
+      .limit(limit)
+    if (!grouped.length) return []
+
+    const userIds = grouped.map((entry) => entry.userId)
+    const [users, scoreRows] = await Promise.all([
+      db.query.user.findMany({
+        where: inArray(user.id, userIds),
+        columns: { id: true, name: true },
+      }),
+      db
+        .select({
+          userId: relayRunScore.userId,
+          score: relayRunScore.score,
+          createdAt: relayRunScore.createdAt,
+        })
+        .from(relayRunScore)
+        .where(inArray(relayRunScore.userId, userIds))
+        .orderBy(desc(relayRunScore.score), asc(relayRunScore.createdAt)),
+    ])
+
+    const nameById = new Map(users.map((entry) => [entry.id, entry.name]))
+    const bestScoreByUser = new Map(grouped.map((entry) => [entry.userId, entry.maxScore ?? 0]))
+    const createdAtByUser = new Map<string, Date>()
+    for (const row of scoreRows) {
+      if (bestScoreByUser.get(row.userId) !== row.score) continue
+      if (!createdAtByUser.has(row.userId)) createdAtByUser.set(row.userId, row.createdAt)
+    }
+
+    return grouped.map((entry) => ({
+      userId: entry.userId,
+      score: entry.maxScore ?? 0,
+      displayName: nameById.get(entry.userId) ?? 'Player',
+      createdAt: createdAtByUser.get(entry.userId) ?? new Date(),
+    }))
+  },
+
+  async countUsersWithBetterBest(score: number) {
+    const grouped = await db
+      .select({
+        userId: relayRunScore.userId,
+        maxScore: sql<number>\`max(\${relayRunScore.score})\`,
+      })
+      .from(relayRunScore)
+      .groupBy(relayRunScore.userId)
+    return grouped.filter((entry) => (entry.maxScore ?? 0) > score).length
+  },
+
+  findRecentByUser(userId: string, take = 5) {
+    return db.query.relayRunScore.findMany({
+      where: eq(relayRunScore.userId, userId),
+      orderBy: [desc(relayRunScore.createdAt)],
+      limit: take,
+      columns: { score: true, createdAt: true },
+    })
+  },
+}
+`
+}
+
 async function patchServerShutdownForDrizzle(destinationDir: string): Promise<void> {
   const serverPath = join(destinationDir, 'apps/server/src/server.ts')
   if (!existsSync(serverPath)) return
@@ -906,6 +1025,10 @@ export async function applyOrmTransform(
     await writeFile_(
       join(destinationDir, 'apps/server/src/modules/health/health.repository.ts'),
       drizzleHealthRepository(database),
+    )
+    await writeFile_(
+      join(destinationDir, 'apps/server/src/modules/game/game.repository.ts'),
+      drizzleGameRepository(),
     )
     await patchServerShutdownForDrizzle(destinationDir)
 

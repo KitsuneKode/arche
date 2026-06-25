@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Arche mark">
+  <rect x="2" y="2" width="60" height="60" fill="#09090b" stroke="#27272a" stroke-width="2"/>
+  <path
+    d="M18 46 L32 14 L46 46"
+    fill="none"
+    stroke="#fafafa"
+    stroke-width="3.2"
+    stroke-linejoin="miter"
+    stroke-linecap="square"
+  />
+  <path d="M23 36 H41" fill="none" stroke="#a1a1aa" stroke-width="2.4" stroke-linecap="square"/>
+  <circle cx="32" cy="46" r="3.2" fill="#10b981"/>
+  <path d="M2 2 H14 M2 2 V14" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="square"/>
+  <path d="M52 50 H62 M54 50 V60" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="square" opacity="0.85"/>
+</svg>

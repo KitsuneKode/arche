@@ -39,6 +39,7 @@ model User {
   accounts      Account[]
   posts         Post[]
   messages      Message[]
+  relayRunScores RelayRunScore[]
 
   @@map("user")
 }
@@ -145,6 +146,18 @@ model LatticeVote {
 
   @@unique([roundId, userId])
   @@map("lattice_vote")
+}
+
+model RelayRunScore {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score     Int
+  createdAt DateTime @default(now())
+
+  @@index([score(sort: Desc), createdAt(sort: Desc)])
+  @@index([userId, score(sort: Desc)])
+  @@map("relay_run_score")
 }
 `
 }

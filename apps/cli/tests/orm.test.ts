@@ -54,6 +54,7 @@ describe('applyOrmTransform', () => {
     await mkdir(join(tempDir, 'apps/server/src/modules/post'), { recursive: true })
     await mkdir(join(tempDir, 'apps/server/src/modules/chat'), { recursive: true })
     await mkdir(join(tempDir, 'apps/server/src/modules/user'), { recursive: true })
+    await mkdir(join(tempDir, 'apps/server/src/modules/game'), { recursive: true })
     await mkdir(join(tempDir, 'packages/store/src/scripts'), { recursive: true })
 
     // Mock files
@@ -146,6 +147,10 @@ onShutdown(async () => {
       join(tempDir, 'apps/server/src/modules/post/post.service.ts'),
       'export const postService = {}\n',
     )
+    await writeFile(
+      join(tempDir, 'apps/server/src/modules/game/game.repository.ts'),
+      "import { prisma } from '../../db/index.js'\nprisma.relayRunScore.create()\n",
+    )
   })
 
   afterEach(async () => {
@@ -186,6 +191,7 @@ onShutdown(async () => {
       expect(schema).toContain('export const verification')
       expect(schema).toContain('export const post')
       expect(schema).toContain('export const message')
+      expect(schema).toContain('export const relayRunScore')
       expect(schema).toContain('export const userRelations')
       expect(schema).toContain('export const postRelations')
     })
@@ -265,6 +271,17 @@ onShutdown(async () => {
       expect(await pathExists(join(tempDir, 'apps/server/src/modules/post/post.service.ts'))).toBe(
         false,
       )
+    })
+
+    it('rewrites game repository for Drizzle', async () => {
+      await applyOrmTransform(tempDir, config)
+      const gameRepo = await readFile(
+        join(tempDir, 'apps/server/src/modules/game/game.repository.ts'),
+        'utf8',
+      )
+      expect(gameRepo).toContain("from '@arche-template/store'")
+      expect(gameRepo).toContain('relayRunScore')
+      expect(gameRepo).not.toContain('prisma')
     })
 
     it('rewrites auth with drizzleAdapter', async () => {
