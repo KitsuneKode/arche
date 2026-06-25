@@ -4,80 +4,60 @@ import { join } from 'node:path'
 
 const ROOT = join(import.meta.dir, '../../..')
 const TEMPLATE = join(ROOT, 'apps/cli/src/templates/fullstack')
+const ADDON = join(ROOT, 'apps/cli/src/templates/addons/live-demo')
 
-/** Monorepo root bun test must not discover template copies (no react in install graph). */
-const FORBIDDEN_TEMPLATE_WEB_TESTS = [
-  'apps/web/app/live-seo.test.ts',
-  'apps/web/lib/client-mounted.test.ts',
-  'apps/web/lib/live-chat-sync.test.ts',
-  'apps/web/lib/proof-run-storage.test.ts',
-  'apps/web/lib/live-feed/live-feed.test.ts',
-  'apps/web/lib/proof-run/proof-run.test.ts',
-  'apps/web/lib/relay-run/engine.test.ts',
-]
-
-const FORBIDDEN_TEMPLATE_PATHS = [
-  'apps/web/app/live/page.tsx',
-  'apps/web/app/live/layout.tsx',
-  'apps/web/app/(sandbox)/play',
-  'apps/web/components/play',
-]
-
-const REQUIRED_PATHS = [
+/** Paths that must exist in the live-demo addon, not the default fullstack template. */
+const ADDON_REQUIRED_PATHS = [
   'apps/web/components/live/live-demo.tsx',
-  'apps/web/components/live/live-demo-footer.tsx',
-  'apps/web/components/live/live-room-context.tsx',
-  'apps/web/components/live/live-panel-shell.tsx',
   'apps/web/components/live/relay-run-game.tsx',
-  'apps/web/components/live/relay-chat-panel.tsx',
-  'apps/web/components/live/relay-chat-popup.tsx',
-  'apps/web/components/live/lattice/relay-chat-sidebar.tsx',
-  'apps/web/components/live/activity-deck.tsx',
-  'apps/web/components/live/live-chat.tsx',
-  'apps/web/lib/live-feed/live-feed.ts',
   'apps/web/lib/relay-run/engine.ts',
-  'apps/web/lib/proof-run/proof-run.ts',
   'apps/web/app/(sandbox)/live/page.tsx',
-  'apps/web/app/(sandbox)/live/opengraph-image.tsx',
-  'apps/web/app/(sandbox)/layout.tsx',
-  'apps/web/lib/og/routes/live-opengraph.meta.ts',
-  'apps/web/lib/og/routes/live-opengraph.image.tsx',
-  'apps/web/lib/og/shell.tsx',
-  'apps/web/lib/og/constants.ts',
-  'apps/web/lib/brand/mark-data-uri.ts',
-  'apps/web/public/brand/arche-mark.svg',
-  'apps/web/lib/api-health.ts',
-  'apps/server/src/modules/chat/chat.routes.ts',
-  'apps/server/src/modules/chat/chat.events.ts',
-  'apps/server/src/modules/live/live.routes.ts',
   'apps/server/src/modules/game/game.trpc.ts',
-  'apps/server/src/modules/demo/demo.trpc.ts',
+  'apps/server/src/modules/chat/chat.trpc.ts',
+  'apps/server/src/modules/live/live.routes.ts',
+  'packages/auth/src/guest-display-name.ts',
+  'packages/auth/package.json',
+  'packages/backend-common/package.exports.live-demo.json',
   'packages/backend-common/src/demo-policy.ts',
-  'packages/store/prisma/migrations/20260625140000_relay_run_score/migration.sql',
+  'packages/ui/package.json',
+  'packages/store/src/scripts/seed.ts',
+  'packages/store/prisma/migrations/20260625150000_user_is_anonymous/migration.sql',
+  'packages/store/prisma/migrations/20260625050000_relay_lattice/migration.sql',
 ]
 
-describe('fullstack template live demo parity', () => {
-  for (const relative of REQUIRED_PATHS) {
-    it(`includes ${relative}`, () => {
-      expect(existsSync(join(TEMPLATE, relative))).toBe(true)
+const TEMPLATE_FORBIDDEN_PATHS = [
+  'apps/web/components/live',
+  'apps/web/app/(sandbox)/live',
+  'apps/server/src/modules/game',
+  'apps/server/src/modules/chat',
+  'apps/server/src/modules/live',
+  'packages/auth/src/guest-display-name.ts',
+  'packages/store/prisma/migrations/20260625050000_relay_lattice',
+]
+
+describe('live-demo addon parity', () => {
+  for (const relative of ADDON_REQUIRED_PATHS) {
+    it(`addon includes ${relative}`, () => {
+      expect(existsSync(join(ADDON, relative))).toBe(true)
     })
   }
 
-  for (const relative of FORBIDDEN_TEMPLATE_PATHS) {
-    it(`does not include legacy ${relative}`, () => {
+  for (const relative of TEMPLATE_FORBIDDEN_PATHS) {
+    it(`default template omits ${relative}`, () => {
       expect(existsSync(join(TEMPLATE, relative))).toBe(false)
     })
   }
 
-  for (const relative of FORBIDDEN_TEMPLATE_WEB_TESTS) {
-    it(`does not duplicate monorepo test ${relative}`, () => {
-      expect(existsSync(join(TEMPLATE, relative))).toBe(false)
-    })
-  }
+  it('addon live page is self-contained (no dogfood marketing imports)', () => {
+    const livePage = readFileSync(join(ADDON, 'apps/web/app/(sandbox)/live/page.tsx'), 'utf8')
+    expect(livePage).not.toContain('@/components/arche/')
+    expect(livePage).not.toContain('live-demo-json-ld')
+    expect(livePage).not.toContain('@/lib/seo')
+    expect(livePage).toContain('LiveDemo')
+  })
 
-  it('(sandbox)/live page does not use server health await or apiReachable prop', () => {
-    const source = readFileSync(join(TEMPLATE, 'apps/web/app/(sandbox)/live/page.tsx'), 'utf8')
-    expect(source).not.toContain('isApiReachable')
-    expect(source).not.toContain('apiReachable')
+  it('addon auth package exports guest-display-name subpath', () => {
+    const authPkg = readFileSync(join(ADDON, 'packages/auth/package.json'), 'utf8')
+    expect(authPkg).toContain('guest-display-name')
   })
 })

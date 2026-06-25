@@ -26,6 +26,7 @@ function makeConfig(
     deployment: 'none',
     includeShowcase: false,
     includeWorker: false,
+    includeLiveDemo: false,
     includeDocker: false,
     includeCi: false,
     initializeGit: false,

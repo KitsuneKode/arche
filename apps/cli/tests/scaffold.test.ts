@@ -26,6 +26,7 @@ function makeConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
     deployment: 'vercel-railway',
     includeShowcase: false,
     includeWorker: false,
+    includeLiveDemo: false,
     includeDocker: true,
     includeCi: true,
     initializeGit: true,
@@ -95,6 +96,7 @@ describe('buildCleanupTargets', () => {
     const targets = buildCleanupTargets({
       includeShowcase: true,
       includeWorker: true,
+      includeLiveDemo: true,
       testing: 'bun',
       family: 'fullstack',
     })
@@ -105,41 +107,59 @@ describe('buildCleanupTargets', () => {
     const targets = buildCleanupTargets({
       includeShowcase: false,
       includeWorker: true,
+      includeLiveDemo: false,
       testing: 'bun',
       family: 'fullstack',
     })
     expect(targets).toContain('showcase')
     expect(targets).toContain('seed')
+    expect(targets).toContain('live')
   })
 
   it('excludes worker when disabled', () => {
     const targets = buildCleanupTargets({
       includeShowcase: true,
       includeWorker: false,
+      includeLiveDemo: false,
       testing: 'bun',
       family: 'fullstack',
     })
     expect(targets).toContain('worker')
+    expect(targets).toContain('live')
   })
 
   it('excludes tests when testing is none', () => {
     const targets = buildCleanupTargets({
       includeShowcase: true,
       includeWorker: true,
+      includeLiveDemo: false,
       testing: 'none',
       family: 'fullstack',
     })
     expect(targets).toContain('tests')
   })
 
-  it('includes readme for all configurations', () => {
+  it('strips live demo by default on fullstack', () => {
     const targets = buildCleanupTargets({
       includeShowcase: false,
       includeWorker: false,
+      includeLiveDemo: false,
       testing: 'bun',
       family: 'fullstack',
     })
+    expect(targets).toContain('live')
     expect(targets).toContain('readme')
+  })
+
+  it('keeps live demo when includeLiveDemo is true', () => {
+    const targets = buildCleanupTargets({
+      includeShowcase: false,
+      includeWorker: false,
+      includeLiveDemo: true,
+      testing: 'bun',
+      family: 'fullstack',
+    })
+    expect(targets).not.toContain('live')
   })
 })
 
@@ -148,6 +168,7 @@ describe('buildCleanupTargets — family awareness', () => {
     const targets = buildCleanupTargets({
       includeShowcase: true,
       includeWorker: true,
+      includeLiveDemo: true,
       testing: 'bun',
       family: 'fullstack',
     })
@@ -158,6 +179,7 @@ describe('buildCleanupTargets — family awareness', () => {
     const targets = buildCleanupTargets({
       includeShowcase: false,
       includeWorker: true,
+      includeLiveDemo: false,
       testing: 'bun',
       family: 'fullstack',
     })
@@ -170,6 +192,7 @@ describe('buildCleanupTargets — family awareness', () => {
     const targets = buildCleanupTargets({
       includeShowcase: true,
       includeWorker: false,
+      includeLiveDemo: false,
       testing: 'bun',
       family: 'fullstack',
     })
@@ -180,6 +203,7 @@ describe('buildCleanupTargets — family awareness', () => {
     const targets = buildCleanupTargets({
       includeShowcase: false,
       includeWorker: false,
+      includeLiveDemo: false,
       testing: 'bun',
       family: 'backend',
     })
@@ -192,6 +216,7 @@ describe('buildCleanupTargets — family awareness', () => {
     const targets = buildCleanupTargets({
       includeShowcase: false,
       includeWorker: false,
+      includeLiveDemo: false,
       testing: 'bun',
       family: 'next',
     })
@@ -214,6 +239,7 @@ describe('buildCleanupTargets — family awareness', () => {
       const targets = buildCleanupTargets({
         includeShowcase: false,
         includeWorker: false,
+        includeLiveDemo: false,
         testing: 'bun',
         family,
       })
@@ -237,6 +263,7 @@ describe('buildCleanupTargets — family awareness', () => {
       const targets = buildCleanupTargets({
         includeShowcase: false,
         includeWorker: false,
+        includeLiveDemo: false,
         testing: 'bun',
         family,
       })
@@ -249,6 +276,7 @@ describe('buildCleanupTargets — family awareness', () => {
     const targets = buildCleanupTargets({
       includeShowcase: false,
       includeWorker: false,
+      includeLiveDemo: false,
       testing: 'bun',
       family: 'next',
     })

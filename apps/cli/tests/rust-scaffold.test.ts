@@ -23,6 +23,7 @@ function makeConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
     deployment: 'none',
     includeShowcase: false,
     includeWorker: false,
+    includeLiveDemo: false,
     includeDocker: true,
     includeCi: true,
     initializeGit: false,

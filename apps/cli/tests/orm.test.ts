@@ -10,7 +10,9 @@ function makeConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
   return {
     projectName: 'test-app',
     destinationDir: '/tmp/test-app',
-    database: 'postgres',
+    family: 'fullstack',
+    bundles: ['product'],
+    packageManager: 'bun',
     vectorDatabase: 'none',
     orm: 'prisma',
     backend: 'express-bun',
@@ -20,6 +22,7 @@ function makeConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
     deployment: 'vercel-railway',
     includeShowcase: false,
     includeWorker: false,
+    includeLiveDemo: false,
     includeDocker: true,
     includeCi: true,
     initializeGit: true,
@@ -273,8 +276,8 @@ onShutdown(async () => {
       )
     })
 
-    it('rewrites game repository for Drizzle', async () => {
-      await applyOrmTransform(tempDir, config)
+    it('rewrites game repository for Drizzle when live demo is enabled', async () => {
+      await applyOrmTransform(tempDir, { ...config, includeLiveDemo: true })
       const gameRepo = await readFile(
         join(tempDir, 'apps/server/src/modules/game/game.repository.ts'),
         'utf8',
@@ -302,7 +305,7 @@ onShutdown(async () => {
     })
 
     it('rewrites tRPC routers with Drizzle query API', async () => {
-      await applyOrmTransform(tempDir, config)
+      await applyOrmTransform(tempDir, { ...config, includeLiveDemo: true })
 
       const postRouter = await readFile(
         join(tempDir, 'apps/server/src/modules/post/post.trpc.ts'),

@@ -33,6 +33,7 @@ function baseConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
     deployment: 'vercel-railway',
     includeShowcase: false,
     includeWorker: false,
+    includeLiveDemo: false,
     includeDocker: true,
     includeCi: true,
     initializeGit: false,
@@ -58,16 +59,18 @@ describe('cleanup targets', () => {
       buildCleanupTargets({
         includeShowcase: false,
         includeWorker: false,
+    includeLiveDemo: false,
         testing: 'none',
         family: 'fullstack',
       }),
-    ).toEqual(['readme', 'showcase', 'seed', 'worker', 'tests'])
+    ).toEqual(['readme', 'showcase', 'seed', 'live', 'worker', 'tests'])
   })
 
   it('does not strip worker for other families by default', () => {
     const targets = buildCleanupTargets({
       includeShowcase: false,
       includeWorker: false,
+    includeLiveDemo: false,
       testing: 'bun',
       family: 'next',
     })

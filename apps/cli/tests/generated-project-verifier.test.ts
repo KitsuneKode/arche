@@ -70,4 +70,16 @@ describe('generated project verifier', () => {
       status: 'skipped',
     })
   }, 60000)
+
+  it('verifies live-demo fullstack structure without installing dependencies', async () => {
+    const result = await verifyGeneratedProject({
+      preset: 'typescript-fullstack',
+      packageManager: 'bun',
+      commands: [],
+      configOverrides: { includeLiveDemo: true, includeWorker: true },
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.missingFiles).toEqual([])
+  }, 60000)
 })

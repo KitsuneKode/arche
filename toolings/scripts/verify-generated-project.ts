@@ -20,6 +20,7 @@ interface CliOptions {
   presets?: Preset[]
   packageManagers?: PackageManager[]
   commands: GeneratedProjectCommand[]
+  configOverrides?: Partial<import('../../apps/cli/src/types/schemas').ProjectConfig>
   keepOutput: boolean
   json: boolean
   skipMissingTools: boolean
@@ -83,6 +84,7 @@ Options:
   --combo-matrix       Verify fullstack combo + standalone family matrix (install/typecheck/lint/build).
   --combo-family=<ids> With --combo-matrix: comma-separated families (e.g. fullstack,next).
   --combo-id=<ids>     With --combo-matrix: comma-separated combo case ids (e.g. fullstack-default).
+  --config-json=<json> Partial ProjectConfig overrides (e.g. '{"includeLiveDemo":true}').
   -h, --help           Show this message.
 
 Examples:
@@ -90,7 +92,7 @@ Examples:
   bun run verify:generated -- --preset=typescript-fullstack --pm=bun,pnpm
   bun run verify:generated -- --preset=solana-product --run=cargo-check,anchor-build
   bun run verify:generated:combo-fullstack
-  bun run verify:generated -- --combo-matrix --combo-family=fullstack --run=install,typecheck,build
+  bun run verify:generated -- --preset=typescript-fullstack --pm=bun --config-json='{"includeLiveDemo":true,"includeWorker":true}' --run=install,typecheck
 `)
     process.exit(0)
   }
@@ -120,6 +122,11 @@ Examples:
     }
     if (arg.startsWith('--combo-id=')) {
       options.comboIds = splitList(arg.slice('--combo-id='.length))
+    }
+    if (arg.startsWith('--config-json=')) {
+      options.configOverrides = JSON.parse(
+        arg.slice('--config-json='.length),
+      ) as CliOptions['configOverrides']
     }
   }
 
@@ -234,6 +241,7 @@ async function main(): Promise<void> {
     const result = await verifyGeneratedProject({
       ...testCase,
       commands: options.commands,
+      configOverrides: options.configOverrides,
       keepOutput: options.keepOutput,
       skipMissingTools: options.skipMissingTools,
     })

@@ -469,6 +469,26 @@ async function checkTemplateDependencyPins(): Promise<Finding[]> {
   ]
 }
 
+async function checkTemplateScaffoldOwnership(): Promise<Finding[]> {
+  const proc = Bun.spawnSync({
+    cmd: ['bun', 'toolings/scripts/sync-fullstack-template.ts', '--check'],
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
+  if (proc.exitCode === 0) return []
+
+  const output = `${proc.stdout.toString()}\n${proc.stderr.toString()}`.trim()
+  return [
+    {
+      severity: 'error',
+      code: 'template-scaffold-drift',
+      path: 'apps/cli/src/templates/fullstack',
+      message: 'Fullstack template or live-demo addon failed minimal ownership checks.',
+      suggestion: `Run \`bun run template:sync:check\` and align template/addon files. Details:\n${output}`,
+    },
+  ]
+}
+
 export async function collectRepoDoctorFindings(): Promise<Finding[]> {
   return dedupeFindings(
     [
@@ -485,6 +505,7 @@ export async function collectRepoDoctorFindings(): Promise<Finding[]> {
       ...(await checkDependencyCatalog()),
       ...(await checkUnusedDependencies()),
       ...(await checkTemplateDependencyPins()),
+      ...(await checkTemplateScaffoldOwnership()),
     ].sort((a, b) => {
       const severityDiff = severityRank(a.severity) - severityRank(b.severity)
       if (severityDiff !== 0) return severityDiff

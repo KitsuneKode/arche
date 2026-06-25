@@ -83,6 +83,7 @@ describe('checkCompatibility', () => {
       example: 'todo',
       bundles: ['realtime'],
       includeWorker: false,
+      includeLiveDemo: false,
       family: 'fullstack',
     })
     expect(result.warnings.some((w: string) => w.includes('Realtime bundle'))).toBe(true)

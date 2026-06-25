@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { access, mkdir, rm } from 'fs/promises'
 import { dirname, resolve } from 'path'
+import { applyLiveDemoRemoval } from '../../apps/cli/src/lib/capabilities/apply-capabilities'
 
 type CleanupTarget = 'showcase' | 'seed' | 'worker' | 'tests' | 'readme' | 'live'
 type ActionType = 'remove' | 'write'
@@ -596,17 +597,11 @@ Examples:
 
 function buildLiveDemoActions(): CleanupAction[] {
   return [
-    { type: 'remove', path: 'apps/web/app/live', description: 'Remove live proof-run route' },
-    { type: 'remove', path: 'apps/web/app/(auth)', description: 'Remove demo auth routes' },
     {
       type: 'remove',
-      path: 'apps/web/components/live',
-      description: 'Remove live demo components',
-    },
-    {
-      type: 'remove',
-      path: 'apps/web/lib/proof-run-storage.ts',
-      description: 'Remove proof-run localStorage helper',
+      path: '(live-demo manifest)',
+      description:
+        'Apply unified live-demo removal (routes, guest auth, demo schema) via capability manifest',
     },
   ]
 }
@@ -782,6 +777,13 @@ async function pathExists(path: string): Promise<boolean> {
 }
 
 async function applyAction(action: CleanupAction, dryRun: boolean): Promise<void> {
+  if (action.path === '(live-demo manifest)') {
+    if (!dryRun) {
+      await applyLiveDemoRemoval(process.cwd())
+    }
+    return
+  }
+
   const absolutePath = resolve(action.path)
   const exists = await pathExists(action.path)
 

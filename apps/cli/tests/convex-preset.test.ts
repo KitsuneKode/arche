@@ -23,6 +23,7 @@ function configForConvex(destinationDir: string): ProjectConfig {
     deployment: 'none',
     includeShowcase: false,
     includeWorker: false,
+    includeLiveDemo: false,
     includeDocker: false,
     includeCi: true,
     initializeGit: false,

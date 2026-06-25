@@ -23,6 +23,7 @@ function nextConfig(destinationDir: string): ProjectConfig {
     deployment: 'none',
     includeShowcase: false,
     includeWorker: false,
+    includeLiveDemo: false,
     includeDocker: false,
     includeCi: false,
     initializeGit: false,

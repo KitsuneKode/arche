@@ -20,6 +20,7 @@ function makeConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
     deployment: 'vercel-railway',
     includeShowcase: false,
     includeWorker: false,
+    includeLiveDemo: false,
     includeDocker: true,
     includeCi: true,
     initializeGit: true,

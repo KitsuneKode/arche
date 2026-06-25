@@ -23,6 +23,7 @@ function baseConfig(destinationDir: string): ProjectConfig {
     deployment: 'vercel-railway',
     includeShowcase: false,
     includeWorker: false,
+    includeLiveDemo: false,
     includeDocker: false,
     includeCi: false,
     initializeGit: false,
