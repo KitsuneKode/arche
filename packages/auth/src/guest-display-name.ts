@@ -1,5 +1,6 @@
 export function guestDisplayName(userId: string): string {
-  return `Guest-${userId.slice(-6)}`
+  const suffix = userId.slice(-8)
+  return `Guest · ${suffix}`
 }
 
 export function resolveDisplayName(
@@ -7,5 +8,6 @@ export function resolveDisplayName(
 ): string | null {
   if (!user) return null
   if (user.isAnonymous) return guestDisplayName(user.id)
+  if (!user.name?.trim()) return guestDisplayName(user.id)
   return user.name
 }

@@ -20,7 +20,7 @@ import {
   type GameState,
   tick,
 } from '@/lib/relay-run/engine'
-import { matchGameShortcut } from '@/lib/relay-run/keyboard'
+import { matchGameShortcut, shouldIgnoreGameKey } from '@/lib/relay-run/keyboard'
 import { writeLocalBest } from '@/lib/relay-run/local-best'
 import { clearPendingScore, readPendingScore, writePendingScore } from '@/lib/relay-run/offline'
 import { drawFrame } from '@/lib/relay-run/renderer'
@@ -454,7 +454,7 @@ export function RelayRunGame({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (relayChatOpen) return
+      if (relayChatOpen || shouldIgnoreGameKey(event)) return
       const shortcut = matchGameShortcut(event)
       if (!shortcut) return
 

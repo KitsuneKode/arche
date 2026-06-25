@@ -20,7 +20,7 @@ import {
   type GameState,
   tick,
 } from '@/lib/relay-run/engine'
-import { matchGameShortcut } from '@/lib/relay-run/keyboard'
+import { matchGameShortcut, shouldIgnoreGameKey } from '@/lib/relay-run/keyboard'
 import { writeLocalBest } from '@/lib/relay-run/local-best'
 import { clearPendingScore, readPendingScore, writePendingScore } from '@/lib/relay-run/offline'
 import { drawFrame } from '@/lib/relay-run/renderer'
@@ -107,7 +107,7 @@ function GameCanvas({
   return (
     <canvas
       ref={canvasRef}
-      className="size-full touch-none cursor-pointer border border-zinc-800 bg-black"
+      className="size-full cursor-pointer touch-none border border-zinc-800 bg-black"
       onPointerDown={onPointerDown}
       aria-label="Relay Run mini-game"
     />
@@ -454,7 +454,7 @@ export function RelayRunGame({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (relayChatOpen) return
+      if (relayChatOpen || shouldIgnoreGameKey(event)) return
       const shortcut = matchGameShortcut(event)
       if (!shortcut) return
 
@@ -726,7 +726,7 @@ export function RelayRunGame({
             type="button"
             variant="outline"
             size="xs"
-            className="border-zinc-700 font-mono text-[10px] tracking-widest uppercase active:scale-[0.96] transition-transform"
+            className="border-zinc-700 font-mono text-[10px] tracking-widest uppercase transition-transform active:scale-[0.96]"
             onClick={toggleAudio}
             aria-label={audioMuted ? 'Unmute game audio' : 'Mute game audio'}
             aria-pressed={audioMuted}
@@ -738,7 +738,7 @@ export function RelayRunGame({
             type="button"
             variant="outline"
             size="xs"
-            className="border-zinc-700 font-mono text-[10px] tracking-widest uppercase active:scale-[0.96] transition-transform"
+            className="border-zinc-700 font-mono text-[10px] tracking-widest uppercase transition-transform active:scale-[0.96]"
             onClick={() => void toggleFullscreen()}
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
           >
@@ -764,19 +764,19 @@ export function RelayRunGame({
             >
               <TabsTrigger
                 value="play"
-                className="font-mono text-[10px] tracking-widest uppercase data-active:text-amber-400 active:scale-[0.96] transition-transform"
+                className="font-mono text-[10px] tracking-widest uppercase transition-transform active:scale-[0.96] data-active:text-amber-400"
               >
                 Play
               </TabsTrigger>
               <TabsTrigger
                 value="leaderboard"
-                className="font-mono text-[10px] tracking-widest uppercase data-active:text-amber-400 active:scale-[0.96] transition-transform"
+                className="font-mono text-[10px] tracking-widest uppercase transition-transform active:scale-[0.96] data-active:text-amber-400"
               >
                 Leaderboard
               </TabsTrigger>
               <TabsTrigger
                 value="stats"
-                className="font-mono text-[10px] tracking-widest uppercase data-active:text-amber-400 active:scale-[0.96] transition-transform"
+                className="font-mono text-[10px] tracking-widest uppercase transition-transform active:scale-[0.96] data-active:text-amber-400"
               >
                 Stats
               </TabsTrigger>
@@ -816,7 +816,7 @@ export function RelayRunGame({
             >
               <div
                 style={{ width: playAreaSize.width, height: playAreaSize.height }}
-                className="relative shrink-0 p-1.5 bg-zinc-950/40 border border-zinc-900/60 rounded-[24px] shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
+                className="relative shrink-0 rounded-[24px] border border-zinc-900/60 bg-zinc-950/40 p-1.5 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]"
               >
                 <div className="size-full overflow-hidden rounded-[18px]">
                   <GameCanvas canvasRef={canvasRef} onPointerDown={handleAction} />
@@ -828,7 +828,7 @@ export function RelayRunGame({
                       type="button"
                       variant="outline"
                       size="xs"
-                      className="border-zinc-700 bg-black/50 font-mono text-[10px] uppercase active:scale-[0.96] transition-transform"
+                      className="border-zinc-700 bg-black/50 font-mono text-[10px] uppercase transition-transform active:scale-[0.96]"
                       onClick={toggleAudio}
                       aria-label={audioMuted ? 'Unmute game audio' : 'Mute game audio'}
                       aria-pressed={audioMuted}
@@ -839,7 +839,7 @@ export function RelayRunGame({
                       type="button"
                       variant="outline"
                       size="xs"
-                      className="border-amber-700/60 bg-black/50 font-mono text-[10px] uppercase text-amber-300 active:scale-[0.96] transition-transform"
+                      className="border-amber-700/60 bg-black/50 font-mono text-[10px] text-amber-300 uppercase transition-transform active:scale-[0.96]"
                       onClick={() => onOpenChat?.()}
                     >
                       Chat
@@ -848,7 +848,7 @@ export function RelayRunGame({
                       type="button"
                       variant="outline"
                       size="xs"
-                      className="border-zinc-700 bg-black/50 font-mono text-[10px] uppercase active:scale-[0.96] transition-transform"
+                      className="border-zinc-700 bg-black/50 font-mono text-[10px] uppercase transition-transform active:scale-[0.96]"
                       onClick={() => void toggleFullscreen()}
                     >
                       Exit
@@ -863,12 +863,12 @@ export function RelayRunGame({
                 </p>
               ) : null}
               {!isFullscreen && activeTab === 'play' && !runPaused ? (
-                <p className="pointer-events-none absolute inset-x-0 bottom-2 text-center font-mono text-[9px] text-zinc-600 tracking-wide">
+                <p className="pointer-events-none absolute inset-x-0 bottom-2 text-center font-mono text-[9px] tracking-wide text-zinc-600">
                   TAP · SPACE · ENTER · F full · M mute · P pause · C chat
                 </p>
               ) : null}
               {!isFullscreen && activeTab === 'play' && runPaused ? (
-                <p className="pointer-events-none absolute inset-x-0 bottom-2 text-center font-mono text-[9px] text-amber-400 tracking-wide">
+                <p className="pointer-events-none absolute inset-x-0 bottom-2 text-center font-mono text-[9px] tracking-wide text-amber-400">
                   {relayChatOpen
                     ? 'CHAT OPEN — ESC TO CLOSE'
                     : manualPaused

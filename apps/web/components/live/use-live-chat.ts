@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react'
 
+import { resolveDisplayName } from '@arche-template/auth/guest-display-name'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLiveRoom } from '@/components/live/live-room-context'
 import { useChatStream } from '@/components/live/use-chat-stream'
@@ -59,6 +60,17 @@ export function useLiveChat({
       onMutate: async ({ content }) => {
         await queryClient.cancelQueries({ queryKey: trpc.chat.list.queryKey() })
         const previous = queryClient.getQueryData(trpc.chat.list.queryKey())
+        const session = queryClient.getQueryData(trpc.auth.getSession.queryKey()) as
+          | { user?: { id: string; name?: string | null; isAnonymous?: boolean | null } }
+          | null
+          | undefined
+        const activeUserId = session?.user?.id ?? userId ?? 'you'
+        const senderName =
+          resolveDisplayName({
+            id: activeUserId,
+            name: session?.user?.name ?? null,
+            isAnonymous: session?.user?.isAnonymous ?? null,
+          }) ?? 'You'
         const optimisticId = `optimistic-${Date.now()}`
         queryClient.setQueryData(trpc.chat.list.queryKey(), (old) => {
           const list = old ?? []
@@ -66,18 +78,19 @@ export function useLiveChat({
             id: optimisticId,
             content,
             kind: 'user' as const,
-            senderId: userId ?? 'you',
+            senderId: activeUserId,
             createdAt: new Date(),
-            sender: { id: userId ?? 'you', name: 'You', image: null },
+            sender: { id: activeUserId, name: senderName, image: null },
           } as (typeof list)[number]
           return [...list, optimistic]
         })
         return { previous, optimisticId }
       },
-      onError: (_err, _vars, context) => {
+      onError: (_err, variables, context) => {
         if (context?.previous) {
           queryClient.setQueryData(trpc.chat.list.queryKey(), context.previous)
         }
+        setDraft(variables.content)
       },
       onSuccess: async () => {
         setDraft('')
@@ -90,14 +103,17 @@ export function useLiveChat({
     const content = draft.trim()
     if (!content || sendMutation.isPending) return
 
+    setDraft('')
+    setGuestSessionError(null)
+
     void (async () => {
       if (!signedIn && guestPostEnabled) {
         try {
-          setGuestSessionError(null)
           await ensureGuestSession(queryClient, trpc.auth.getSession.queryKey(), () =>
             queryClient.fetchQuery(trpc.auth.getSession.queryOptions()),
           )
         } catch (error: unknown) {
+          setDraft(content)
           setGuestSessionError(
             error instanceof Error ? error.message : 'Could not start guest session',
           )

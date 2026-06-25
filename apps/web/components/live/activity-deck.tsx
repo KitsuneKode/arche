@@ -59,12 +59,20 @@ export function ActivityDeck({
         ))}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-hidden">
         {tab === 'chat' ? (
           <LiveChat signedIn={signedIn} guestPostEnabled={guestPostEnabled} userId={userId} />
         ) : null}
-        {tab === 'posts' ? <PostsPanel isRegistered={isRegistered} /> : null}
-        {tab === 'you' ? <SessionPanel onSignedIn={onSignedIn} /> : null}
+        {tab === 'posts' ? (
+          <div className="h-full overflow-y-auto">
+            <PostsPanel isRegistered={isRegistered} />
+          </div>
+        ) : null}
+        {tab === 'you' ? (
+          <div className="h-full overflow-y-auto">
+            <SessionPanel onSignedIn={onSignedIn} />
+          </div>
+        ) : null}
       </div>
     </div>
   )

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+import { focusChatInput } from '@/components/live/chat-composer'
 import {
   useChatPortalTarget,
   useGameFullscreenActive,
@@ -114,7 +115,7 @@ export function RelayChatPopup({
   useEffect(() => {
     if (relayChatOpen) {
       setLastSeenId(latestId)
-      panelRef.current?.querySelector<HTMLElement>('[data-latest-message]')?.focus()
+      requestAnimationFrame(() => focusChatInput(panelRef.current))
     }
   }, [relayChatOpen, latestId])
 
