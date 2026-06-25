@@ -1,50 +1,53 @@
 import { prisma } from '../../db/index.js'
 
+export type LatticeTx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
+
+type Db = LatticeTx | typeof prisma
+
+function client(db?: LatticeTx): Db {
+  return db ?? prisma
+}
+
 export const latticeRepository = {
-  findAllCells() {
-    return prisma.latticeCell.findMany({ orderBy: { id: 'asc' } })
+  findAllCells(db?: LatticeTx) {
+    return client(db).latticeCell.findMany({ orderBy: { id: 'asc' } })
   },
 
-  unlockCell(cellId: string, at: Date) {
-    return prisma.latticeCell.update({
+  unlockCell(cellId: string, at: Date, db?: LatticeTx) {
+    return client(db).latticeCell.update({
       where: { id: cellId },
       data: { unlockedAt: at },
     })
   },
 
-  findOpenRound() {
-    return prisma.latticeRound.findFirst({
+  findOpenRound(db?: LatticeTx) {
+    return client(db).latticeRound.findFirst({
       where: { status: 'open' },
-      orderBy: { roundNumber: 'desc' },
+      orderBy: { roundNumber: 'asc' },
       include: { votes: true },
     })
   },
 
-  findLatestRound() {
-    return prisma.latticeRound.findFirst({
-      orderBy: { roundNumber: 'desc' },
-      include: { votes: true },
-    })
-  },
-
-  createRound(data: {
-    roundNumber: number
-    cellAId: string
-    cellBId: string
-    startsAt: Date
-    endsAt: Date
-  }) {
-    return prisma.latticeRound.create({
+  createRound(
+    data: {
+      roundNumber: number
+      cellAId: string
+      cellBId: string
+      startsAt: Date
+      endsAt: Date
+    },
+    db?: LatticeTx,
+  ) {
+    return client(db).latticeRound.create({
       data: { ...data, status: 'open' },
       include: { votes: true },
     })
   },
 
-  resolveRound(roundId: string, winnerId: string) {
-    return prisma.latticeRound.update({
-      where: { id: roundId },
+  tryResolveRound(roundId: string, winnerId: string, db?: LatticeTx) {
+    return client(db).latticeRound.updateMany({
+      where: { id: roundId, status: 'open' },
       data: { status: 'resolved', winnerId },
-      include: { votes: true },
     })
   },
 
@@ -56,12 +59,16 @@ export const latticeRepository = {
     })
   },
 
-  countRounds() {
-    return prisma.latticeRound.count()
+  nextRoundNumber(db: LatticeTx) {
+    return client(db)
+      .latticeRound.aggregate({ _max: { roundNumber: true } })
+      .then(
+        (result: { _max: { roundNumber: number | null } }) => (result._max.roundNumber ?? 0) + 1,
+      )
   },
 
-  findRecentResolvedPairs(limit: number) {
-    return prisma.latticeRound.findMany({
+  findRecentResolvedPairs(limit: number, db?: LatticeTx) {
+    return client(db).latticeRound.findMany({
       where: { status: 'resolved' },
       orderBy: { roundNumber: 'desc' },
       take: limit,

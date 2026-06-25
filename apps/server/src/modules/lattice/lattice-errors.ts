@@ -11,3 +11,13 @@ export function isLatticeSchemaMissing(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
   return message.includes('lattice_') && message.includes('does not exist')
 }
+
+/** Another API instance already holds the single open round slot. */
+export function isLatticeOpenRoundRace(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: string }).code === 'P2002'
+  )
+}

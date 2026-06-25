@@ -45,6 +45,15 @@ process.on('uncaughtException', (error) => {
   process.exit(1)
 })
 
+function isLatticeRoundEngineEnabled(): boolean {
+  const flag = process.env.LATTICE_ROUND_ENGINE?.trim()
+  if (flag === 'true') return true
+  if (flag === 'false') return false
+  // Vercel API shares Neon with Render — only one host should run the interval engine.
+  if (process.env.VERCEL === '1') return false
+  return true
+}
+
 async function main(): Promise<void> {
   validateEnvironment('server')
 
@@ -78,7 +87,7 @@ async function main(): Promise<void> {
     logger.info('Redis disabled (ENABLE_REDIS=false) — no BullMQ or /admin/queues')
   }
 
-  const latticeEngineEnabled = process.env.LATTICE_ROUND_ENGINE !== 'false'
+  const latticeEngineEnabled = isLatticeRoundEngineEnabled()
   if (latticeEngineEnabled) {
     const { latticeService } = await import('./modules/lattice/lattice.service.js')
     void latticeService.tickEngine()

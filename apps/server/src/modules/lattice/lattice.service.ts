@@ -1,10 +1,12 @@
 import { logger } from '../../common/logger'
+import { prisma } from '../../db/index.js'
 import { chatService } from '../chat/chat.service.js'
 import type { LatticeStatePublic } from '../live/live.dto.js'
 import { emitLiveEvent } from '../live/live.events.js'
-import { isLatticeSchemaMissing } from './lattice-errors.js'
+import { isLatticeOpenRoundRace, isLatticeSchemaMissing } from './lattice-errors.js'
 import { CLASH_PAIRS, cellLabel, ROUND_DURATION_MS } from './lattice.deck.js'
-import { latticeRepository } from './lattice.repository.js'
+import { latticeRepository, type LatticeTx } from './lattice.repository.js'
+import { pickRoundWinner } from './lattice.tally.js'
 
 const EMPTY_LATTICE_STATE: LatticeStatePublic = {
   now: new Date().toISOString(),
@@ -36,29 +38,14 @@ function pairKey(a: string, b: string) {
   return [a, b].sort().join(':')
 }
 
-async function pickNextPair(): Promise<[string, string]> {
-  const recent = await latticeRepository.findRecentResolvedPairs(3)
+async function pickNextPair(tx: LatticeTx): Promise<[string, string]> {
+  const recent = await latticeRepository.findRecentResolvedPairs(3, tx)
   const recentKeys = new Set(recent.map((round) => pairKey(round.cellAId, round.cellBId)))
 
   const available = CLASH_PAIRS.filter(([a, b]) => !recentKeys.has(pairKey(a, b)))
   const pool = available.length > 0 ? available : CLASH_PAIRS
   const index = Math.floor(Math.random() * pool.length)
   return pool[index]!
-}
-
-function tallyVotes(
-  votes: Array<{ choice: string }>,
-  cellAId: string,
-  cellBId: string,
-): { votesA: number; votesB: number; winnerId: string } {
-  let votesA = 0
-  let votesB = 0
-  for (const vote of votes) {
-    if (vote.choice === 'a') votesA += 1
-    else if (vote.choice === 'b') votesB += 1
-  }
-  const winnerId = votesA >= votesB ? cellAId : cellBId
-  return { votesA, votesB, winnerId }
 }
 
 async function buildPublicState(userId?: string): Promise<LatticeStatePublic> {
@@ -73,7 +60,7 @@ async function buildPublicState(userId?: string): Promise<LatticeStatePublic> {
   let votesB = 0
 
   if (roundRow) {
-    const tallies = tallyVotes(roundRow.votes, roundRow.cellAId, roundRow.cellBId)
+    const tallies = pickRoundWinner(roundRow.cellAId, roundRow.cellBId, roundRow.votes)
     votesA = tallies.votesA
     votesB = tallies.votesB
     if (userId) {
@@ -114,80 +101,82 @@ async function broadcastState() {
   emitLiveEvent({ type: 'lattice:state', state })
 }
 
-async function startNextRound() {
-  const [cellAId, cellBId] = await pickNextPair()
-  const roundNumber = (await latticeRepository.countRounds()) + 1
+type PendingChat = { content: string }
+
+async function createNextRoundInTx(tx: LatticeTx, pending: PendingChat[]) {
+  const stillOpen = await latticeRepository.findOpenRound(tx)
+  if (stillOpen) return
+
+  const roundNumber = await latticeRepository.nextRoundNumber(tx)
+  const [cellAId, cellBId] = await pickNextPair(tx)
   const startsAt = new Date()
   const endsAt = new Date(startsAt.getTime() + ROUND_DURATION_MS)
-  const round = await latticeRepository.createRound({
-    roundNumber,
-    cellAId,
-    cellBId,
-    startsAt,
-    endsAt,
-  })
 
-  await chatService.postSystemMessage(
-    `Clash #${round.roundNumber}: ${cellLabel(cellAId)} vs ${cellLabel(cellBId)} — pick a side!`,
-  )
-  await broadcastState()
+  try {
+    await latticeRepository.createRound({ roundNumber, cellAId, cellBId, startsAt, endsAt }, tx)
+    pending.push({
+      content: `Clash #${roundNumber}: ${cellLabel(cellAId)} vs ${cellLabel(cellBId)} — pick a side!`,
+    })
+  } catch (error) {
+    if (isLatticeOpenRoundRace(error)) return
+    throw error
+  }
 }
 
-async function resolveOpenRound() {
-  const openRound = await latticeRepository.findOpenRound()
-  if (!openRound) return false
-  if (openRound.endsAt.getTime() > Date.now()) return false
+/** Single-writer tick: advisory lock + at most one open round in the database. */
+async function runEngineTick(): Promise<void> {
+  const pending: PendingChat[] = []
+  let shouldBroadcast = false
 
-  const { votesA, votesB, winnerId } = tallyVotes(
-    openRound.votes,
-    openRound.cellAId,
-    openRound.cellBId,
-  )
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(867530901)`
 
-  await latticeRepository.resolveRound(openRound.id, winnerId)
-  await latticeRepository.unlockCell(winnerId, new Date())
+    const openRound = await latticeRepository.findOpenRound(tx)
 
-  const winnerLabel = cellLabel(winnerId)
-  const loserLabel = cellLabel(
-    winnerId === openRound.cellAId ? openRound.cellBId : openRound.cellAId,
-  )
-  await chatService.postSystemMessage(
-    `Clash #${openRound.roundNumber} resolved — ${winnerLabel} wins (${votesA}–${votesB}) over ${loserLabel}. Cell lit on the grid.`,
-  )
+    if (openRound && openRound.endsAt.getTime() <= Date.now()) {
+      const { votesA, votesB, winnerId, tieBreak } = pickRoundWinner(
+        openRound.cellAId,
+        openRound.cellBId,
+        openRound.votes,
+      )
+      const updated = await latticeRepository.tryResolveRound(openRound.id, winnerId, tx)
+      if (updated.count > 0) {
+        await latticeRepository.unlockCell(winnerId, new Date(), tx)
+        const loserId = winnerId === openRound.cellAId ? openRound.cellBId : openRound.cellAId
+        const score = tieBreak ? `${votesA}–${votesB}, coin flip` : `${votesA}–${votesB}`
+        pending.push({
+          content: `Clash #${openRound.roundNumber} resolved — ${cellLabel(winnerId)} wins (${score}) over ${cellLabel(loserId)}. Cell lit on the grid.`,
+        })
+        await createNextRoundInTx(tx, pending)
+        shouldBroadcast = true
+      }
+      return
+    }
 
-  await startNextRound()
-  return true
+    if (!openRound) {
+      await createNextRoundInTx(tx, pending)
+      shouldBroadcast = pending.length > 0
+    }
+  })
+
+  for (const message of pending) {
+    await chatService.postSystemMessage(message.content)
+  }
+  if (shouldBroadcast) await broadcastState()
 }
 
 export const latticeService = {
   async getPublicState(userId?: string) {
-    return withLatticeSchema(async () => {
-      await latticeService.resolveRoundIfDue()
-      await latticeService.ensureOpenRound()
-      return buildPublicState(userId)
-    })
-  },
-
-  async ensureOpenRound() {
-    const open = await latticeRepository.findOpenRound()
-    if (open) return open
-    await startNextRound()
-    return latticeRepository.findOpenRound()
+    return withLatticeSchema(() => buildPublicState(userId))
   },
 
   async resolveRoundIfDue() {
-    let resolved = false
-    // Resolve at most one round per call to avoid runaway loops
-    const openRound = await latticeRepository.findOpenRound()
-    if (openRound && openRound.endsAt.getTime() <= Date.now()) {
-      resolved = await resolveOpenRound()
-    }
-    return resolved
+    await runEngineTick()
   },
 
   async castVote(userId: string, roundId: string, choice: 'a' | 'b') {
     const result = await withLatticeSchema(async () => {
-      await latticeService.resolveRoundIfDue()
+      await runEngineTick()
 
       const openRound = await latticeRepository.findOpenRound()
       if (!openRound || openRound.id !== roundId) {
@@ -211,11 +200,7 @@ export const latticeService = {
 
   async tickEngine() {
     try {
-      const resolved = await latticeService.resolveRoundIfDue()
-      if (!resolved) {
-        const open = await latticeRepository.findOpenRound()
-        if (!open) await latticeService.ensureOpenRound()
-      }
+      await runEngineTick()
     } catch (error) {
       if (isLatticeSchemaMissing(error)) {
         logLatticeSchemaMissingOnce()

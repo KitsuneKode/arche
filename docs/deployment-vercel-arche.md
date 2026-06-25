@@ -127,6 +127,8 @@ bun run db:seed                          # lattice cells + system chat user
 
 Until this runs, `/health` stays `200` but `lattice.getState` errors and `/live` breaks. After migrate + seed, redeploy is not required.
 
+**Relay Lattice engine:** run the background round engine on **one** API host only (Render Docker). On Vercel API (`VERCEL=1`), the engine is off by default; set `LATTICE_ROUND_ENGINE=false` explicitly if needed. Both hosts share Neon — two engines duplicate clash chat lines.
+
 ## Smoke tests
 
 ```bash
