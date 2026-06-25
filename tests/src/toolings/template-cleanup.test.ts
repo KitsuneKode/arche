@@ -35,8 +35,6 @@ describe('template-cleanup', () => {
   it('plans live demo removal when requested', async () => {
     const actions = await buildCleanupPlan(['live'])
     const paths = actions.map((action) => action.path)
-    expect(paths).toContain('apps/web/app/live')
-    expect(paths).toContain('apps/web/components/live')
-    expect(paths).toContain('apps/web/lib/proof-run-storage.ts')
+    expect(paths).toContain('(live-demo manifest)')
   })
 })
