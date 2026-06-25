@@ -121,7 +121,7 @@ Vercel and Render share the same Neon `DATABASE_URL`. Deploying new API code **d
 
 ```bash
 export DATABASE_URL='postgresql://...'   # Neon connection string
-bun run db:deploy                        # e.g. 20260625050000_relay_lattice, 20260625140000_relay_run_score
+bun run db:deploy                        # e.g. 20260625050000_relay_lattice, 20260625140000_relay_run_score, 20260625150000_user_is_anonymous
 bun run db:seed                          # lattice cells + system chat user (if lattice tables are new)
 ```
 

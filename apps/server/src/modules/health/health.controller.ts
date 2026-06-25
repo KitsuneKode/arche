@@ -4,7 +4,7 @@ import { healthService } from './health.service'
 export const healthController = {
   async getHealth(_req: Request, res: Response) {
     const result = await healthService.check()
-    const statusCode = result.status === 'OK' ? 200 : 503
+    const statusCode = result.status === 'OK' && result.schema === 'ready' ? 200 : 503
     res.status(statusCode).json(result)
   },
 }

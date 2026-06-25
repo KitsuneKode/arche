@@ -98,8 +98,13 @@ export function ProofLadder({
         const response = await fetch(getApiHealthFetchUrl(), {
           credentials: 'include',
         })
-        const body = (await response.json()) as { database?: string }
-        return { ok: response.ok, status: response.status, database: body.database }
+        const body = (await response.json()) as { database?: string; schema?: string }
+        return {
+          ok: response.ok,
+          status: response.status,
+          database: body.database,
+          schema: body.schema,
+        }
       },
       fetchHello: () => queryClient.fetchQuery(trpc.hello.queryOptions({ name: 'Arche' })),
       fetchPosts: () => queryClient.fetchQuery(trpc.post.list.queryOptions()),

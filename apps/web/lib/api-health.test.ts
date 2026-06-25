@@ -31,13 +31,15 @@ describe('probeApiHealth', () => {
     globalThis.fetch = originalFetch
   })
 
-  it('returns unreachable when database is not connected', async () => {
+  it('returns unreachable when schema migrations are pending', async () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async () =>
-      new Response(JSON.stringify({ database: 'disconnected' }), { status: 200 })) as typeof fetch
+      new Response(JSON.stringify({ database: 'connected', status: 'OK', schema: 'pending' }), {
+        status: 503,
+      })) as typeof fetch
 
     await expect(probeApiHealth()).resolves.toEqual(
-      expect.objectContaining({ reachable: false, database: 'disconnected' }),
+      expect.objectContaining({ reachable: false, database: 'connected', schema: 'pending' }),
     )
     globalThis.fetch = originalFetch
   })

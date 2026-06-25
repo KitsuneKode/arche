@@ -49,7 +49,7 @@ export type ProofRungResult = {
 
 export type ProofRunContext = {
   apiReachable: boolean
-  fetchHealth: () => Promise<{ ok: boolean; status: number; database?: string }>
+  fetchHealth: () => Promise<{ ok: boolean; status: number; database?: string; schema?: string }>
   fetchHello: () => Promise<string>
   fetchPosts: () => Promise<unknown[]>
   fetchChatMessages: () => Promise<Array<{ senderId: string; content: string }>>
@@ -82,8 +82,15 @@ export async function runProofRungs(ctx: ProofRunContext): Promise<ProofRungResu
 
   try {
     const health = await ctx.fetchHealth()
-    if (!health.ok || health.database !== 'connected') {
-      results.push({ id: 'api', state: 'fail', receipt: `Health ${health.status}` })
+    if (!health.ok || health.database !== 'connected' || health.schema === 'pending') {
+      results.push({
+        id: 'api',
+        state: 'fail',
+        receipt:
+          health.schema === 'pending'
+            ? 'Database migrations pending (run bun run db:deploy)'
+            : `Health ${health.status}`,
+      })
       return results
     }
     results.push({ id: 'api', state: 'pass', receipt: 'database: connected' })

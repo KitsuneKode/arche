@@ -12,6 +12,7 @@ export const apiHealthQueryKey = ['sandbox', 'api-health'] as const
 export type ApiHealthStatus = {
   reachable: boolean
   database?: string
+  schema?: string
   latencyMs?: number
 }
 
@@ -22,6 +23,10 @@ type ProbeApiHealthOptions = {
 
 function isConnectedDatabase(database: string | undefined): boolean {
   return database === 'connected'
+}
+
+function isSchemaReady(schema: string | undefined): boolean {
+  return schema === 'ready' || schema === undefined
 }
 
 export function getApiHealthFetchUrl(): string {
@@ -41,17 +46,18 @@ export async function probeApiHealth(
       cache: 'no-store',
     })
     const latencyMs = isClient ? Date.now() - started : undefined
-
-    if (!response.ok) {
-      return { reachable: false, latencyMs }
+    const body = (await response.json()) as {
+      database?: string
+      status?: string
+      schema?: string
     }
-
-    const body = (await response.json()) as { database?: string; status?: string }
-    const reachable = isConnectedDatabase(body.database)
+    const reachable =
+      response.ok && isConnectedDatabase(body.database) && isSchemaReady(body.schema)
 
     return {
       reachable,
       database: body.database,
+      schema: body.schema,
       latencyMs,
     }
   } catch {

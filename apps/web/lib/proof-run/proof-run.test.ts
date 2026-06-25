@@ -4,7 +4,12 @@ import { passedRungIds, PROOF_RUNGS, runProofRungs } from './proof-run'
 
 const baseCtx = {
   apiReachable: true,
-  fetchHealth: async () => ({ ok: true, status: 200, database: 'connected' as const }),
+  fetchHealth: async () => ({
+    ok: true,
+    status: 200,
+    database: 'connected' as const,
+    schema: 'ready' as const,
+  }),
   fetchHello: async () => 'Hi Arche from TRPC',
   fetchPosts: async () => [{ id: '1' }],
   fetchChatMessages: async () => [],
