@@ -571,14 +571,16 @@ export function subscribeChatEvents(listener: (event: ChatStreamEvent) => void) 
 
   const serverPath = join(destinationDir, serverDir, 'src/server.ts')
   try {
-    const content = await readFile(serverPath, 'utf8')
-    const patched = content.replace(
+    let content = await readFile(serverPath, 'utf8')
+    content = content.replace(
+      /\nfunction isLatticeRoundEngineEnabled\(\): boolean \{\n  return process\.env\.LATTICE_ROUND_ENGINE\?\.trim\(\) === 'true'\n\}\n/,
+      '\n',
+    )
+    content = content.replace(
       /\n  const latticeEngineEnabled[\s\S]*?logger\.info\('Relay Lattice round engine started'\)\n  \}/,
       '',
     )
-    if (patched !== content) {
-      await writeFile(serverPath, patched)
-    }
+    await writeFile(serverPath, content)
   } catch {
     // server bootstrap not present
   }
