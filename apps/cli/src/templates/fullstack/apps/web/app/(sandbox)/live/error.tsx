@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 
-export default function PlayError({
+export default function LiveError({
   error,
   reset,
 }: {
@@ -10,7 +10,7 @@ export default function PlayError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Play route error:', error.digest ?? error.message)
+    console.error('Live route error:', error.digest ?? error.message)
   }, [error])
 
   return (
@@ -20,8 +20,8 @@ export default function PlayError({
           △
         </span>
       </div>
-      <h1 className="text-xl font-bold tracking-tight">Relay couldn&apos;t load</h1>
-      <p className="mt-2 max-w-md text-sm text-zinc-400">Reload to try again.</p>
+      <h1 className="text-xl font-bold tracking-tight">Live demo couldn&apos;t load</h1>
+      <p className="mt-2 max-w-md text-sm text-zinc-400">Reload to try again, or return home.</p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <button
           type="button"
@@ -31,10 +31,10 @@ export default function PlayError({
           Reload
         </button>
         <a
-          href="/live"
+          href="/"
           className="border border-zinc-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-zinc-500"
         >
-          Full live demo
+          Home
         </a>
       </div>
     </main>

@@ -20,6 +20,7 @@ const config = {
   },
   async redirects() {
     return [
+      { source: '/play', destination: '/live', permanent: true },
       { source: '/docs', destination: '/docs/getting-started', permanent: false },
       { source: '/docs/auth', destination: '/docs/packages/auth', permanent: false },
       { source: '/docs/store', destination: '/docs/packages/store', permanent: false },

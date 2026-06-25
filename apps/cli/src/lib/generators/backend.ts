@@ -602,7 +602,7 @@ export async function stripLiveDemoWeb(destinationDir: string): Promise<void> {
     'apps/web/lib/client-mounted.ts',
     'apps/web/lib/api-health.ts',
     'apps/web/lib/use-api-reachable.ts',
-    'apps/web/lib/stack-ping.ts',
+    'apps/web/lib/relay-run',
   ]
   for (const relativePath of livePaths) {
     await rm(join(destinationDir, relativePath), { recursive: true, force: true })

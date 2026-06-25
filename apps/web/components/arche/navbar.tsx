@@ -11,7 +11,6 @@ import { BrandMark } from '@/components/arche/brand-mark'
 const links = [
   { href: '/families', label: 'Families' },
   { href: '/live', label: 'Live demo' },
-  { href: '/play', label: 'Relay' },
   { href: '/docs/getting-started', label: 'Docs', matchPrefix: '/docs' },
   { href: '/examples', label: 'Examples' },
   { href: '/blog', label: 'Blog' },

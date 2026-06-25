@@ -5,9 +5,9 @@ import { LiveDemoJsonLd } from '@/components/seo/live-demo-json-ld'
 import { buildPageMetadata } from '@/lib/seo'
 
 export const metadata = buildPageMetadata({
-  title: 'Live stack demo — Relay Lattice, chat, and proof run',
+  title: 'Live stack demo — Relay Run, chat, and proof run',
   description:
-    'Interactive TypeScript fullstack demo: Relay Lattice multiplayer clashes, tRPC, SSE, Prisma, Better Auth, and proof-run checks on arche.dev.',
+    'Interactive TypeScript fullstack demo: Relay Run mini-game with leaderboard, tRPC, SSE, Prisma, Better Auth, and proof-run checks on arche.dev.',
   path: '/live',
   keywords: [
     'tRPC',
@@ -27,9 +27,9 @@ export default function LivePage() {
       <Navbar />
 
       <SiteFrame>
-        <HeroBlock eyebrow="Live sandbox" title="Relay Lattice" accent=" live." size="md">
-          Pick a side in binary clashes, light the shared grid, and chat in one SSE-powered room.
-          Sign in to vote and post. Proof-run checks run on the left.
+        <HeroBlock eyebrow="Live sandbox" title="Relay Run" accent=" live." size="md">
+          Play the Flappy-style relay game, climb the leaderboard, and chat via the #relay popup.
+          Sign in to save scores and post. Proof-run checks run on the left.
         </HeroBlock>
 
         <section className="flex-1 bg-black p-6 md:p-16">

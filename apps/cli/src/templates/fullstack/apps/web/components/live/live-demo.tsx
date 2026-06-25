@@ -4,11 +4,11 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useState } from 'react'
 
-import { RelayChatSidebar } from '@/components/live/lattice/relay-chat-sidebar'
-import { RelayLattice } from '@/components/live/lattice/relay-lattice'
 import { LiveDemoFooter } from '@/components/live/live-demo-footer'
 import { LiveRoomProvider } from '@/components/live/live-room-context'
 import { ProofLadder } from '@/components/live/proof-ladder'
+import { RelayChatPopup } from '@/components/live/relay-chat-popup'
+import { RelayRunGame } from '@/components/live/relay-run-game'
 import { SessionPanel } from '@/components/live/session-panel'
 import { useApiReachable } from '@/lib/use-api-reachable'
 import { useTRPC } from '@/trpc/client'
@@ -51,19 +51,20 @@ function LiveDemoInner() {
       ) : null}
       {confirmedOffline ? <ApiOfflineBanner /> : null}
 
-      <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr_0.75fr]">
+      <div className="relative grid h-[min(78vh,880px)] min-h-[520px] gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <ProofLadder
           apiReachable={apiReachable || stillChecking}
           signedIn={signedIn}
           userId={userId}
         />
-        <RelayLattice signedIn={signedIn} />
-        <RelayChatSidebar
-          signedIn={signedIn}
-          userId={userId}
-          onSignInClick={() => setShowSignIn(true)}
-        />
+        <RelayRunGame signedIn={signedIn} onSignInClick={() => setShowSignIn(true)} />
       </div>
+
+      <RelayChatPopup
+        signedIn={signedIn}
+        userId={userId}
+        onSignInClick={() => setShowSignIn(true)}
+      />
 
       {showSignIn && !signedIn ? (
         <div className="border border-zinc-800 bg-black p-4">

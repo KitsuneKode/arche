@@ -46,12 +46,7 @@ process.on('uncaughtException', (error) => {
 })
 
 function isLatticeRoundEngineEnabled(): boolean {
-  const flag = process.env.LATTICE_ROUND_ENGINE?.trim()
-  if (flag === 'true') return true
-  if (flag === 'false') return false
-  // Vercel API shares Neon with Render — only one host should run the interval engine.
-  if (process.env.VERCEL === '1') return false
-  return true
+  return process.env.LATTICE_ROUND_ENGINE?.trim() === 'true'
 }
 
 async function main(): Promise<void> {

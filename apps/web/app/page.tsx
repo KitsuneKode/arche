@@ -59,9 +59,6 @@ export default function LandingPage() {
                 <PrimaryLink href="/live" variant="outline">
                   See it live
                 </PrimaryLink>
-                <PrimaryLink href="/play" variant="outline">
-                  Try Relay
-                </PrimaryLink>
                 <PrimaryLink href="/families" variant="outline">
                   Compare presets
                 </PrimaryLink>

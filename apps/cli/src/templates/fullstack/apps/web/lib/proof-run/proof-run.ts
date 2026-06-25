@@ -5,7 +5,9 @@ export type ProofRungId =
   | 'datastore'
   | 'relay-read'
   | 'session'
+  | 'game-board'
   | 'relay-write'
+  | 'game-score'
   | 'secret'
   | 'challenge-chat'
   | 'challenge-post'
@@ -24,7 +26,9 @@ export const PROOF_RUNGS: ProofRungDef[] = [
   { id: 'datastore', layer: 'Prisma', label: 'Published posts readable' },
   { id: 'relay-read', layer: 'Chat', label: 'Live chat feed' },
   { id: 'session', layer: 'Auth', label: 'Session probe (guest OK)' },
-  { id: 'relay-write', layer: 'Chat', label: 'Authenticated send', requiresAuth: true },
+  { id: 'game-board', layer: 'Game', label: 'Leaderboard readable' },
+  { id: 'relay-write', layer: 'Chat', label: 'Silent send verify', requiresAuth: true },
+  { id: 'game-score', layer: 'Game', label: 'Score submit', requiresAuth: true },
   { id: 'secret', layer: 'Auth', label: 'Protected procedure', requiresAuth: true },
   {
     id: 'challenge-chat',
@@ -52,7 +56,10 @@ export type ProofRunContext = {
   fetchSession: () => Promise<{
     user?: { id: string; name?: string | null; email?: string | null }
   } | null>
-  sendChatMessage: (content: string) => Promise<void>
+  fetchLeaderboard: () => Promise<unknown[]>
+  fetchMyBest: () => Promise<{ score: number } | null>
+  verifyChatSend: (content: string) => Promise<void>
+  submitGameScore: (score: number) => Promise<void>
   fetchSecretMessage: () => Promise<string>
   createDraftPost: (input: { title: string; content: string; slug: string }) => Promise<void>
 }
@@ -124,21 +131,51 @@ export async function runProofRungs(ctx: ProofRunContext): Promise<ProofRungResu
     return results
   }
 
+  try {
+    const board = await ctx.fetchLeaderboard()
+    results.push({ id: 'game-board', state: 'pass', receipt: `${board.length} entries` })
+  } catch {
+    results.push({ id: 'game-board', state: 'fail', receipt: 'game.leaderboard failed' })
+    return results
+  }
+
   if (!sessionUserId) {
-    for (const id of ['relay-write', 'secret', 'challenge-chat', 'challenge-post'] as const) {
+    for (const id of [
+      'relay-write',
+      'game-score',
+      'secret',
+      'challenge-chat',
+      'challenge-post',
+    ] as const) {
       results.push({ id, state: 'locked', receipt: 'Sign in to unlock' })
     }
     return results
   }
 
   try {
-    await voidSend(() => ctx.sendChatMessage(`Proof run ping @ ${new Date().toISOString()}`))
-    results.push({ id: 'relay-write', state: 'pass', receipt: 'chat.send ok' })
+    await voidSend(() => ctx.verifyChatSend('proof-run verify'))
+    results.push({ id: 'relay-write', state: 'pass', receipt: 'chat.verifySend ok' })
   } catch (error) {
     results.push({
       id: 'relay-write',
       state: 'fail',
-      receipt: error instanceof Error ? error.message : 'send failed',
+      receipt: error instanceof Error ? error.message : 'verify failed',
+    })
+  }
+
+  try {
+    const best = await ctx.fetchMyBest()
+    if (best && best.score >= 1) {
+      results.push({ id: 'game-score', state: 'pass', receipt: `best: ${best.score}` })
+    } else {
+      await voidSend(() => ctx.submitGameScore(1))
+      results.push({ id: 'game-score', state: 'pass', receipt: 'score saved' })
+    }
+  } catch (error) {
+    results.push({
+      id: 'game-score',
+      state: 'fail',
+      receipt: error instanceof Error ? error.message : 'submit failed',
     })
   }
 
@@ -156,9 +193,14 @@ export async function runProofRungs(ctx: ProofRunContext): Promise<ProofRungResu
         message.senderId === sessionUserId && message.content.toLowerCase().includes('arche'),
     )
     if (!hasArche) {
-      await voidSend(() => ctx.sendChatMessage('Proof run — arche checkpoint'))
+      results.push({
+        id: 'challenge-chat',
+        state: 'fail',
+        receipt: 'Post a message containing arche',
+      })
+    } else {
+      results.push({ id: 'challenge-chat', state: 'pass', receipt: 'arche message verified' })
     }
-    results.push({ id: 'challenge-chat', state: 'pass', receipt: 'arche message verified' })
   } catch (error) {
     results.push({
       id: 'challenge-chat',

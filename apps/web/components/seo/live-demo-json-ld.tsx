@@ -10,7 +10,7 @@ export function LiveDemoJsonLd() {
     name: 'Arche live stack demo',
     url,
     description:
-      'Interactive TypeScript fullstack demo with tRPC, Prisma, Better Auth, public chat, and proof-run verification.',
+      'Interactive TypeScript fullstack demo with Relay Run mini-game, leaderboard, tRPC, Prisma, Better Auth, and proof-run verification.',
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Web',
     offers: {

@@ -8,8 +8,8 @@ export default function Image() {
   return new ImageResponse(
     <OgShell
       eyebrow="Live sandbox"
-      title="Chat, posts, and proof run."
-      subtitle="Real tRPC, Prisma, and Better Auth against the arche.dev demo API."
+      title="Relay Run, chat, and proof run."
+      subtitle="Flappy-style mini-game, leaderboard, tRPC, Prisma, and Better Auth on arche.dev."
       footer="kitsunekode · arche"
     />,
     size,

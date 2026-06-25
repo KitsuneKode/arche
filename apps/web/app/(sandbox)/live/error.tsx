@@ -21,9 +21,7 @@ export default function LiveError({
         </span>
       </div>
       <h1 className="text-xl font-bold tracking-tight">Live demo couldn&apos;t load</h1>
-      <p className="mt-2 max-w-md text-sm text-zinc-400">
-        Reload to try again, or open the lighter Relay demo.
-      </p>
+      <p className="mt-2 max-w-md text-sm text-zinc-400">Reload to try again, or return home.</p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <button
           type="button"
@@ -32,12 +30,6 @@ export default function LiveError({
         >
           Reload
         </button>
-        <a
-          href="/play"
-          className="border border-zinc-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-zinc-500"
-        >
-          Open Relay
-        </a>
         <a
           href="/"
           className="border border-zinc-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-zinc-500"

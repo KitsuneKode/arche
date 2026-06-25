@@ -115,19 +115,19 @@ NEXT_PUBLIC_API_URL=https://api.arche.kitsunelabs.xyz
 
 `arche-api` may return **401** when Vercel Deployment Protection is on. For smoke tests, add `VERCEL_PROTECTION_BYPASS` or disable protection on the API project. See [deploy-smoke.md](./deploy-smoke.md).
 
-## After Relay Lattice ships (required once per database)
+## After schema changes (required once per database)
 
 Vercel and Render share the same Neon `DATABASE_URL`. Deploying new API code **does not** run Prisma migrations. Run locally against production:
 
 ```bash
 export DATABASE_URL='postgresql://...'   # Neon connection string
-bun run db:deploy                        # applies 20260625050000_relay_lattice
-bun run db:seed                          # lattice cells + system chat user
+bun run db:deploy                        # e.g. 20260625050000_relay_lattice, 20260625140000_relay_run_score
+bun run db:seed                          # lattice cells + system chat user (if lattice tables are new)
 ```
 
-Until this runs, `/health` stays `200` but `lattice.getState` errors and `/live` breaks. After migrate + seed, redeploy is not required.
+Until migrations run, `/health` stays `200` but new tRPC routes that touch new tables (e.g. `game.leaderboard`) error. After migrate, redeploy is not required unless API code was not yet deployed.
 
-**Relay Lattice engine:** run the background round engine on **one** API host only (Render Docker). On Vercel API (`VERCEL=1`), the engine is off by default; set `LATTICE_ROUND_ENGINE=false` explicitly if needed. Both hosts share Neon — two engines duplicate clash chat lines.
+**Relay Lattice engine:** opt-in only — set `LATTICE_ROUND_ENGINE=true` on **one** API host if you still need clash rounds. Leave unset/false on Vercel and Render for `/live` (Relay Run) to avoid clash spam in chat.
 
 ## Smoke tests
 

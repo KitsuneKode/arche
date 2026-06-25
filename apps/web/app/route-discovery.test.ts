@@ -23,6 +23,6 @@ describe('route discovery controls', () => {
     expect(urls).not.toContain('https://arche.test/__design-lab')
     expect(urls).not.toContain('https://arche.test/showcase')
     expect(urls).toContain('https://arche.test/live')
-    expect(urls).toContain('https://arche.test/play')
+    expect(urls).not.toContain('https://arche.test/play')
   })
 })

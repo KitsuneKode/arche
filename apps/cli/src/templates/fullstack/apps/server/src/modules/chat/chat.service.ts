@@ -19,6 +19,13 @@ export const chatService = {
     return toPublicMessage(message)
   },
 
+  async verifySend(senderId: string, content: string) {
+    if (!content.trim() || content.length > 280) {
+      throw new Error('Message must be 1–280 characters')
+    }
+    return { ok: true as const }
+  },
+
   async postSystemMessage(content: string) {
     const message = await chatRepository.createMessage({
       content,

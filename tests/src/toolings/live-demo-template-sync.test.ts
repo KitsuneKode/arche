@@ -13,20 +13,29 @@ const FORBIDDEN_TEMPLATE_WEB_TESTS = [
   'apps/web/lib/proof-run-storage.test.ts',
   'apps/web/lib/live-feed/live-feed.test.ts',
   'apps/web/lib/proof-run/proof-run.test.ts',
+  'apps/web/lib/relay-run/engine.test.ts',
 ]
 
-const FORBIDDEN_TEMPLATE_PATHS = ['apps/web/app/live/page.tsx', 'apps/web/app/live/layout.tsx']
+const FORBIDDEN_TEMPLATE_PATHS = [
+  'apps/web/app/live/page.tsx',
+  'apps/web/app/live/layout.tsx',
+  'apps/web/app/(sandbox)/play',
+  'apps/web/components/play',
+]
 
 const REQUIRED_PATHS = [
   'apps/web/components/live/live-demo.tsx',
   'apps/web/components/live/live-demo-footer.tsx',
   'apps/web/components/live/live-room-context.tsx',
-  'apps/web/components/live/lattice/relay-lattice.tsx',
-  'apps/web/components/live/lattice/clash-panel.tsx',
+  'apps/web/components/live/live-panel-shell.tsx',
+  'apps/web/components/live/relay-run-game.tsx',
+  'apps/web/components/live/relay-chat-panel.tsx',
+  'apps/web/components/live/relay-chat-popup.tsx',
   'apps/web/components/live/lattice/relay-chat-sidebar.tsx',
   'apps/web/components/live/activity-deck.tsx',
   'apps/web/components/live/live-chat.tsx',
   'apps/web/lib/live-feed/live-feed.ts',
+  'apps/web/lib/relay-run/engine.ts',
   'apps/web/lib/proof-run/proof-run.ts',
   'apps/web/app/(sandbox)/live/page.tsx',
   'apps/web/app/(sandbox)/layout.tsx',
@@ -34,9 +43,10 @@ const REQUIRED_PATHS = [
   'apps/server/src/modules/chat/chat.routes.ts',
   'apps/server/src/modules/chat/chat.events.ts',
   'apps/server/src/modules/live/live.routes.ts',
-  'apps/server/src/modules/lattice/lattice.trpc.ts',
+  'apps/server/src/modules/game/game.trpc.ts',
   'apps/server/src/modules/demo/demo.trpc.ts',
   'packages/backend-common/src/demo-policy.ts',
+  'packages/store/prisma/migrations/20260625140000_relay_run_score/migration.sql',
 ]
 
 describe('fullstack template live demo parity', () => {

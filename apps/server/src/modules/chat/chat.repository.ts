@@ -1,8 +1,20 @@
 import { prisma } from '../../db/index.js'
 
+export function buildPublicFeedWhere() {
+  return {
+    kind: { notIn: ['proof'] },
+    NOT: {
+      sender: {
+        OR: [{ name: 'Live Smoke' }, { email: { startsWith: 'smoke+' } }],
+      },
+    },
+  }
+}
+
 export const chatRepository = {
   findRecentMessages() {
     return prisma.message.findMany({
+      where: buildPublicFeedWhere(),
       orderBy: { createdAt: 'asc' },
       take: 50,
       include: { sender: true },
@@ -21,9 +33,11 @@ export const chatRepository = {
   },
 
   async getStats() {
+    const where = buildPublicFeedWhere()
     const [total, latest] = await Promise.all([
-      prisma.message.count(),
+      prisma.message.count({ where }),
       prisma.message.findFirst({
+        where,
         orderBy: { createdAt: 'desc' },
         select: { createdAt: true },
       }),

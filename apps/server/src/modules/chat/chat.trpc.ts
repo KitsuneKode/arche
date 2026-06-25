@@ -11,4 +11,8 @@ export const chatRouter = {
   send: protectedProcedure
     .input(sendMessageSchema)
     .mutation(({ ctx, input }) => chatService.sendMessage(ctx.session.user.id, input.content)),
+
+  verifySend: protectedProcedure
+    .input(sendMessageSchema)
+    .mutation(({ ctx, input }) => chatService.verifySend(ctx.session.user.id, input.content)),
 } satisfies TRPCRouterRecord

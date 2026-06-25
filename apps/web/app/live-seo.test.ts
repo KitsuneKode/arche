@@ -49,17 +49,16 @@ describe('/live SEO', () => {
 
   it('live page wires the same metadata contract', () => {
     const source = readFileSync(join(appRoot, '(sandbox)/live/page.tsx'), 'utf8')
-    expect(source).toContain('Relay Lattice')
+    expect(source).toContain('Relay Run')
     expect(source).toContain('LiveDemoJsonLd')
     expect(source).toContain('<LiveDemo />')
     expect(source).not.toContain('isApiReachable')
   })
 
-  it('play page wires relay metadata', () => {
-    const source = readFileSync(join(appRoot, '(sandbox)/play/page.tsx'), 'utf8')
-    expect(source).toContain('Relay — live chat and stack ping')
-    expect(source).toContain('PlayJsonLd')
-    expect(source).toContain('PlayPanels')
+  it('redirects /play to /live', () => {
+    const source = readFileSync(join(appRoot, '../next.config.js'), 'utf8')
+    expect(source).toContain("source: '/play'")
+    expect(source).toContain("destination: '/live'")
   })
 
   it('includes live opengraph image route files', () => {

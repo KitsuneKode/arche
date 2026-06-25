@@ -11,8 +11,9 @@ import {
   type SetStateAction,
 } from 'react'
 
+import { LivePanelShell } from '@/components/live/live-panel-shell'
 import { ProofComplete } from '@/components/live/proof-complete'
-import config from '@/env'
+import { getApiHealthFetchUrl } from '@/lib/api-health'
 import {
   passedRungIds,
   PROOF_RUNGS,
@@ -80,10 +81,13 @@ export function ProofLadder({
   })
   const signedIn = signedInProp ?? Boolean(sessionQuery.data?.user)
   const userId = userIdProp ?? sessionQuery.data?.user?.id
-  const sendMutation = useMutation(trpc.chat.send.mutationOptions())
+  const verifySendMutation = useMutation(trpc.chat.verifySend.mutationOptions())
+  const submitScoreMutation = useMutation(trpc.game.submitScore.mutationOptions())
   const createPostMutation = useMutation(trpc.post.create.mutationOptions())
-  const sendMessageRef = useRef(sendMutation.mutateAsync)
-  sendMessageRef.current = sendMutation.mutateAsync
+  const verifySendRef = useRef(verifySendMutation.mutateAsync)
+  verifySendRef.current = verifySendMutation.mutateAsync
+  const submitScoreRef = useRef(submitScoreMutation.mutateAsync)
+  submitScoreRef.current = submitScoreMutation.mutateAsync
   const createPostRef = useRef(createPostMutation.mutateAsync)
   createPostRef.current = createPostMutation.mutateAsync
 
@@ -91,7 +95,7 @@ export function ProofLadder({
     const results = await runProofRungs({
       apiReachable,
       fetchHealth: async () => {
-        const response = await fetch(`${config.NEXT_PUBLIC_API_URL}/health`, {
+        const response = await fetch(getApiHealthFetchUrl(), {
           credentials: 'include',
         })
         const body = (await response.json()) as { database?: string }
@@ -106,8 +110,19 @@ export function ProofLadder({
         return queryClient.fetchQuery(options)
       },
       fetchSession: () => queryClient.fetchQuery(trpc.auth.getSession.queryOptions()),
-      sendChatMessage: async (content) => {
-        await sendMessageRef.current({ content })
+      fetchLeaderboard: () => queryClient.fetchQuery(trpc.game.leaderboard.queryOptions()),
+      fetchMyBest: async () => {
+        try {
+          return await queryClient.fetchQuery(trpc.game.myBest.queryOptions())
+        } catch {
+          return null
+        }
+      },
+      verifyChatSend: async (content) => {
+        await verifySendRef.current({ content })
+      },
+      submitGameScore: async (score) => {
+        await submitScoreRef.current({ score })
       },
       fetchSecretMessage: () => queryClient.fetchQuery(trpc.auth.getSecretMessage.queryOptions()),
       createDraftPost: async (input) => {
@@ -119,7 +134,8 @@ export function ProofLadder({
     })
 
     applyResults(results, setStates, setReceipts)
-    await queryClient.invalidateQueries({ queryKey: trpc.chat.list.queryKey() })
+    await queryClient.invalidateQueries({ queryKey: trpc.game.leaderboard.queryKey() })
+    await queryClient.invalidateQueries({ queryKey: trpc.game.myBest.queryKey() })
   }, [apiReachable, queryClient, trpc])
 
   runChecksRef.current = runChecks
@@ -153,23 +169,28 @@ export function ProofLadder({
   const allPassed = completedCount === PROOF_RUNGS.length
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
       <ProofComplete visible={allPassed} />
-      <div className="border border-zinc-800 bg-black">
-        <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/50 px-4 py-3">
-          <div>
-            <p className="font-mono text-[10px] tracking-widest text-amber-400 uppercase">
-              Proof run
-            </p>
-            <p className="mt-1 text-sm text-zinc-400">
-              Real checks against the deployed API stack.
-            </p>
-          </div>
+      <LivePanelShell
+        title="Proof run"
+        subtitle="Real checks against the deployed API stack."
+        meta={
           <p className="font-mono text-xs text-zinc-500">
             {completedCount}/{PROOF_RUNGS.length}
           </p>
-        </div>
-
+        }
+        footer={
+          <div className="p-4">
+            <button
+              type="button"
+              onClick={() => void runChecks()}
+              className="border border-zinc-700 px-3 py-2 font-mono text-[10px] tracking-widest text-zinc-300 uppercase hover:border-zinc-500"
+            >
+              Re-run proof
+            </button>
+          </div>
+        }
+      >
         <ol className="divide-y divide-zinc-800">
           {PROOF_RUNGS.map((rung) => {
             const state = states[rung.id] ?? (rung.requiresAuth && !signedIn ? 'locked' : 'pending')
@@ -189,17 +210,7 @@ export function ProofLadder({
             )
           })}
         </ol>
-
-        <div className="border-t border-zinc-800 p-4">
-          <button
-            type="button"
-            onClick={() => void runChecks()}
-            className="border border-zinc-700 px-3 py-2 font-mono text-[10px] tracking-widest text-zinc-300 uppercase hover:border-zinc-500"
-          >
-            Re-run proof
-          </button>
-        </div>
-      </div>
+      </LivePanelShell>
     </div>
   )
 }

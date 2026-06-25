@@ -1,7 +1,17 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react'
 
 import type { RouterOutputs } from '@arche-template/trpc'
 import { liveStreamUrl } from '@/lib/live-chat-sync'
@@ -19,6 +29,8 @@ type LatticeState = RouterOutputs['lattice']['getState']
 type LiveRoomContextValue = {
   mode: LiveFeedMode
   pollingFallback: boolean
+  relayChatOpen: boolean
+  setRelayChatOpen: Dispatch<SetStateAction<boolean>>
 }
 
 const LiveRoomContext = createContext<LiveRoomContextValue | null>(null)
@@ -28,6 +40,7 @@ export function LiveRoomProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
   const preferredMode = resolveLiveFeedMode()
   const [mode, setMode] = useState<LiveFeedMode>(preferredMode)
+  const [relayChatOpen, setRelayChatOpen] = useState(false)
 
   const onEvent = useCallback(
     (event: LiveStreamClientEvent) => {
@@ -68,7 +81,10 @@ export function LiveRoomProvider({ children }: { children: React.ReactNode }) {
     }
   }, [preferredMode])
 
-  const value = useMemo(() => ({ mode, pollingFallback: mode === 'poll' }), [mode])
+  const value = useMemo(
+    () => ({ mode, pollingFallback: mode === 'poll', relayChatOpen, setRelayChatOpen }),
+    [mode, relayChatOpen],
+  )
 
   return <LiveRoomContext.Provider value={value}>{children}</LiveRoomContext.Provider>
 }
@@ -76,7 +92,12 @@ export function LiveRoomProvider({ children }: { children: React.ReactNode }) {
 export function useLiveRoom() {
   const context = useContext(LiveRoomContext)
   if (!context) {
-    return { mode: resolveLiveFeedMode(), pollingFallback: !isChatSseEnabled() }
+    return {
+      mode: resolveLiveFeedMode(),
+      pollingFallback: !isChatSseEnabled(),
+      relayChatOpen: false,
+      setRelayChatOpen: () => {},
+    }
   }
   return context
 }

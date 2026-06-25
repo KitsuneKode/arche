@@ -63,8 +63,8 @@ async function signIn(email: string, password: string): Promise<string> {
 const maybeDescribe = RUN ? describe : describe.skip
 
 maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
-  it('0. proof rung registry has 10 rungs', () => {
-    expect(PROOF_RUNGS).toHaveLength(10)
+  it('0. proof rung registry has 12 rungs', () => {
+    expect(PROOF_RUNGS).toHaveLength(12)
   })
 
   it(
@@ -112,14 +112,14 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     expect(session?.user ?? null).toBeNull()
   })
 
-  it('6. sign-up, chat.send, getSecretMessage when authenticated', async () => {
-    const email = `live-smoke-${Date.now()}@example.com`
+  it('6. sign-up, verifySend, game score, getSecretMessage when authenticated', async () => {
+    const email = `smoke+${Date.now()}@example.com`
     const password = 'SmokeTest123!'
 
     const signUp = await fetch(`${API}/api/auth/sign-up/email`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email, password, name: 'Live Smoke' }),
+      body: JSON.stringify({ email, password, name: 'Smoke Runner' }),
     })
     expect(signUp.ok).toBe(true)
 
@@ -130,21 +130,31 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
       null,
       cookie,
     )
-    expect(session?.user?.name).toBe('Live Smoke')
+    expect(session?.user?.name).toBe('Smoke Runner')
 
-    const sent = await fetch(`${API}/api/trpc/chat.send?batch=1`, {
+    const verify = await fetch(`${API}/api/trpc/chat.verifySend?batch=1`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         cookie,
       },
       body: JSON.stringify({
-        0: { json: { content: `smoke test ${Date.now()}` } },
+        0: { json: { content: `smoke verify ${Date.now()}` } },
       }),
     })
-    expect(sent.ok).toBe(true)
-    const sendBody = (await sent.json()) as Array<{ result?: { data: { json: unknown } } }>
-    expect(sendBody[0]?.result?.data.json).toBeDefined()
+    expect(verify.ok).toBe(true)
+
+    const score = await fetch(`${API}/api/trpc/game.submitScore?batch=1`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie,
+      },
+      body: JSON.stringify({
+        0: { json: { score: 1 } },
+      }),
+    })
+    expect(score.ok).toBe(true)
 
     const secret = await trpcQuery<string>('auth.getSecretMessage', null, cookie)
     expect(secret).toContain('secret')
@@ -169,13 +179,9 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     expect(body[0]?.error).toBeDefined()
   })
 
-  it('8. lattice.getState returns grid and round', async () => {
-    const state = await trpcQuery<{
-      cells: Array<{ id: string; label: string; unlocked: boolean }>
-      round: { id: string; cellA: { label: string }; cellB: { label: string } } | null
-    }>('lattice.getState')
-    expect(state.cells.length).toBe(25)
-    expect(state.round).toBeDefined()
+  it('8. game.leaderboard returns array', async () => {
+    const board = await trpcQuery<Array<{ score: number; displayName: string }>>('game.leaderboard')
+    expect(Array.isArray(board)).toBe(true)
   })
 
   it(
@@ -185,7 +191,7 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
       const response = await fetch(`${web}/live`)
       expect(response.ok).toBe(true)
       const html = await response.text()
-      expect(html).toMatch(/Relay Lattice|Live sandbox/)
+      expect(html).toMatch(/Relay Run|Live sandbox/)
       expect(html).toMatch(/relay|Relay/)
       expect(html).not.toContain('Production Ready')
     },
@@ -229,7 +235,7 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     expect(body[0]?.result?.data.json.id).toBeDefined()
   })
 
-  it('12. unified live SSE stream emits ready and lattice state', async () => {
+  it('12. unified live SSE stream emits ready', async () => {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 5000)
 
