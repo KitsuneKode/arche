@@ -31,16 +31,16 @@
   "dependencies": {
     "@arche-template/common": "workspace:*",
     "@t3-oss/env-core": "catalog:",
-    "date-fns": "^4.2.1",
+    "date-fns": "catalog:",
     "ioredis": "catalog:",
     "redis": "catalog:",
-    "winston": "^3.19.0",
+    "winston": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
-    "@types/winston": "^2.4.4"
+    "oxlint": "catalog:"
   },
   "peerDependencies": {
     "typescript": "catalog:"

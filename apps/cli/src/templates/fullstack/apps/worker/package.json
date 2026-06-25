@@ -16,7 +16,7 @@
     "@arche-template/backend-common": "workspace:*",
     "@arche-template/common": "workspace:*",
     "@arche-template/store": "workspace:*",
-    "bullmq": "^5.76.10"
+    "bullmq": "^5.79.1"
   },
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",

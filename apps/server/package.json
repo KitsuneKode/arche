@@ -21,24 +21,25 @@
     "@arche-template/auth": "workspace:*",
     "@arche-template/backend-common": "workspace:*",
     "@arche-template/store": "workspace:*",
-    "@bull-board/api": "^7.1.5",
-    "@bull-board/express": "^7.1.5",
+    "@bull-board/api": "catalog:",
+    "@bull-board/express": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@trpc/server": "catalog:",
     "bullmq": "catalog:",
-    "compression": "^1.8.1",
-    "cors": "^2.8.6",
+    "compression": "catalog:",
+    "cors": "catalog:",
     "express": "catalog:",
-    "express-rate-limit": "^8.5.2",
+    "express-rate-limit": "catalog:",
     "superjson": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
-    "@types/compression": "^1.7.5",
-    "@types/cors": "^2.8.19",
-    "@types/express": "catalog:"
+    "@types/compression": "catalog:",
+    "@types/cors": "catalog:",
+    "@types/express": "catalog:",
+    "oxlint": "catalog:"
   },
   "peerDependencies": {
     "typescript": "catalog:"

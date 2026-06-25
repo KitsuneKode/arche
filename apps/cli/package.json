@@ -69,6 +69,7 @@
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",
     "@types/node": "catalog:",
+    "oxlint": "catalog:",
     "typescript": "catalog:"
   },
   "engines": {

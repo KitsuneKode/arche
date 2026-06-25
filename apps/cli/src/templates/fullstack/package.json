@@ -27,20 +27,12 @@
     "postinstall": "bun run db:generate",
     "test": "bun test"
   },
-  "dependencies": {
-    "@t3-oss/env-core": "^0.13.11",
-    "@t3-oss/env-nextjs": "^0.13.11",
-    "compression": "^1.7.5",
-    "express-rate-limit": "^8.5.2",
-    "zod": "^4.4.3"
-  },
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",
-    "@types/compression": "^1.7.5",
     "oxfmt": "^0.50.0",
-    "oxlint": "^1.65.0",
-    "turbo": "^2.9.14",
-    "typescript": "6.0.3"
+    "oxlint": "^1.71.0",
+    "turbo": "^2.10.0",
+    "typescript": "^6.0.3"
   },
   "engines": {
     "node": ">=20"

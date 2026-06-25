@@ -68,7 +68,11 @@ describe('fullstack workspace output', () => {
 
       expect(root.packageManager).toStartWith('bun@')
       expect(root.workspaces.packages).toContain('apps/*')
-      expect(root.workspaces.catalog).toEqual(workspaceCatalog)
+      for (const [dependency, version] of Object.entries(root.workspaces.catalog)) {
+        expect(workspaceCatalog[dependency as keyof typeof workspaceCatalog]).toBe(version)
+      }
+      expect(root.workspaces.catalog.ioredis).toBe('5.10.1')
+      expect(root.workspaces.catalog.redis).toBe('^5.12.1')
       const turbo = JSON.parse(readFileSync(join(destinationDir, 'turbo.json'), 'utf8'))
       expect(turbo.tasks.transit.dependsOn).toEqual(['^transit'])
       expect(turbo.tasks.lint.dependsOn).toEqual(['transit'])

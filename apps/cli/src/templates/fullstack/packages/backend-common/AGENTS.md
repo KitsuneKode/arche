@@ -7,8 +7,8 @@ Shared backend utilities for `apps/server` and `apps/worker`.
 - `src/env.ts` — `serverEnv` (t3-env)
 - `src/utils/validate-env.ts` — startup validation
 - `src/utils/redis-enabled.ts` — `ENABLE_REDIS`, `resolveRedisUrl`
-- `src/redis/index.ts` — application Redis client (`redis` / node-redis)
-- `src/redis/bull-connection.ts` — BullMQ-only `ioredis` connections
+- `src/redis/index.ts` — application Redis client (official `redis` / node-redis)
+- `src/redis/bull-connection.ts` — BullMQ-only `ioredis` connections (BullMQ requires the ioredis API; do not replace with `redis`)
 - `package.json` — subpath exports
 
 ## Owns

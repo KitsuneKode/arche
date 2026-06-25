@@ -1,3 +1,4 @@
+import { logger } from '../../common/logger.js'
 import { chatService } from '../chat/chat.service.js'
 import type { LatticeStatePublic } from '../live/live.dto.js'
 import { emitLiveEvent } from '../live/live.events.js'
@@ -10,6 +11,16 @@ const EMPTY_LATTICE_STATE: LatticeStatePublic = {
   cells: [],
   round: null,
   ready: false,
+}
+
+let latticeSchemaMissingLogged = false
+
+function logLatticeSchemaMissingOnce(): void {
+  if (latticeSchemaMissingLogged) return
+  latticeSchemaMissingLogged = true
+  logger.warn(
+    'Relay Lattice tables are missing — round engine paused. Run database migrations on the API host (bun run db:deploy).',
+  )
 }
 
 async function withLatticeSchema<T>(fn: () => Promise<T>): Promise<T | typeof EMPTY_LATTICE_STATE> {
@@ -73,6 +84,7 @@ async function buildPublicState(userId?: string): Promise<LatticeStatePublic> {
 
   return {
     now: new Date().toISOString(),
+    ready: true,
     cells: cells.map((cell) => ({
       id: cell.id,
       label: cell.label,
@@ -198,10 +210,18 @@ export const latticeService = {
   },
 
   async tickEngine() {
-    const resolved = await latticeService.resolveRoundIfDue()
-    if (!resolved) {
-      const open = await latticeRepository.findOpenRound()
-      if (!open) await latticeService.ensureOpenRound()
+    try {
+      const resolved = await latticeService.resolveRoundIfDue()
+      if (!resolved) {
+        const open = await latticeRepository.findOpenRound()
+        if (!open) await latticeService.ensureOpenRound()
+      }
+    } catch (error) {
+      if (isLatticeSchemaMissing(error)) {
+        logLatticeSchemaMissingOnce()
+        return
+      }
+      logger.error('Relay Lattice tickEngine failed', { error })
     }
   },
 }

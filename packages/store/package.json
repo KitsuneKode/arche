@@ -26,6 +26,7 @@
     "@arche-template/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/pg": "catalog:",
+    "oxlint": "catalog:",
     "prisma": "catalog:"
   },
   "peerDependencies": {

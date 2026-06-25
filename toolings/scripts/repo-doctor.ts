@@ -429,6 +429,46 @@ async function checkDependencyCatalog(): Promise<Finding[]> {
   ]
 }
 
+async function checkUnusedDependencies(): Promise<Finding[]> {
+  const proc = Bun.spawnSync({
+    cmd: ['bun', 'toolings/scripts/audit-unused-dependencies.ts'],
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
+  if (proc.exitCode === 0) return []
+
+  const output = `${proc.stdout.toString()}\n${proc.stderr.toString()}`.trim()
+  return [
+    {
+      severity: 'warn',
+      code: 'unused-dependencies',
+      path: 'package.json',
+      message: 'Some workspace dependencies may be unused.',
+      suggestion: `Run \`bun run deps:unused\` and remove or justify entries. Details:\n${output}`,
+    },
+  ]
+}
+
+async function checkTemplateDependencyPins(): Promise<Finding[]> {
+  const proc = Bun.spawnSync({
+    cmd: ['bun', 'toolings/scripts/audit-template-deps.ts'],
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
+  if (proc.exitCode === 0) return []
+
+  const output = `${proc.stdout.toString()}\n${proc.stderr.toString()}`.trim()
+  return [
+    {
+      severity: 'warn',
+      code: 'template-deps-drift',
+      path: 'apps/cli/src/templates/fullstack',
+      message: 'Fullstack template dependency pins drift from workspace catalog.',
+      suggestion: `Align template package.json files with toolings/catalog/workspace-catalog.json. Details:\n${output}`,
+    },
+  ]
+}
+
 export async function collectRepoDoctorFindings(): Promise<Finding[]> {
   return dedupeFindings(
     [
@@ -443,6 +483,8 @@ export async function collectRepoDoctorFindings(): Promise<Finding[]> {
       ...(await checkTemplateAgentsSync()),
       ...(await checkWebCoreSync()),
       ...(await checkDependencyCatalog()),
+      ...(await checkUnusedDependencies()),
+      ...(await checkTemplateDependencyPins()),
     ].sort((a, b) => {
       const severityDiff = severityRank(a.severity) - severityRank(b.severity)
       if (severityDiff !== 0) return severityDiff

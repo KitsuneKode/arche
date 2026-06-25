@@ -20,7 +20,8 @@
   },
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",
-    "@types/bun": "catalog:"
+    "@types/bun": "catalog:",
+    "oxlint": "catalog:"
   },
   "peerDependencies": {
     "typescript": "catalog:"
