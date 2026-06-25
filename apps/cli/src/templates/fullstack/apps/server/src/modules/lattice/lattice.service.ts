@@ -1,8 +1,25 @@
 import { chatService } from '../chat/chat.service.js'
 import type { LatticeStatePublic } from '../live/live.dto.js'
 import { emitLiveEvent } from '../live/live.events.js'
+import { isLatticeSchemaMissing } from './lattice-errors.js'
 import { CLASH_PAIRS, cellLabel, ROUND_DURATION_MS } from './lattice.deck.js'
 import { latticeRepository } from './lattice.repository.js'
+
+const EMPTY_LATTICE_STATE: LatticeStatePublic = {
+  now: new Date().toISOString(),
+  cells: [],
+  round: null,
+  ready: false,
+}
+
+async function withLatticeSchema<T>(fn: () => Promise<T>): Promise<T | typeof EMPTY_LATTICE_STATE> {
+  try {
+    return await fn()
+  } catch (error) {
+    if (isLatticeSchemaMissing(error)) return EMPTY_LATTICE_STATE
+    throw error
+  }
+}
 
 function pairKey(a: string, b: string) {
   return [a, b].sort().join(':')
@@ -132,9 +149,11 @@ async function resolveOpenRound() {
 
 export const latticeService = {
   async getPublicState(userId?: string) {
-    await latticeService.resolveRoundIfDue()
-    await latticeService.ensureOpenRound()
-    return buildPublicState(userId)
+    return withLatticeSchema(async () => {
+      await latticeService.resolveRoundIfDue()
+      await latticeService.ensureOpenRound()
+      return buildPublicState(userId)
+    })
   },
 
   async ensureOpenRound() {
@@ -155,20 +174,27 @@ export const latticeService = {
   },
 
   async castVote(userId: string, roundId: string, choice: 'a' | 'b') {
-    await latticeService.resolveRoundIfDue()
+    const result = await withLatticeSchema(async () => {
+      await latticeService.resolveRoundIfDue()
 
-    const openRound = await latticeRepository.findOpenRound()
-    if (!openRound || openRound.id !== roundId) {
-      throw new Error('This clash is no longer open')
-    }
-    if (openRound.endsAt.getTime() <= Date.now()) {
-      throw new Error('Voting closed for this clash')
-    }
+      const openRound = await latticeRepository.findOpenRound()
+      if (!openRound || openRound.id !== roundId) {
+        throw new Error('This clash is no longer open')
+      }
+      if (openRound.endsAt.getTime() <= Date.now()) {
+        throw new Error('Voting closed for this clash')
+      }
 
-    await latticeRepository.upsertVote(roundId, userId, choice)
-    const state = await buildPublicState(userId)
-    emitLiveEvent({ type: 'lattice:state', state })
-    return state
+      await latticeRepository.upsertVote(roundId, userId, choice)
+      const state = await buildPublicState(userId)
+      emitLiveEvent({ type: 'lattice:state', state })
+      return state
+    })
+
+    if (result.ready === false) {
+      throw new Error('Relay Lattice is not ready — run database migrations on the API host')
+    }
+    return result
   },
 
   async tickEngine() {

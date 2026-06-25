@@ -75,7 +75,7 @@
     "smoke:scaffold": "bun toolings/scripts/smoke-scaffold-manual.ts",
     "template:clean:dry": "bun toolings/scripts/template-cleanup.ts --dry-run",
     "template:clean": "bun toolings/scripts/template-cleanup.ts --yes",
-    "commit:check": "bun run --filter @arche-template/dev commitlint -- --last --verbose",
+    "commit:check": "commitlint --last --verbose",
     "lint": "turbo run lint",
     "lint:affected": "turbo run lint --affected",
     "lint:fix": "turbo run lint:fix",
@@ -105,10 +105,12 @@
     "lint-staged": "lint-staged"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.0.1",
+    "@commitlint/config-conventional": "^21.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
     "only-allow": "^1.2.2",
-    "turbo": "catalog:",
+    "turbo": "^2.10.0",
     "typescript": "catalog:"
   },
   "engines": {

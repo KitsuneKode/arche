@@ -115,6 +115,18 @@ NEXT_PUBLIC_API_URL=https://api.arche.kitsunelabs.xyz
 
 `arche-api` may return **401** when Vercel Deployment Protection is on. For smoke tests, add `VERCEL_PROTECTION_BYPASS` or disable protection on the API project. See [deploy-smoke.md](./deploy-smoke.md).
 
+## After Relay Lattice ships (required once per database)
+
+Vercel and Render share the same Neon `DATABASE_URL`. Deploying new API code **does not** run Prisma migrations. Run locally against production:
+
+```bash
+export DATABASE_URL='postgresql://...'   # Neon connection string
+bun run db:deploy                        # applies 20260625050000_relay_lattice
+bun run db:seed                          # lattice cells + system chat user
+```
+
+Until this runs, `/health` stays `200` but `lattice.getState` errors and `/live` breaks. After migrate + seed, redeploy is not required.
+
 ## Smoke tests
 
 ```bash

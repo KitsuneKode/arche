@@ -41,6 +41,12 @@ export function RelayLattice({ signedIn }: { signedIn: boolean }) {
           <p className="font-mono text-xs text-zinc-600">Loading grid…</p>
         ) : stateQuery.isError ? (
           <p className="font-mono text-xs text-red-400">Grid unavailable.</p>
+        ) : stateQuery.data?.ready === false ? (
+          <p className="font-mono text-xs text-amber-400">
+            Relay Lattice tables are not migrated yet. Run{' '}
+            <code className="text-amber-200">bun run db:deploy</code> against production Postgres,
+            then seed lattice cells.
+          </p>
         ) : (
           <div className="grid grid-cols-5 gap-1.5">
             {stateQuery.data?.cells.map((cell) => (

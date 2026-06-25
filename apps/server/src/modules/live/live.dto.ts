@@ -25,6 +25,8 @@ export const latticeStatePublicSchema = z.object({
   now: z.string(),
   cells: z.array(latticeCellPublicSchema),
   round: latticeRoundPublicSchema.nullable(),
+  /** False when Relay Lattice tables are not migrated yet. */
+  ready: z.boolean().optional(),
 })
 
 export type LatticeStatePublic = z.infer<typeof latticeStatePublicSchema>
