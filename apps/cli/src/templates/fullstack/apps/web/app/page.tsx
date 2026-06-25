@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { helloQueryOptions, HydrateClient, prefetch } from '@/trpc/server'
 import { TrpcStatus } from './trpc-status'
 
@@ -30,9 +29,6 @@ export default async function HomePage() {
         <div className="actions" aria-label="Local commands">
           <code>bun dev</code>
           <code>bun run db:migrate</code>
-          <Link href="/live" className="live-link-button">
-            Open live proof run →
-          </Link>
         </div>
       </section>
 

@@ -9,9 +9,7 @@ import { securityHeaders } from './common/middleware/security-headers'
 import { tracingMiddleware } from './common/middleware/tracing'
 import { adminRoutes } from './modules/admin/admin.routes'
 import { authRoutes } from './modules/auth/auth.routes'
-import { chatRoutes } from './modules/chat/chat.routes'
 import { healthRoutes } from './modules/health/health.routes'
-import { liveRoutes } from './modules/live/live.routes'
 import { rootRoutes } from './modules/root/root.routes'
 import { trpcRoutes } from './modules/trpc/trpc.routes'
 
@@ -36,8 +34,6 @@ if (bullBoardEnabled) {
   app.use('/admin/queues', adminRoutes)
 }
 app.use('/api/auth', authRoutes)
-app.use('/api/chat', chatRoutes)
-app.use('/api/live', liveRoutes)
 
 app.use(express.json({ limit: '1mb' }))
 app.use('/api/trpc', apiRateLimit, trpcRoutes)

@@ -14,25 +14,6 @@ type UserWithOptionalFields = {
 
 export function toPublicUser(user: UserWithOptionalFields | null): PublicUserShape | null {
   if (!user) return null
-  return { id: user.id, name: user.name, image: user.image }
-}
-
-type MessageWithSender = {
-  id: string
-  content: string
-  kind?: string
-  senderId: string
-  createdAt: Date
-  sender: UserWithOptionalFields | null
-}
-
-export function toPublicMessage(message: MessageWithSender) {
-  return {
-    id: message.id,
-    content: message.content,
-    kind: message.kind ?? 'user',
-    senderId: message.senderId,
-    createdAt: message.createdAt,
-    sender: toPublicUser(message.sender),
-  }
+  const trimmed = user.name?.trim()
+  return { id: user.id, name: trimmed || 'User', image: user.image }
 }

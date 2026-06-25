@@ -35,9 +35,6 @@ export const serverEnv = createEnv({
     BETTER_AUTH_SECRET: z.string().min(32, 'Must be at least 32 characters for security'),
     BETTER_AUTH_URL: z.string().url(),
 
-    // Marketing /live demo: auto sign-in after email sign-up (off in production unless enabled)
-    DEMO_AUTO_SIGN_IN: envBooleanSchema(false).default(false),
-
     // Optional: OAuth Providers
     GITHUB_CLIENT_ID: z.string().optional(),
     GITHUB_CLIENT_SECRET: z.string().optional(),

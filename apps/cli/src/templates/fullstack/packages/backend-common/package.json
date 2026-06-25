@@ -19,8 +19,7 @@
     "./redis-enabled": "./src/utils/redis-enabled.ts",
     "./performance": "./src/utils/performance.ts",
     "./graceful-shutdown": "./src/utils/graceful-shutdown.ts",
-    "./config-schema": "./src/utils/config-schema.ts",
-    "./demo-policy": "./src/demo-policy.ts"
+    "./config-schema": "./src/utils/config-schema.ts"
   },
   "scripts": {
     "test": "bun test",

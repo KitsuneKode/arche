@@ -15,13 +15,3 @@ export const apiRateLimit = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests. Please try again later.' },
 })
-
-export const chatStreamRateLimit = rateLimit({
-  windowMs: 60 * 1000,
-  max: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many stream connections. Please try again later.' },
-})
-
-export const liveStreamRateLimit = chatStreamRateLimit
