@@ -9,8 +9,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type Dispatch,
-  type SetStateAction,
+  type RefObject,
 } from 'react'
 
 import type { RouterOutputs } from '@arche-template/trpc'
@@ -30,7 +29,10 @@ type LiveRoomContextValue = {
   mode: LiveFeedMode
   pollingFallback: boolean
   relayChatOpen: boolean
-  setRelayChatOpen: Dispatch<SetStateAction<boolean>>
+  openRelayChat: () => void
+  closeRelayChat: () => void
+  registerFullscreenHost: (host: HTMLElement | null) => void
+  fullscreenHostRef: RefObject<HTMLElement | null>
 }
 
 const LiveRoomContext = createContext<LiveRoomContextValue | null>(null)
@@ -41,6 +43,19 @@ export function LiveRoomProvider({ children }: { children: React.ReactNode }) {
   const preferredMode = resolveLiveFeedMode()
   const [mode, setMode] = useState<LiveFeedMode>(preferredMode)
   const [relayChatOpen, setRelayChatOpen] = useState(false)
+  const fullscreenHostRef = useRef<HTMLElement | null>(null)
+
+  const openRelayChat = useCallback(() => {
+    setRelayChatOpen(true)
+  }, [])
+
+  const closeRelayChat = useCallback(() => {
+    setRelayChatOpen(false)
+  }, [])
+
+  const registerFullscreenHost = useCallback((host: HTMLElement | null) => {
+    fullscreenHostRef.current = host
+  }, [])
 
   const onEvent = useCallback(
     (event: LiveStreamClientEvent) => {
@@ -82,12 +97,22 @@ export function LiveRoomProvider({ children }: { children: React.ReactNode }) {
   }, [preferredMode])
 
   const value = useMemo(
-    () => ({ mode, pollingFallback: mode === 'poll', relayChatOpen, setRelayChatOpen }),
-    [mode, relayChatOpen],
+    () => ({
+      mode,
+      pollingFallback: mode === 'poll',
+      relayChatOpen,
+      openRelayChat,
+      closeRelayChat,
+      registerFullscreenHost,
+      fullscreenHostRef,
+    }),
+    [mode, relayChatOpen, openRelayChat, closeRelayChat, registerFullscreenHost],
   )
 
   return <LiveRoomContext.Provider value={value}>{children}</LiveRoomContext.Provider>
 }
+
+const fallbackFullscreenHostRef = { current: null as HTMLElement | null }
 
 export function useLiveRoom() {
   const context = useContext(LiveRoomContext)
@@ -96,10 +121,54 @@ export function useLiveRoom() {
       mode: resolveLiveFeedMode(),
       pollingFallback: !isChatSseEnabled(),
       relayChatOpen: false,
-      setRelayChatOpen: () => {},
+      openRelayChat: () => {},
+      closeRelayChat: () => {},
+      registerFullscreenHost: () => {},
+      fullscreenHostRef: fallbackFullscreenHostRef,
     }
   }
   return context
+}
+
+/** Portal target: game fullscreen host when active, otherwise document.body */
+export function useChatPortalTarget(): HTMLElement | null {
+  const { fullscreenHostRef } = useLiveRoom()
+  const [target, setTarget] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    const resolve = () => {
+      const host = fullscreenHostRef.current
+      if (host && document.fullscreenElement === host) {
+        setTarget(host)
+        return
+      }
+      setTarget(document.body)
+    }
+
+    resolve()
+    document.addEventListener('fullscreenchange', resolve)
+    return () => document.removeEventListener('fullscreenchange', resolve)
+  }, [fullscreenHostRef])
+
+  return target
+}
+
+export function useGameFullscreenActive(): boolean {
+  const { fullscreenHostRef } = useLiveRoom()
+  const [active, setActive] = useState(false)
+
+  useEffect(() => {
+    const resolve = () => {
+      const host = fullscreenHostRef.current
+      setActive(Boolean(host && document.fullscreenElement === host))
+    }
+
+    resolve()
+    document.addEventListener('fullscreenchange', resolve)
+    return () => document.removeEventListener('fullscreenchange', resolve)
+  }, [fullscreenHostRef])
+
+  return active
 }
 
 function isChatSseEnabled() {

@@ -27,12 +27,17 @@ export default function LivePage() {
       <Navbar />
 
       <SiteFrame>
-        <HeroBlock eyebrow="Live sandbox" title="Relay Run" accent=" live." size="md">
-          Play the Flappy-style relay game, climb the leaderboard, and chat via the #relay popup.
-          Sign in to save scores and post. Proof-run checks run on the left.
+        <HeroBlock
+          eyebrow="Live sandbox"
+          title="Relay Run"
+          accent=" live."
+          size="md"
+          className="!p-4 md:!p-8"
+        >
+          Tap to play. Chat, posts, and sign-in are in the side panel — proof checks below.
         </HeroBlock>
 
-        <section className="flex-1 bg-black p-6 md:p-16">
+        <section className="flex-1 bg-black p-4 md:p-8">
           <LiveDemo />
         </section>
       </SiteFrame>

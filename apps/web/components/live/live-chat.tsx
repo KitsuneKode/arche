@@ -3,17 +3,35 @@
 import { useLiveChat } from '@/components/live/use-live-chat'
 import { formatRelativeTime, formatUtcClockTime, useClientMounted } from '@/lib/client-mounted'
 
-export function LiveChat({ signedIn, userId }: { signedIn: boolean; userId?: string }) {
+export function LiveChat({
+  signedIn,
+  guestPostEnabled = false,
+  userId,
+}: {
+  signedIn: boolean
+  guestPostEnabled?: boolean
+  userId?: string
+}) {
   const mounted = useClientMounted()
-  const { draft, setDraft, messagesQuery, sendMutation, sendMessage, stats, pollingFallback } =
-    useLiveChat({ signedIn, userId })
+  const canPost = signedIn || guestPostEnabled
+  const {
+    draft,
+    setDraft,
+    messagesQuery,
+    sendMutation,
+    sendMessage,
+    guestSessionError,
+    stats,
+    pollingFallback,
+  } = useLiveChat({ signedIn, guestPostEnabled, userId })
 
   return (
     <div className="border border-zinc-800 bg-black">
       <div className="border-b border-zinc-800 bg-zinc-900/50 px-4 py-3">
         <p className="font-mono text-[10px] tracking-widest text-amber-400 uppercase">Live chat</p>
         <p className="mt-1 text-sm text-zinc-400">
-          Demo channel — public read. Sign in to post. Messages are visible to everyone.
+          Demo channel — public read. Post as a guest or sign in to keep your identity. Messages are
+          visible to everyone.
         </p>
         {stats ? (
           <p className="mt-2 font-mono text-[10px] text-zinc-600" suppressHydrationWarning>
@@ -54,7 +72,7 @@ export function LiveChat({ signedIn, userId }: { signedIn: boolean; userId?: str
         )}
       </div>
 
-      {signedIn ? (
+      {canPost ? (
         <form
           className="flex gap-2 border-t border-zinc-800 p-4"
           onSubmit={(event) => {
@@ -81,12 +99,15 @@ export function LiveChat({ signedIn, userId }: { signedIn: boolean; userId?: str
         </form>
       ) : (
         <p className="border-t border-zinc-800 p-4 font-mono text-[10px] text-zinc-600">
-          Sign in on the You tab to post messages.
+          Chat is read-only while the API is offline.
         </p>
       )}
 
       {sendMutation.isError ? (
         <p className="px-4 pb-4 font-mono text-xs text-red-400">{sendMutation.error.message}</p>
+      ) : null}
+      {guestSessionError ? (
+        <p className="px-4 pb-4 font-mono text-xs text-red-400">{guestSessionError}</p>
       ) : null}
     </div>
   )

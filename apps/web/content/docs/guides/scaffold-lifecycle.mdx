@@ -13,28 +13,41 @@ This page describes what happens inside **`apps/cli/src/lib/scaffold.ts`** when 
   B["Copy template tree"]
   C["Family transforms"]
   D["Rename scopes"]
-  E["template-cleanup"]
-  F["arche.json + bundles"]
-  G["env / docker / CI / deploy docs"]
-  H["Agent context + SHOWCASE"]
-  I["git init + install"]
-  A --> B --> C --> D --> E --> F --> G --> H --> I
+  E["Capability cleanup (live-demo safety net)"]
+  F{"includeLiveDemo?"}
+  G["Copy live-demo addon overlay"]
+  H["arche.json + bundles"]
+  I["env / docker / CI / deploy docs"]
+  J["Agent context + SHOWCASE"]
+  K["git init + install"]
+  A --> B --> C --> D --> E --> F
+  F -->|No| H
+  F -->|Yes| G --> H
+  H --> I --> J --> K
 `}
 />
 
 ## Key stages
 
-| Stage         | What changes                                                                   |
-| ------------- | ------------------------------------------------------------------------------ |
-| Copy          | Polyglot or family stub from `apps/cli/src/templates/`                         |
-| Transforms    | Rust, Solana, Convex, ORM/database rewrites                                    |
-| Cleanup       | Removes demo, worker, tests per flags (`toolings/scripts/template-cleanup.ts`) |
-| Agent context | `AGENTS.md`, `.docs/`, `.plans/`, symlinks                                     |
-| Portfolio     | `package.json#portfolio`, optional `SHOWCASE.mdx`                              |
+| Stage         | What changes                                                                                   |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| Copy          | Polyglot or family stub from `apps/cli/src/templates/`                                       |
+| Transforms    | Rust, Solana, Convex, ORM/database rewrites                                                    |
+| Cleanup       | Capability helpers strip live-demo paths and patch leaked wiring when flags omit `--live-demo` |
+| Live demo     | Optional overlay from `apps/cli/src/templates/addons/live-demo/` when `--live-demo` is set     |
+| Agent context | `AGENTS.md`, `.docs/`, `.plans/`, symlinks                                                     |
+| Portfolio     | `package.json#portfolio`, optional `SHOWCASE.mdx`                                            |
+
+<DocsCallout tone="info" title="Dogfood vs generated">
+  This repo's `apps/web` marketing site and `/live` preview are **not** copied into the default
+  fullstack template. Use `--live-demo` to ship Relay Run, chat, lattice, and guest auth in a
+  generated project.
+</DocsCallout>
 
 ## Flags that affect output
 
 - `--no-showcase` — skip demo surfaces and `SHOWCASE.mdx`
+- `--live-demo` — opt-in Relay Run / chat / lattice capability (separate from `--showcase`)
 - `--no-worker` — drop worker workspace and queue admin routes
 - `--no-ci` / `--no-docker` — skip those generators
 - `--dry-run` — plan only
@@ -46,6 +59,9 @@ Develop the CLI from this repo:
 ```bash
 bun run dev:cli -- --help
 bun test apps/cli
+bun run template:sync:check
+bun run repo:doctor:strict
 ```
 
+`template:sync:check` enforces a minimal fullstack template and a self-contained live-demo addon.
 See [This source repository](/docs/reference/source-template) and repo `docs/cli-development.md`.

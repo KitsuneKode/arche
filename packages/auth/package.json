@@ -5,7 +5,8 @@
   "module": "src/index.ts",
   "exports": {
     "./server": "./src/index.ts",
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./guest-display-name": "./src/guest-display-name.ts"
   },
   "scripts": {
     "lint": "oxlint",

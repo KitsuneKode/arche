@@ -167,49 +167,66 @@ export function ProofLadder({
     [states],
   )
   const allPassed = completedCount === PROOF_RUNGS.length
+  const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex min-h-0 flex-col gap-2">
       <ProofComplete visible={allPassed} />
       <LivePanelShell
+        compact
         title="Proof run"
-        subtitle="Real checks against the deployed API stack."
+        scroll={expanded}
         meta={
-          <p className="font-mono text-xs text-zinc-500">
-            {completedCount}/{PROOF_RUNGS.length}
-          </p>
-        }
-        footer={
-          <div className="p-4">
+          <div className="flex shrink-0 items-center gap-2">
+            <p className="font-mono text-[10px] text-zinc-500">
+              {completedCount}/{PROOF_RUNGS.length}
+            </p>
             <button
               type="button"
-              onClick={() => void runChecks()}
-              className="border border-zinc-700 px-3 py-2 font-mono text-[10px] tracking-widest text-zinc-300 uppercase hover:border-zinc-500"
+              onClick={() => setExpanded((value) => !value)}
+              className="border border-zinc-700 px-2 py-0.5 font-mono text-[10px] tracking-widest text-zinc-400 uppercase hover:border-zinc-500 hover:text-zinc-200"
+              aria-expanded={expanded}
             >
-              Re-run proof
+              {expanded ? 'Hide' : 'Show'}
             </button>
+            {expanded ? (
+              <button
+                type="button"
+                onClick={() => void runChecks()}
+                className="border border-zinc-700 px-2 py-0.5 font-mono text-[10px] tracking-widest text-zinc-400 uppercase hover:border-zinc-500 hover:text-zinc-200"
+              >
+                Re-run
+              </button>
+            ) : null}
           </div>
         }
       >
-        <ol className="divide-y divide-zinc-800">
-          {PROOF_RUNGS.map((rung) => {
-            const state = states[rung.id] ?? (rung.requiresAuth && !signedIn ? 'locked' : 'pending')
-            return (
-              <li key={rung.id} className="flex gap-4 px-4 py-3 font-mono text-xs">
-                <span className={`w-4 shrink-0 ${stateClass(state)}`}>{stateGlyph(state)}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] tracking-widest text-zinc-600 uppercase">
-                    {rung.layer}
-                  </p>
-                  <p className="text-zinc-200">{rung.label}</p>
-                  {receipts[rung.id] ? (
-                    <p className="mt-1 truncate text-[10px] text-zinc-500">{receipts[rung.id]}</p>
-                  ) : null}
-                </div>
-              </li>
-            )
-          })}
-        </ol>
+        {expanded ? (
+          <ol className="divide-y divide-zinc-800">
+            {PROOF_RUNGS.map((rung) => {
+              const state =
+                states[rung.id] ?? (rung.requiresAuth && !signedIn ? 'locked' : 'pending')
+              return (
+                <li key={rung.id} className="flex gap-3 px-3 py-2 font-mono text-xs">
+                  <span className={`w-4 shrink-0 ${stateClass(state)}`}>{stateGlyph(state)}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] tracking-widest text-zinc-600 uppercase">
+                      {rung.layer}
+                    </p>
+                    <p className="text-zinc-200">{rung.label}</p>
+                    {receipts[rung.id] ? (
+                      <p className="mt-1 truncate text-[10px] text-zinc-500">{receipts[rung.id]}</p>
+                    ) : null}
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
+        ) : (
+          <p className="px-3 py-2 font-mono text-[10px] text-zinc-500">
+            Live API stack checks — expand when you want the full ladder.
+          </p>
+        )}
       </LivePanelShell>
     </div>
   )

@@ -8,22 +8,27 @@ import { formatRelativeTime, formatUtcClockTime, useClientMounted } from '@/lib/
 
 export function RelayChatPanel({
   signedIn,
+  guestPostEnabled = false,
   userId,
   onSignInClick,
   showHeader = true,
 }: {
   signedIn: boolean
+  guestPostEnabled?: boolean
   userId?: string
   onSignInClick?: () => void
   showHeader?: boolean
 }) {
   const mounted = useClientMounted()
+  const canPost = signedIn || guestPostEnabled
   const { pollingFallback } = useLiveRoom()
-  const { draft, setDraft, messagesQuery, sendMutation, sendMessage, stats } = useLiveChat({
-    signedIn,
-    userId,
-    useSharedRoom: true,
-  })
+  const { draft, setDraft, messagesQuery, sendMutation, sendMessage, guestSessionError, stats } =
+    useLiveChat({
+      signedIn,
+      guestPostEnabled,
+      userId,
+      useSharedRoom: true,
+    })
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const messageCount = messagesQuery.data?.length ?? 0
@@ -98,7 +103,7 @@ export function RelayChatPanel({
         )}
       </div>
 
-      {signedIn ? (
+      {canPost ? (
         <form
           className="flex shrink-0 gap-2 border-t border-zinc-800 p-4"
           onSubmit={(event) => {
@@ -126,7 +131,7 @@ export function RelayChatPanel({
       ) : (
         <div className="shrink-0 border-t border-zinc-800 p-4">
           <p className="font-mono text-[10px] text-zinc-600">
-            Read-only.{' '}
+            Read-only while offline.{' '}
             <button
               type="button"
               onClick={onSignInClick}
@@ -134,10 +139,17 @@ export function RelayChatPanel({
             >
               Sign in
             </button>{' '}
-            to chat.
+            to keep your identity.
           </p>
         </div>
       )}
+
+      {sendMutation.isError ? (
+        <p className="px-4 pb-2 font-mono text-xs text-red-400">{sendMutation.error.message}</p>
+      ) : null}
+      {guestSessionError ? (
+        <p className="px-4 pb-2 font-mono text-xs text-red-400">{guestSessionError}</p>
+      ) : null}
     </div>
   )
 }

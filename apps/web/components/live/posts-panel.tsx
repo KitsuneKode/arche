@@ -13,7 +13,7 @@ function slugify(title: string) {
   return `${base || 'note'}-${Date.now().toString(36)}`
 }
 
-export function PostsPanel({ signedIn }: { signedIn: boolean }) {
+export function PostsPanel({ isRegistered }: { isRegistered: boolean }) {
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null)
@@ -77,7 +77,7 @@ export function PostsPanel({ signedIn }: { signedIn: boolean }) {
         </div>
       ) : null}
 
-      {signedIn ? (
+      {isRegistered ? (
         <form
           className="space-y-3 border-t border-zinc-800 p-4"
           onSubmit={(event) => {

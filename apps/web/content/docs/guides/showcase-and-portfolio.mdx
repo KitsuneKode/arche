@@ -11,11 +11,22 @@ When enabled on `typescript-fullstack`, the CLI **keeps** demo-oriented routes a
 bun run dev:cli -- my-app --yes --preset=typescript-fullstack --showcase --dir=../projects
 ```
 
-Use `--no-showcase` for a lean product tree—`template-cleanup` removes demo apps, landing pages, and related components (see `toolings/scripts/template-cleanup.ts`).
+Use `--no-showcase` for a lean product tree—capability cleanup removes demo apps, landing pages, and related components.
+
+## `--live-demo` (TypeScript fullstack)
+
+Relay Run, live chat, lattice, guest auth, and `/live` ship only when you opt in:
+
+```bash
+bun run dev:cli -- my-demo --yes --preset=typescript-fullstack --live-demo --dir=../projects
+```
+
+`--live-demo` is **independent** of `--showcase`. The default fullstack template is minimal; the addon under `apps/cli/src/templates/addons/live-demo/` overlays server, web, auth, store, and seed scripts so generated projects build without dogfood-only marketing imports.
 
 <DocsCallout tone="info" title="This marketing site">
-  `/showcase` on arche.dev is a **dev-only** component gallery in the template repo—not the same as
-  generated demo routes. Production builds return 404 for `/showcase`.
+  `/live` on arche.dev is a **dogfood** preview in this template repo—not part of the default
+  generated scaffold. Production builds of generated apps only include `/live` when you pass
+  `--live-demo`.
 </DocsCallout>
 
 ## Portfolio metadata

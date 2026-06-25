@@ -1,3 +1,5 @@
+import { resolveDisplayName } from '@arche-template/auth/guest-display-name'
+
 type PublicUserShape = {
   id: string
   name: string | null
@@ -10,11 +12,12 @@ type UserWithOptionalFields = {
   image: string | null
   email?: string | null
   emailVerified?: boolean | null
+  isAnonymous?: boolean | null
 }
 
 export function toPublicUser(user: UserWithOptionalFields | null): PublicUserShape | null {
   if (!user) return null
-  return { id: user.id, name: user.name, image: user.image }
+  return { id: user.id, name: resolveDisplayName(user), image: user.image }
 }
 
 type MessageWithSender = {

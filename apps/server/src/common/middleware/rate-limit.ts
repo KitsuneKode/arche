@@ -8,6 +8,15 @@ export const authRateLimit = rateLimit({
   message: { error: 'Too many requests. Please try again later.' },
 })
 
+/** Stricter cap for anonymous session creation (Better Auth sign-in/anonymous). */
+export const anonymousSignInRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many guest sessions. Please try again later.' },
+})
+
 export const apiRateLimit = rateLimit({
   windowMs: 60 * 1000,
   max: 100,

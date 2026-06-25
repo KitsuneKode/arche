@@ -3,6 +3,11 @@ import { prisma } from '@arche-template/store'
 import { betterAuth } from 'better-auth'
 export { fromNodeHeaders, toNodeHandler } from 'better-auth/node'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
+import { anonymous } from 'better-auth/plugins'
+import { migrateGuestData } from './migrate-guest-data.js'
+
+export { guestDisplayName, resolveDisplayName } from './guest-display-name.js'
+export { migrateGuestData, deleteStaleAnonymousUsers } from './migrate-guest-data.js'
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -13,7 +18,14 @@ export const auth = betterAuth({
     enabled: true,
     autoSignIn: isDemoAutoSignInEnabled(),
   },
-  plugins: [], // make sure this is the last plugin in the array
+  plugins: [
+    anonymous({
+      emailDomainName: 'guest.local',
+      onLinkAccount: async ({ anonymousUser, newUser }) => {
+        await migrateGuestData(anonymousUser.user.id, newUser.user.id)
+      },
+    }),
+  ],
   socialProviders: {
     //   github: {
     //     clientId: process.env.GITHUB_CLIENT_ID as string,

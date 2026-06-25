@@ -1,7 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-
 import { PostsPanel } from '@/components/live/posts-panel'
 import { SessionPanel } from '@/components/live/session-panel'
 
@@ -9,22 +7,25 @@ type DrawerTab = 'posts' | 'you' | null
 
 export function LiveDemoFooter({
   signedIn,
+  isRegistered = signedIn,
+  tab,
+  onTabChange,
   onSignedIn,
-  onOpenYou,
 }: {
   signedIn: boolean
+  isRegistered?: boolean
+  tab: DrawerTab
+  onTabChange: (tab: DrawerTab) => void
   onSignedIn?: () => void
-  onOpenYou?: () => void
 }) {
-  const [tab, setTab] = useState<DrawerTab>(null)
-
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 font-mono text-[10px] tracking-widest uppercase">
+    <div className="shrink-0">
+      <div className="flex items-center gap-2 border border-zinc-800 bg-zinc-950/50 px-2 py-1.5 font-mono text-[10px] tracking-widest uppercase">
+        <span className="px-1 text-zinc-600">More</span>
         <button
           type="button"
-          onClick={() => setTab(tab === 'posts' ? null : 'posts')}
-          className={`border px-4 py-2 ${
+          onClick={() => onTabChange(tab === 'posts' ? null : 'posts')}
+          className={`border px-2.5 py-1 ${
             tab === 'posts' ? 'border-white bg-white text-black' : 'border-zinc-800 text-zinc-500'
           }`}
         >
@@ -32,21 +33,25 @@ export function LiveDemoFooter({
         </button>
         <button
           type="button"
-          onClick={() => {
-            const next = tab === 'you' ? null : 'you'
-            setTab(next)
-            if (next === 'you') onOpenYou?.()
-          }}
-          className={`border px-4 py-2 ${
+          onClick={() => onTabChange(tab === 'you' ? null : 'you')}
+          className={`border px-2.5 py-1 ${
             tab === 'you' ? 'border-white bg-white text-black' : 'border-zinc-800 text-zinc-500'
           }`}
         >
-          You
+          You{signedIn ? '' : ' · sign in'}
         </button>
       </div>
 
-      {tab === 'posts' ? <PostsPanel signedIn={signedIn} /> : null}
-      {tab === 'you' ? <SessionPanel onSignedIn={onSignedIn} /> : null}
+      {tab === 'posts' ? (
+        <div className="mt-2 max-h-[min(40vh,320px)] overflow-y-auto border border-zinc-800">
+          <PostsPanel isRegistered={isRegistered} />
+        </div>
+      ) : null}
+      {tab === 'you' ? (
+        <div className="mt-2 max-h-[min(40vh,320px)] overflow-y-auto border border-zinc-800">
+          <SessionPanel onSignedIn={onSignedIn} />
+        </div>
+      ) : null}
     </div>
   )
 }

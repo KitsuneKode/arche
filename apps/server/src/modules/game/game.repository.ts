@@ -1,6 +1,19 @@
+import { guestDisplayName } from '@arche-template/auth/guest-display-name'
 import { prisma } from '../../db/index.js'
 
 const LEADERBOARD_LIMIT = 10
+
+type LeaderboardRow = {
+  userId: string
+  score: number
+  createdAt: Date
+  displayName: string | null
+  isAnonymous: boolean | null
+}
+
+type CountRow = {
+  count: number
+}
 
 export const gameRepository = {
   insertScore(userId: string, score: number) {
@@ -17,49 +30,47 @@ export const gameRepository = {
   },
 
   async findLeaderboard(limit = LEADERBOARD_LIMIT) {
-    const grouped = await prisma.relayRunScore.groupBy({
-      by: ['userId'],
-      _max: { score: true },
-      orderBy: { _max: { score: 'desc' } },
-      take: limit,
-    })
-    if (!grouped.length) return []
+    const rows = await prisma.$queryRaw<LeaderboardRow[]>`
+      SELECT
+        best."userId",
+        best.score,
+        best."createdAt",
+        best."displayName",
+        best."isAnonymous"
+      FROM (
+        SELECT DISTINCT ON (s."userId")
+          s."userId" AS "userId",
+          s.score AS score,
+          s."createdAt" AS "createdAt",
+          u.name AS "displayName",
+          u."isAnonymous" AS "isAnonymous"
+        FROM relay_run_score s
+        JOIN "user" u ON u.id = s."userId"
+        ORDER BY s."userId", s.score DESC, s."createdAt" ASC
+      ) best
+      ORDER BY best.score DESC, best."createdAt" ASC
+      LIMIT ${limit}
+    `
 
-    const userIds = grouped.map((entry) => entry.userId)
-    const [users, scoreRows] = await Promise.all([
-      prisma.user.findMany({
-        where: { id: { in: userIds } },
-        select: { id: true, name: true },
-      }),
-      prisma.relayRunScore.findMany({
-        where: { userId: { in: userIds } },
-        orderBy: [{ score: 'desc' }, { createdAt: 'asc' }],
-        select: { userId: true, score: true, createdAt: true },
-      }),
-    ])
-
-    const nameById = new Map(users.map((user) => [user.id, user.name]))
-    const bestScoreByUser = new Map(grouped.map((entry) => [entry.userId, entry._max.score ?? 0]))
-    const createdAtByUser = new Map<string, Date>()
-    for (const row of scoreRows) {
-      if (bestScoreByUser.get(row.userId) !== row.score) continue
-      if (!createdAtByUser.has(row.userId)) createdAtByUser.set(row.userId, row.createdAt)
-    }
-
-    return grouped.map((entry) => ({
-      userId: entry.userId,
-      score: entry._max.score ?? 0,
-      displayName: nameById.get(entry.userId) ?? 'Player',
-      createdAt: createdAtByUser.get(entry.userId) ?? new Date(),
+    return rows.map((row) => ({
+      userId: row.userId,
+      score: row.score,
+      displayName: row.isAnonymous ? guestDisplayName(row.userId) : (row.displayName ?? 'Player'),
+      createdAt: row.createdAt,
     }))
   },
 
   async countUsersWithBetterBest(score: number) {
-    const grouped = await prisma.relayRunScore.groupBy({
-      by: ['userId'],
-      _max: { score: true },
-    })
-    return grouped.filter((entry) => (entry._max.score ?? 0) > score).length
+    const result = await prisma.$queryRaw<CountRow[]>`
+      SELECT COUNT(*)::int AS count
+      FROM (
+        SELECT s."userId"
+        FROM relay_run_score s
+        GROUP BY s."userId"
+        HAVING MAX(s.score) > ${score}
+      ) t
+    `
+    return result[0]?.count ?? 0
   },
 
   findRecentByUser(userId: string, take = 5) {
