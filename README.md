@@ -74,6 +74,12 @@ bun run dev:cli -- my-api --yes --preset=rust-api --dir=../projects
 # pnpm catalogs
 bun run dev:cli -- my-app --yes --preset=typescript-fullstack --pm=pnpm --dir=../projects
 
+# Minimal default (no Relay Run / live routes)
+bun run dev:cli -- my-app --yes --preset=typescript-fullstack --dir=../projects
+
+# Opt-in live demo (Relay Run, chat, lattice, guest auth, /live)
+bun run dev:cli -- my-demo --yes --preset=typescript-fullstack --live-demo --dir=../projects
+
 # Dry run
 bun run dev:cli -- my-app --yes --dry-run --dir=../projects
 ```

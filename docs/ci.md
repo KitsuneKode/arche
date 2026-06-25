@@ -12,14 +12,16 @@ Runs on `push` to `main`, `prod`, and `develop`, and on pull requests. Three job
 
 Legacy single-job ladder (for local scripts):
 
-| Step         | Command                                                               | Purpose                        |
-| ------------ | --------------------------------------------------------------------- | ------------------------------ |
-| Format       | `bun run format:check`                                                | Oxfmt repo formatting          |
-| Lint + types | `bunx turbo run lint check-types` (+ `--affected` on PRs / `develop`) | Turbo lint and TypeScript      |
-| Tests        | `bun test`                                                            | CLI, tooling, and unit tests   |
-| Build        | `bunx turbo run build` (+ `--affected` on PRs / `develop`)            | Build packages                 |
-| Package      | `bun run pkg:check`                                                   | CLI pack dry-run               |
-| Repo doctor  | `bun run repo:doctor:strict`                                          | Doc/path drift (warnings fail) |
+| Step         | Command                                                               | Purpose                                        |
+| ------------ | --------------------------------------------------------------------- | ---------------------------------------------- |
+| Format       | `bun run format:check`                                                | Oxfmt repo formatting                          |
+| Lint + types | `bunx turbo run lint check-types` (+ `--affected` on PRs / `develop`) | Turbo lint and TypeScript                      |
+| Tests        | `bun test`                                                            | CLI, tooling, and unit tests                   |
+| Build        | `bunx turbo run build` (+ `--affected` on PRs / `develop`)            | Build packages                                 |
+| Package      | `bun run pkg:check`                                                   | CLI pack dry-run                               |
+| Repo doctor  | `bun run repo:doctor:strict`                                          | Doc/path drift + template sync (warnings fail) |
+
+`repo:doctor:strict` runs `template:sync:check`, which fails when live-demo code leaks into the minimal fullstack template or when the live-demo addon is missing required overlays (package exports, seed, self-contained `/live` page).
 
 Turbo uses `TURBO_SCM_BASE` (PR base SHA, previous push SHA, or `git rev-parse HEAD^1`) for `--affected`. On **push to `main` or `prod`**, lint/types/build run on the **full workspace** (no `--affected`).
 
@@ -80,8 +82,19 @@ It scaffolds ~18 projects serially (each `install` + `typecheck` + `lint` + `bui
 For local template changes, prefer targeted checks:
 
 ```bash
+# Minimal vs live-demo template invariants (fast)
+bun run template:sync:check
+bun test apps/cli/tests/scaffold-minimal.test.ts apps/cli/tests/capabilities.test.ts
+bun test tests/src/toolings/live-demo-template-sync.test.ts
+
 # Single default fullstack preset (fastest meaningful check)
 bun run verify:generated:fullstack
+
+# Live-demo fullstack structure (no install)
+bun test apps/cli/tests/generated-project-verifier.test.ts -t "live-demo"
+
+# Live-demo install + typecheck (release-grade)
+bun run verify:generated:live-demo
 
 # All 6 fullstack combo variants (covers express/hono/rust/worker/sqlite/drizzle)
 bun run verify:generated:combo-fullstack
@@ -90,7 +103,9 @@ bun run verify:generated:combo-fullstack
 bun toolings/scripts/verify-generated-project.ts --combo-matrix --combo-id=fullstack-rust-axum --run=install,typecheck,lint,build
 ```
 
-The **combo matrix** exists because the CLI generates many project shapes from templates. Dogfood `apps/web` can be correct while generated scaffolds drift (stale routes, orphaned imports after `stripLiveDemoWeb`). CI catches that drift before release.
+The **combo matrix** exists because the CLI generates many project shapes from templates. Dogfood `apps/web` can be correct while generated scaffolds drift (stale routes, orphaned imports after live-demo cleanup). CI catches that drift before release.
+
+Heavier install/typecheck for `--live-demo` is available via weekly generated verification or by extending `verifyGeneratedProject({ configOverrides: { includeLiveDemo: true } })`.
 
 ## What CI does not run
 

@@ -22,7 +22,7 @@
 - `bun run --cwd apps/cli lint` - Lint the CLI package.
 - `bun run verify:generated` - Generate the curated preset matrix into temp dirs and verify structure without installing dependencies.
 - `bun run verify:generated -- --preset=typescript-fullstack --pm=bun,pnpm` - Verify selected preset/package-manager structure.
-- `bun run verify:generated -- --preset=solana-product --run=cargo-check,anchor-build` - Opt into slower generated-project tool gates.
+- `bun run verify:generated:live-demo` - Install and typecheck a generated `--live-demo` fullstack project.
 - `bun run smoke:scaffold` - Scaffold stable presets into temp dirs, install, typecheck/build, and probe Rust API health (needs Postgres on `localhost:5432` for live API checks).
 
 ## Web development
@@ -73,6 +73,8 @@
 - `bun run rename-scope` - Apply scope rename across the repo.
 - `bun run rename-scope:verbose` - Apply scope rename with verbose logging.
 - `bun toolings/scripts/rename-scope.ts --from @arche-template --to @acme` - Explicitly rename one internal scope to another.
+- `bun run agents:sync` / `bun run agents:sync:check` - Sync or verify workspace `AGENTS.md` into the fullstack template.
+- `bun run template:sync:check` - Verify the fullstack template is minimal and the `live-demo` addon is complete.
 - `bun run template:clean:dry` - Preview cleanup for showcase code and optional workspaces.
 - `bun run template:clean` - Apply the recommended cleanup plan.
 

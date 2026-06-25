@@ -46,6 +46,12 @@ bun run dev:cli -- my-product --yes --preset=rust-fullstack --dir=../projects
 # pnpm package-manager output
 bun run dev:cli -- my-app --yes --preset=typescript-fullstack --pm=pnpm --dir=../projects
 
+# Minimal default fullstack (no live-demo modules)
+bun run dev:cli -- my-app --yes --preset=typescript-fullstack --dir=../projects
+
+# Opt-in live demo capability
+bun run dev:cli -- my-demo --yes --preset=typescript-fullstack --live-demo --dir=../projects
+
 # Preview planned writes without creating files
 bun run dev:cli -- my-app --yes --dry-run --dir=../projects
 ```
@@ -70,22 +76,23 @@ bun run dev:cli -- my-app --yes --dry-run --dir=../projects
 
 ## Common flags
 
-| Flag                                  | Description                                                        |
-| ------------------------------------- | ------------------------------------------------------------------ |
-| `--yes`                               | Use non-interactive defaults                                       |
-| `--dir=<path>`                        | Output parent directory or exact project path                      |
-| `--family=<name>`                     | Legacy family selection                                            |
-| `--preset=<id>`                       | Preset starting point                                              |
-| `--pm=bun\|pnpm\|npm`                 | Package manager: Bun default, pnpm first-class, npm experimental   |
-| `--backend=<name>`                    | Backend override for fullstack only (ignored for `convex-product`) |
-| `--database=<postgres\|sqlite\|none>` | Database selection                                                 |
-| `--orm=<prisma\|drizzle\|none>`       | ORM selection                                                      |
-| `--showcase` / `--no-showcase`        | Keep or remove showcase content                                    |
-| `--worker` / `--no-worker`            | Keep or remove worker workspace                                    |
-| `--docker` / `--no-docker`            | Generate or skip Docker files                                      |
-| `--ci` / `--no-ci`                    | Generate or skip GitHub Actions CI                                 |
-| `--deployment=<mode>`                 | Deployment docs mode                                               |
-| `--dry-run`                           | Preview planned files                                              |
+| Flag                                  | Description                                                             |
+| ------------------------------------- | ----------------------------------------------------------------------- |
+| `--yes`                               | Use non-interactive defaults                                            |
+| `--dir=<path>`                        | Output parent directory or exact project path                           |
+| `--family=<name>`                     | Legacy family selection                                                 |
+| `--preset=<id>`                       | Preset starting point                                                   |
+| `--pm=bun\|pnpm\|npm`                 | Package manager: Bun default, pnpm first-class, npm experimental        |
+| `--backend=<name>`                    | Backend override for fullstack only (ignored for `convex-product`)      |
+| `--database=<postgres\|sqlite\|none>` | Database selection                                                      |
+| `--orm=<prisma\|drizzle\|none>`       | ORM selection                                                           |
+| `--showcase` / `--no-showcase`        | Keep or remove showcase content                                         |
+| `--live-demo` / `--no-live-demo`      | Opt-in Relay Run / chat / lattice / guest auth (`typescript-fullstack`) |
+| `--worker` / `--no-worker`            | Keep or remove worker workspace                                         |
+| `--docker` / `--no-docker`            | Generate or skip Docker files                                           |
+| `--ci` / `--no-ci`                    | Generate or skip GitHub Actions CI                                      |
+| `--deployment=<mode>`                 | Deployment docs mode                                                    |
+| `--dry-run`                           | Preview planned files                                                   |
 
 ## Subcommands
 

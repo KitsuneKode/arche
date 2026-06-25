@@ -18,7 +18,24 @@ cp apps/web/.env.example apps/web/.env.local
 cp apps/server/.env.example apps/server/.env
 ```
 
-Run Postgres + Redis via `docker compose` (from CLI scaffold) or local installs.
+**Easiest path (Postgres only, no Redis):**
+
+```bash
+bun run dev:local
+```
+
+That starts Docker Postgres (`~/Projects/docker-compose/postgres/docker-compose.db.yml`), runs migrations, then web (`:3000`) + API (`:8080`).
+
+| Script                   | What it does                                                            |
+| ------------------------ | ----------------------------------------------------------------------- |
+| `bun run dev:deps`       | Postgres container only                                                 |
+| `bun run dev:deps:redis` | Postgres + Redis (`~/Projects/docker-compose/redis/docker-compose.yml`) |
+| `bun run dev:app`        | Web + API (assumes Postgres is up)                                      |
+| `bun run dev:local`      | deps → migrate → app                                                    |
+
+Set `ENABLE_REDIS=false` in `apps/server/.env` for local play (default in `.env.example`). Turn Redis on only when you need queues/worker.
+
+Override compose paths: `DOCKER_COMPOSE_POSTGRES`, `DOCKER_COMPOSE_REDIS`.
 
 ## Quick reference (development)
 
