@@ -23,6 +23,14 @@ describe('root package.json scripts', () => {
     expect(pkg.devDependencies['only-allow']).toBeDefined()
     expect(pkg.scripts.preinstall).toBe('bunx only-allow bun')
   })
+
+  it('skips embedded CLI template unit tests in the root test script', () => {
+    const pkg = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')) as {
+      scripts: Record<string, string>
+    }
+    expect(pkg.scripts.test).toContain('--path-ignore-patterns')
+    expect(pkg.scripts.test).toContain('apps/cli/src/templates')
+  })
 })
 
 describe('bunfig.toml test discovery', () => {
