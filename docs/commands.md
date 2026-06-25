@@ -51,6 +51,8 @@
 - `bun run check-types:affected` - Typecheck changed packages and dependents through Turbo.
 - `bun run format` - Format with Oxfmt.
 - `bun run format:check` - Check formatting.
+- `bun run catalog:apply` - Pin shared dependency versions to the workspace catalog (`toolings/catalog/workspace-catalog.json`).
+- `bun run deps:audit` - Fail on catalog version drift; warn on unused catalog entries.
 - `bun run repo:doctor` - Audit stale scaffolding, broken exports, placeholder files, and doc drift.
 - `bun run repo:doctor:strict` - Fail on warnings and errors for CI or pre-release checks.
 - `bun run check:cli` / `bun run check:web` - Fast inner loop for CLI or web workspace changes.

@@ -23,14 +23,17 @@ WORKDIR /app
 
 COPY --from=pruner /app/out/json/ .
 
+COPY toolings/scripts/docker-slim-pruned-root.ts ./docker-slim-pruned-root.ts
+RUN bun ./docker-slim-pruned-root.ts package.json
+
 ENV CI=true
 ENV HUSKY=0
 ENV SKIP_POSTINSTALL=1
 ENV TURBO_TELEMETRY_DISABLED=1
 
-# out/json/ has no turbo.json; lifecycle scripts must not run here.
+# Slim repo-only root devDependencies (husky, changesets, etc.) — lockfile is a superset; do not use --frozen here.
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-  bun install --frozen-lockfile --ignore-scripts
+  bun install --ignore-scripts
 
 COPY --from=pruner /app/out/full/ .
 # out/full/ omits bun.lock; keep the lockfile from out/json/ for turbo + reproducible installs

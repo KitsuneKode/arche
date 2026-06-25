@@ -22,7 +22,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@t3-oss/env-core": "^0.13.11",
+    "@t3-oss/env-core": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

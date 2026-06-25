@@ -18,15 +18,15 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
-    "pg": "^8.21.0"
+    "@prisma/adapter-pg": "catalog:",
+    "@prisma/client": "catalog:",
+    "pg": "catalog:"
   },
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
-    "@types/pg": "^8.20.0",
-    "prisma": "^7.8.0"
+    "@types/pg": "catalog:",
+    "prisma": "catalog:"
   },
   "peerDependencies": {
     "typescript": "catalog:"

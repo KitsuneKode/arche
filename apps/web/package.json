@@ -23,7 +23,7 @@
     "@arche-template/ui": "workspace:*",
     "@hugeicons/core-free-icons": "^4.1.4",
     "@hugeicons/react": "^1.1.6",
-    "@t3-oss/env-nextjs": "^0.13.11",
+    "@t3-oss/env-nextjs": "catalog:",
     "@tanstack/react-query": "^5.100.10",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
@@ -47,7 +47,7 @@
     "sonner": "^2.0.7",
     "streamdown": "^2.5.0",
     "sugar-high": "^1.2.0",
-    "superjson": "^2.2.6",
+    "superjson": "catalog:",
     "tailwind-merge": "^3.6.0",
     "zod": "catalog:"
   },

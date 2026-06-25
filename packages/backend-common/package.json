@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@arche-template/common": "workspace:*",
-    "@t3-oss/env-core": "^0.13.11",
+    "@t3-oss/env-core": "catalog:",
     "date-fns": "^4.2.1",
     "ioredis": "catalog:",
     "redis": "catalog:",

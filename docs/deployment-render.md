@@ -39,7 +39,7 @@ Docker uses `turbo prune @arche-template/server` in [apps/server/Dockerfile](../
 bun run docker:build
 ```
 
-Bun matches [`.bun-version`](../.bun-version). Install uses `--ignore-scripts` (pruned `out/json/` has no `turbo.json`); `db:generate` runs after sources are copied. If you see `Could not find turbo.json` during **install**, pull latest `main`. If you see `lockfile had changes, but lockfile is frozen`, re-run `bun install` at repo root and commit `bun.lock`.
+Bun matches [`.bun-version`](../.bun-version). Install uses `--ignore-scripts` (pruned `out/json/` has no `turbo.json`); `db:generate` runs after sources are copied. The builder stage **slims root `devDependencies`** (husky, changesets, sharp, etc. stay out of the image) via `toolings/scripts/docker-slim-pruned-root.ts` — only `turbo` + `typescript` remain at the root before `bun install`. Install is **not** `--frozen-lockfile` in Docker because the slimmed root `package.json` is a subset of the committed lockfile.
 
 ## Manual Docker service
 
@@ -57,6 +57,15 @@ Same env as the blueprint — [deployment-vercel.md](./deployment-vercel.md) ser
 Deploy `apps/worker` as a second Render service with `REDIS_URL` (+ `DATABASE_URL` if jobs use Prisma). Not required for basic API + web.
 
 ## Troubleshooting
+
+### Deploy fails after Relay Lattice / schema changes
+
+Run migrations against production Postgres before expecting `/health` to stay up:
+
+```bash
+DATABASE_URL='postgresql://...' bun run db:migrate
+DATABASE_URL='postgresql://...' bun run db:seed   # optional demo + lattice cells
+```
 
 ### `Missing required: REDIS_URL`
 

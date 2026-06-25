@@ -9,7 +9,8 @@
   },
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",
-    "@types/bun": "catalog:"
+    "@types/bun": "catalog:",
+    "sharp": "^0.34.5"
   },
   "peerDependencies": {
     "typescript": "catalog:"

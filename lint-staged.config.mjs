@@ -5,15 +5,15 @@
 export default {
   '(apps|packages|toolings)/**/*.{js,ts,jsx,tsx}': (files) => {
     const escapedFiles = files.map((f) => `'${f.replace(/'/g, "'\\''")}'`).join(' ')
-    return [`oxlint --fix ${escapedFiles}`, `oxfmt ${escapedFiles}`]
+    return [`bunx oxlint --fix ${escapedFiles}`, `bunx oxfmt ${escapedFiles}`]
   },
 
-  '**/*.md': ['oxfmt'],
+  '**/*.md': ['bunx oxfmt'],
 
   '**/*.json': (files) => {
     if (files.length === 0) return []
     const escapedFiles = files.map((f) => `'${f.replace(/'/g, "'\\''")}'`).join(' ')
-    return [`oxfmt ${escapedFiles}`]
+    return [`bunx oxfmt ${escapedFiles}`]
   },
 
   'packages/store/prisma/schema.prisma': (file) => [`prisma format --schema ${file}`],

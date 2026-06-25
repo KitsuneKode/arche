@@ -409,6 +409,26 @@ export async function checkTemplateAgentsSync(): Promise<Finding[]> {
   }))
 }
 
+async function checkDependencyCatalog(): Promise<Finding[]> {
+  const proc = Bun.spawnSync({
+    cmd: ['bun', 'toolings/scripts/audit-dependencies.ts'],
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
+  if (proc.exitCode === 0) return []
+
+  const output = `${proc.stdout.toString()}\n${proc.stderr.toString()}`.trim()
+  return [
+    {
+      severity: 'error',
+      code: 'catalog-drift',
+      path: 'toolings/catalog/workspace-catalog.json',
+      message: 'Workspace dependency versions drift from the Bun catalog.',
+      suggestion: `Run \`bun run catalog:apply\` and commit. Details:\n${output}`,
+    },
+  ]
+}
+
 export async function collectRepoDoctorFindings(): Promise<Finding[]> {
   return dedupeFindings(
     [
@@ -422,6 +442,7 @@ export async function collectRepoDoctorFindings(): Promise<Finding[]> {
       ...(await checkAgentsDocBudget()),
       ...(await checkTemplateAgentsSync()),
       ...(await checkWebCoreSync()),
+      ...(await checkDependencyCatalog()),
     ].sort((a, b) => {
       const severityDiff = severityRank(a.severity) - severityRank(b.severity)
       if (severityDiff !== 0) return severityDiff
