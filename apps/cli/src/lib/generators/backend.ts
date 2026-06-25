@@ -129,6 +129,7 @@ const HONO_EXPRESS_ARTIFACTS = [
   'src/common/validate.ts',
   'src/modules/trpc/trpc.routes.ts',
   'src/modules/chat/chat.routes.ts',
+  'src/modules/live/live.routes.ts',
   'src/modules/admin/admin.routes.ts',
   'src/modules/admin/admin.controller.ts',
   'src/modules/admin/admin.service.ts',
@@ -507,7 +508,83 @@ async function detectServerDir(destinationDir: string): Promise<string> {
   return 'apps/server'
 }
 
-async function stripLiveDemoWeb(destinationDir: string): Promise<void> {
+/** Relay Lattice is Express + Prisma-only; strip server wiring for other stacks. */
+export async function stripRelayLatticeFromProject(destinationDir: string): Promise<void> {
+  const serverDir = await detectServerDir(destinationDir)
+  await rm(join(destinationDir, serverDir, 'src/modules/lattice'), { recursive: true, force: true })
+  await rm(join(destinationDir, serverDir, 'src/modules/live/live.routes.ts'), { force: true })
+
+  const chatEventsPath = join(destinationDir, serverDir, 'src/modules/chat/chat.events.ts')
+  try {
+    await writeFile(
+      chatEventsPath,
+      `import { EventEmitter } from 'node:events'
+
+const bus = new EventEmitter()
+
+export type ChatStreamEvent = {
+  type: 'message'
+  messageId: string
+}
+
+export function emitChatMessage(messageId: string) {
+  bus.emit('message', { type: 'message', messageId } satisfies ChatStreamEvent)
+}
+
+export function subscribeChatEvents(listener: (event: ChatStreamEvent) => void) {
+  bus.on('message', listener)
+  return () => {
+    bus.off('message', listener)
+  }
+}
+`,
+    )
+  } catch {
+    // chat module not present
+  }
+
+  const appRouterPath = join(destinationDir, serverDir, 'src/modules/trpc/app.router.ts')
+  try {
+    const content = await readFile(appRouterPath, 'utf8')
+    const patched = content
+      .replace(/import { latticeRouter } from '\.\.\/lattice\/lattice\.trpc'\n/, '')
+      .replace(/\n  lattice: latticeRouter,/, '')
+    if (patched !== content) {
+      await writeFile(appRouterPath, patched)
+    }
+  } catch {
+    // tRPC router not present
+  }
+
+  const appPath = join(destinationDir, serverDir, 'src/app.ts')
+  try {
+    const content = await readFile(appPath, 'utf8')
+    const patched = content
+      .replace(/import { liveRoutes } from '\.\/modules\/live\/live\.routes'\n/, '')
+      .replace(/\napp\.use\('\/api\/live', liveRoutes\)/, '')
+    if (patched !== content) {
+      await writeFile(appPath, patched)
+    }
+  } catch {
+    // Express app not present
+  }
+
+  const serverPath = join(destinationDir, serverDir, 'src/server.ts')
+  try {
+    const content = await readFile(serverPath, 'utf8')
+    const patched = content.replace(
+      /\n  const latticeEngineEnabled[\s\S]*?logger\.info\('Relay Lattice round engine started'\)\n  \}/,
+      '',
+    )
+    if (patched !== content) {
+      await writeFile(serverPath, patched)
+    }
+  } catch {
+    // server bootstrap not present
+  }
+}
+
+export async function stripLiveDemoWeb(destinationDir: string): Promise<void> {
   const livePaths = [
     'apps/web/app/live',
     'apps/web/app/(sandbox)',

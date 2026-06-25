@@ -106,11 +106,45 @@ model Post {
 model Message {
   id        String   @id @default(cuid())
   content   String
+  kind      String   @default("user")
   createdAt DateTime @default(now())
   senderId  String
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@map("message")
+}
+
+model LatticeCell {
+  id         String    @id
+  label      String
+  unlockedAt DateTime?
+
+  @@map("lattice_cell")
+}
+
+model LatticeRound {
+  id          String        @id @default(cuid())
+  roundNumber Int
+  cellAId     String
+  cellBId     String
+  winnerId    String?
+  status      String
+  startsAt    DateTime
+  endsAt      DateTime
+  votes       LatticeVote[]
+
+  @@map("lattice_round")
+}
+
+model LatticeVote {
+  id      String       @id @default(cuid())
+  roundId String
+  userId  String
+  choice  String
+  round   LatticeRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, userId])
+  @@map("lattice_vote")
 }
 `
 }

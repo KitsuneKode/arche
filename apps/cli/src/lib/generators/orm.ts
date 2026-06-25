@@ -19,6 +19,7 @@ import { existsSync } from 'node:fs'
 import { readFile, writeFile, rm, mkdir } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import type { ProjectConfig } from '../../types/schemas'
+import { stripLiveDemoWeb, stripRelayLatticeFromProject } from './backend'
 
 // =============================================================================
 // Drizzle schema definitions (database-aware)
@@ -923,6 +924,10 @@ export async function applyOrmTransform(
 
     // 13. Add drizzle-orm to server package for router imports
     await patchServerPackageJsonForDrizzle(join(destinationDir, 'apps/server/package.json'))
+
+    // 14. Relay Lattice requires Prisma service layers — strip for Drizzle scaffolds
+    await stripRelayLatticeFromProject(destinationDir)
+    await stripLiveDemoWeb(destinationDir)
 
     return
   }
