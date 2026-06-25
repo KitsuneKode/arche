@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 type ChatComposerProps = {
   draft: string
@@ -22,6 +22,20 @@ export function ChatComposer({
   autoFocus = false,
 }: ChatComposerProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const wasSendingRef = useRef(false)
+
+  useEffect(() => {
+    if (wasSendingRef.current && !sending) {
+      requestAnimationFrame(() => inputRef.current?.focus())
+    }
+    wasSendingRef.current = sending
+  }, [sending])
+
+  useEffect(() => {
+    if (autoFocus) {
+      requestAnimationFrame(() => inputRef.current?.focus())
+    }
+  }, [autoFocus])
 
   const submit = () => {
     if (disabled || sending || !draft.trim()) return
@@ -47,7 +61,8 @@ export function ChatComposer({
           event.stopPropagation()
         }}
         placeholder={placeholder}
-        disabled={disabled || sending}
+        disabled={disabled}
+        aria-busy={sending}
         autoFocus={autoFocus}
         data-chat-input=""
         className="min-w-0 flex-1 border border-zinc-800 bg-zinc-950 px-3 py-2 font-mono text-sm text-white ring-amber-500/40 outline-none focus:ring-1 disabled:opacity-60"

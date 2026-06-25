@@ -113,9 +113,14 @@ export function RelayChatPopup({
   }, [relayChatOpen, closeRelayChat])
 
   useEffect(() => {
+    if (!relayChatOpen) return
+    const frame = requestAnimationFrame(() => focusChatInput(panelRef.current))
+    return () => cancelAnimationFrame(frame)
+  }, [relayChatOpen])
+
+  useEffect(() => {
     if (relayChatOpen) {
       setLastSeenId(latestId)
-      requestAnimationFrame(() => focusChatInput(panelRef.current))
     }
   }, [relayChatOpen, latestId])
 
