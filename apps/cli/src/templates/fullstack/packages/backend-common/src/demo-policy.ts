@@ -14,9 +14,14 @@ export function resolveDemoChatSyncMode(): DemoChatSyncMode {
   return process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME ? 'poll' : 'sse'
 }
 
+export function resolveDemoLiveSyncMode(): DemoChatSyncMode {
+  return resolveDemoChatSyncMode()
+}
+
 export function getDemoCapabilities() {
   return {
     autoSignIn: isDemoAutoSignInEnabled(),
     chatSync: resolveDemoChatSyncMode(),
+    liveSync: resolveDemoLiveSyncMode(),
   }
 }

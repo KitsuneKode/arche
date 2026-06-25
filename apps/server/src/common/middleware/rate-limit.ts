@@ -23,3 +23,5 @@ export const chatStreamRateLimit = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many stream connections. Please try again later.' },
 })
+
+export const liveStreamRateLimit = chatStreamRateLimit

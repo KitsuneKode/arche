@@ -19,6 +19,11 @@ const FORBIDDEN_TEMPLATE_PATHS = ['apps/web/app/live/page.tsx', 'apps/web/app/li
 
 const REQUIRED_PATHS = [
   'apps/web/components/live/live-demo.tsx',
+  'apps/web/components/live/live-demo-footer.tsx',
+  'apps/web/components/live/live-room-context.tsx',
+  'apps/web/components/live/lattice/relay-lattice.tsx',
+  'apps/web/components/live/lattice/clash-panel.tsx',
+  'apps/web/components/live/lattice/relay-chat-sidebar.tsx',
   'apps/web/components/live/activity-deck.tsx',
   'apps/web/components/live/live-chat.tsx',
   'apps/web/lib/live-feed/live-feed.ts',
@@ -28,6 +33,8 @@ const REQUIRED_PATHS = [
   'apps/web/lib/api-health.ts',
   'apps/server/src/modules/chat/chat.routes.ts',
   'apps/server/src/modules/chat/chat.events.ts',
+  'apps/server/src/modules/live/live.routes.ts',
+  'apps/server/src/modules/lattice/lattice.trpc.ts',
   'apps/server/src/modules/demo/demo.trpc.ts',
   'packages/backend-common/src/demo-policy.ts',
 ]

@@ -3,19 +3,23 @@ title: Live proof run
 description: What /live proves, how to run it locally, and how to harden before production.
 ---
 
-The **Live demo** route (`/live`) is a bounded sandbox on arche.dev and in generated fullstack scaffolds. It runs real checks against your API—health, tRPC, Prisma reads, session probes, live chat, posts, and optional challenges—not illustrative snippets.
+The **Live demo** route (`/live`) is a bounded sandbox on arche.dev and in generated fullstack scaffolds. It runs real checks against your API—health, tRPC, Prisma reads, session probes, **Relay Lattice** multiplayer clashes, live chat, posts, and optional challenges—not illustrative snippets.
 
-## Activity deck
+## Relay Lattice
 
-The right column has three tabs:
+The center column is a shared **5×5 grid** of stack concepts. Every ~75 seconds the API runs a **Clash**: two cells compete (for example SSE vs Polling). Signed-in users vote before the timer locks; the winning cell **lights up for everyone**. Late joiners call `lattice.getState` once, then receive updates on the unified live stream.
 
-| Tab   | Signed out              | Signed in                              |
-| ----- | ----------------------- | -------------------------------------- |
-| Chat  | Read public feed        | Compose; updates via SSE (~2s)         |
-| Posts | Read published articles | Create a short draft note              |
-| You   | Sign in / sign up       | Session info, proof progress, sign out |
+| Column        | Role                                         |
+| ------------- | -------------------------------------------- |
+| Proof ladder  | Personal rung checks (localStorage progress) |
+| Relay Lattice | Shared grid + active clash + vote bar        |
+| #relay feed   | Chat + system clash announcements            |
 
-Chat uses `GET /api/chat/stream` (Server-Sent Events) with polling fallback when SSE is unavailable.
+Realtime uses **one** `GET /api/live/stream` connection (SSE) for chat invalidation and lattice state patches. Polling is fallback only when the stream drops.
+
+## Footer drawer
+
+**Posts** and **You** (sign-in) live in a collapsible footer row so the game stays focal.
 
 ## What it proves
 
@@ -26,6 +30,7 @@ Chat uses `GET /api/chat/stream` (Server-Sent Events) with polling fallback when
 | Contract           | tRPC    | `hello` query                         |
 | Datastore          | Prisma  | `post.list` returns seeded posts      |
 | Live chat feed     | Chat    | `chat.list` (senders redacted)        |
+| Relay Lattice      | Game    | `lattice.getState` + `lattice.vote`   |
 | Session            | Auth    | `auth.getSession` (guest OK)          |
 | Authenticated send | Chat    | `chat.send` after sign-in             |
 | Secret             | Auth    | `auth.getSecretMessage` after sign-in |

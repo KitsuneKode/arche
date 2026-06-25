@@ -169,21 +169,30 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     expect(body[0]?.error).toBeDefined()
   })
 
+  it('8. lattice.getState returns grid and round', async () => {
+    const state = await trpcQuery<{
+      cells: Array<{ id: string; label: string; unlocked: boolean }>
+      round: { id: string; cellA: { label: string }; cellB: { label: string } } | null
+    }>('lattice.getState')
+    expect(state.cells.length).toBe(25)
+    expect(state.round).toBeDefined()
+  })
+
   it(
-    '8. /live page renders when web dev server is up',
+    '9. /live page renders when web dev server is up',
     async () => {
       const web = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
       const response = await fetch(`${web}/live`)
       expect(response.ok).toBe(true)
       const html = await response.text()
-      expect(html).toMatch(/Live sandbox|Proof run/)
-      expect(html).toMatch(/Live chat|Try the stack/)
+      expect(html).toMatch(/Relay Lattice|Live sandbox/)
+      expect(html).toMatch(/relay|Relay/)
       expect(html).not.toContain('Production Ready')
     },
     { timeout: 15_000 },
   )
 
-  it('9. chat.stats returns count metadata', async () => {
+  it('10. chat.stats returns count metadata', async () => {
     const stats = await trpcQuery<{ total: number; latestAt: string | null }>('chat.stats')
     expect(stats.total).toBeGreaterThanOrEqual(0)
     if (stats.total > 0) {
@@ -191,7 +200,7 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     }
   })
 
-  it('10. post.create draft when authenticated', async () => {
+  it('11. post.create draft when authenticated', async () => {
     const email = `live-post-${Date.now()}@example.com`
     const password = 'SmokeTest123!'
     await fetch(`${API}/api/auth/sign-up/email`, {
@@ -220,7 +229,29 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     expect(body[0]?.result?.data.json.id).toBeDefined()
   })
 
-  it('11. SSE chat stream emits heartbeat or message events', async () => {
+  it('12. unified live SSE stream emits ready and lattice state', async () => {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
+
+    try {
+      const response = await fetch(`${API}/api/live/stream`, {
+        signal: controller.signal,
+        headers: { accept: 'text/event-stream' },
+      })
+      expect(response.ok).toBe(true)
+      expect(response.headers.get('content-type')).toContain('text/event-stream')
+
+      const reader = response.body?.getReader()
+      expect(reader).toBeDefined()
+      const { value } = await reader!.read()
+      const chunk = new TextDecoder().decode(value)
+      expect(chunk).toContain('event: ready')
+    } finally {
+      clearTimeout(timeout)
+    }
+  })
+
+  it('13. legacy chat stream still works', async () => {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 5000)
 

@@ -21,6 +21,9 @@ export function useChatStream(onMessage: () => void, enabled = true) {
 
     const feed = createLiveFeed({
       streamUrl: chatStreamUrl(),
+      onEvent: (event) => {
+        if (event.type === 'chat:message') onMessageRef.current()
+      },
       onInvalidate: () => onMessageRef.current(),
       pollIntervalMs: DEFAULT_POLL_INTERVAL_MS,
       preferSse: preferredMode === 'sse',

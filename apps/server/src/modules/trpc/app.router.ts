@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { authRouter } from '../auth/auth.trpc'
 import { chatRouter } from '../chat/chat.trpc'
 import { demoRouter } from '../demo/demo.trpc'
+import { latticeRouter } from '../lattice/lattice.trpc'
 import { postRouter } from '../post/post.trpc'
 import { userRouter } from '../user/user.trpc'
 import { createTRPCRouter, publicProcedure } from './trpc'
@@ -11,6 +12,7 @@ export const appRouter = createTRPCRouter({
   user: userRouter,
   post: postRouter,
   chat: chatRouter,
+  lattice: latticeRouter,
   demo: demoRouter,
   hello: publicProcedure
     .input(z.object({ name: z.string() }))

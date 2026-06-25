@@ -17,6 +17,55 @@ async function main() {
     },
   })
 
+  await prisma.user.upsert({
+    where: { email: 'system@arche.dev' },
+    update: {},
+    create: {
+      email: 'system@arche.dev',
+      name: 'Relay',
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      id: 'user_system_arche',
+    },
+  })
+
+  const latticeCells = [
+    { id: 'trpc', label: 'tRPC' },
+    { id: 'sse', label: 'SSE' },
+    { id: 'prisma', label: 'Prisma' },
+    { id: 'auth', label: 'Better Auth' },
+    { id: 'redis', label: 'Redis' },
+    { id: 'nextjs', label: 'Next.js' },
+    { id: 'express', label: 'Express' },
+    { id: 'bullmq', label: 'BullMQ' },
+    { id: 'neon', label: 'Neon' },
+    { id: 'sqlite', label: 'SQLite' },
+    { id: 'vercel', label: 'Vercel' },
+    { id: 'render', label: 'Render' },
+    { id: 'docker', label: 'Docker' },
+    { id: 'turbo', label: 'Turborepo' },
+    { id: 'bun', label: 'Bun' },
+    { id: 'zod', label: 'Zod' },
+    { id: 'react-query', label: 'React Query' },
+    { id: 'polling', label: 'Polling' },
+    { id: 'websocket', label: 'WebSocket' },
+    { id: 'postgres', label: 'Postgres' },
+    { id: 'hono', label: 'Hono' },
+    { id: 'rust', label: 'Rust' },
+    { id: 'typescript', label: 'TypeScript' },
+    { id: 'ci', label: 'CI' },
+    { id: 'monorepo', label: 'Monorepo' },
+  ]
+
+  for (const cell of latticeCells) {
+    await prisma.latticeCell.upsert({
+      where: { id: cell.id },
+      update: { label: cell.label },
+      create: { id: cell.id, label: cell.label },
+    })
+  }
+
   const posts = [
     {
       title: 'The Future of Full-Stack: Why We Chose Monorepos',

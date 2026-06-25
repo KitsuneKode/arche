@@ -20,6 +20,7 @@ export function toPublicUser(user: UserWithOptionalFields | null): PublicUserSha
 type MessageWithSender = {
   id: string
   content: string
+  kind?: string
   senderId: string
   createdAt: Date
   sender: UserWithOptionalFields | null
@@ -29,6 +30,7 @@ export function toPublicMessage(message: MessageWithSender) {
   return {
     id: message.id,
     content: message.content,
+    kind: message.kind ?? 'user',
     senderId: message.senderId,
     createdAt: message.createdAt,
     sender: toPublicUser(message.sender),

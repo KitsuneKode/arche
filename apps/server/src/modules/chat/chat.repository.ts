@@ -9,9 +9,13 @@ export const chatRepository = {
     })
   },
 
-  createMessage(data: { content: string; senderId: string }) {
+  createMessage(data: { content: string; senderId: string; kind?: string }) {
     return prisma.message.create({
-      data,
+      data: {
+        content: data.content,
+        senderId: data.senderId,
+        kind: data.kind ?? 'user',
+      },
       include: { sender: true },
     })
   },

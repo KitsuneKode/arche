@@ -6,4 +6,5 @@ export {
   type EventSourceLike,
   type LiveFeedHandle,
   type LiveFeedMode,
+  type LiveStreamClientEvent,
 } from './live-feed'

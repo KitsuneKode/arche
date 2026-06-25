@@ -81,6 +81,33 @@ describe('createLiveFeed', () => {
     })
   })
 
+  it('routes multiplex SSE events', () => {
+    const events: string[] = []
+    const handlers = new Map<string, (event: { data: string }) => void>()
+    const feed = createLiveFeed({
+      streamUrl: 'http://localhost:8080/api/live/stream',
+      onEvent: (event) => events.push(event.type),
+      preferSse: true,
+      eventSourceFactory: () => ({
+        addEventListener: (type, listener) => {
+          handlers.set(type, listener)
+        },
+        removeEventListener: (type) => {
+          handlers.delete(type)
+        },
+        close: () => {},
+        onerror: null,
+      }),
+    })
+
+    feed.start()
+    handlers.get('lattice:state')?.({ data: JSON.stringify({ now: '2026-01-01' }) })
+    handlers.get('chat:message')?.({ data: JSON.stringify({ messageId: 'm1' }) })
+    feed.stop()
+
+    expect(events).toEqual(['lattice:state', 'chat:message'])
+  })
+
   it('uses default poll interval constant', () => {
     expect(DEFAULT_POLL_INTERVAL_MS).toBe(2_000)
   })

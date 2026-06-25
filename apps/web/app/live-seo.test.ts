@@ -49,7 +49,7 @@ describe('/live SEO', () => {
 
   it('live page wires the same metadata contract', () => {
     const source = readFileSync(join(appRoot, '(sandbox)/live/page.tsx'), 'utf8')
-    expect(source).toContain('Live stack demo — chat, posts, and proof run')
+    expect(source).toContain('Relay Lattice')
     expect(source).toContain('LiveDemoJsonLd')
     expect(source).toContain('<LiveDemo />')
     expect(source).not.toContain('isApiReachable')

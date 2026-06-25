@@ -518,6 +518,8 @@ async function stripLiveDemoWeb(destinationDir: string): Promise<void> {
     'apps/web/lib/live-feed',
     'apps/web/lib/live-chat-sync.ts',
     'apps/web/lib/live-chat-sync-policy.ts',
+    'apps/server/src/modules/live',
+    'apps/server/src/modules/lattice',
     'apps/web/lib/proof-run',
     'apps/web/lib/proof-run-storage.ts',
     'apps/web/lib/client-mounted.ts',

@@ -1,21 +1,18 @@
-import { EventEmitter } from 'node:events'
+import { emitLiveEvent, subscribeLiveEvents } from '../live/live.events.js'
 
 export type ChatStreamEvent = {
   type: 'message'
   messageId: string
 }
 
-const chatBus = new EventEmitter()
-chatBus.setMaxListeners(200)
-
 export function emitChatMessage(messageId: string) {
-  const payload: ChatStreamEvent = { type: 'message', messageId }
-  chatBus.emit('message', payload)
+  emitLiveEvent({ type: 'chat:message', messageId })
 }
 
 export function subscribeChatEvents(listener: (event: ChatStreamEvent) => void) {
-  chatBus.on('message', listener)
-  return () => {
-    chatBus.off('message', listener)
-  }
+  return subscribeLiveEvents((event) => {
+    if (event.type === 'chat:message') {
+      listener({ type: 'message', messageId: event.messageId })
+    }
+  })
 }

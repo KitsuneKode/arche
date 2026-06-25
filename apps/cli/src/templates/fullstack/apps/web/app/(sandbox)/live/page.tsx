@@ -4,9 +4,9 @@ import Link from 'next/link'
 import { LiveDemo } from '@/components/live/live-demo'
 
 export const metadata: Metadata = {
-  title: 'Live stack demo — chat, posts, and proof run',
+  title: 'Live stack demo — Relay Lattice, chat, and proof run',
   description:
-    'Interactive fullstack demo: tRPC, Prisma, Better Auth, public chat, draft posts, and proof-run checks.',
+    'Interactive fullstack demo: Relay Lattice clashes, tRPC, SSE, Prisma, Better Auth, and proof-run checks.',
 }
 
 export default function LivePage() {
@@ -15,11 +15,11 @@ export default function LivePage() {
       <section className="hero">
         <p className="eyebrow">Live sandbox</p>
         <h1>
-          Try the stack <span style={{ color: 'var(--color-accent)' }}>live.</span>
+          Relay Lattice <span style={{ color: 'var(--color-accent)' }}>live.</span>
         </h1>
         <p className="lede">
-          Chat, posts, and proof-run checks against your API — not illustrative snippets. Sign in to
-          unlock write access and optional challenges.
+          Pick a side in binary clashes, light the shared grid, and chat in one SSE-powered room.
+          Sign in to vote and post. Proof-run checks run alongside the game.
         </p>
         <div className="actions">
           <Link href="/">← Back to home</Link>

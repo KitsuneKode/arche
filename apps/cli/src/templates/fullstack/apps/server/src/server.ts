@@ -78,6 +78,16 @@ async function main(): Promise<void> {
     logger.info('Redis disabled (ENABLE_REDIS=false) — no BullMQ or /admin/queues')
   }
 
+  const latticeEngineEnabled = process.env.LATTICE_ROUND_ENGINE !== 'false'
+  if (latticeEngineEnabled) {
+    const { latticeService } = await import('./modules/lattice/lattice.service.js')
+    void latticeService.tickEngine()
+    setInterval(() => {
+      void latticeService.tickEngine()
+    }, 5_000)
+    logger.info('Relay Lattice round engine started')
+  }
+
   onShutdown(async () => {
     logger.info('Closing Prisma connection...')
     await prisma.$disconnect()
