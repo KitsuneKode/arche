@@ -40,6 +40,7 @@ export interface GeneratedComboCase {
 
 export interface VerifyGeneratedProjectOptions extends GeneratedProjectCase {
   commands?: GeneratedProjectCommand[]
+  configOverrides?: Partial<ProjectConfig>
   keepOutput?: boolean
   skipMissingTools?: boolean
 }
@@ -290,7 +291,11 @@ function commandTimeoutMs(comboId: string | undefined, command: GeneratedProject
     : COMMAND_TIMEOUT_MS[command]
 }
 
-function configForCase(destinationDir: string, testCase: GeneratedProjectCase): ProjectConfig {
+function configForCase(
+  destinationDir: string,
+  testCase: GeneratedProjectCase,
+  overrides: Partial<ProjectConfig> = {},
+): ProjectConfig {
   const defaults = projectDefaultsForPreset(testCase.preset)
 
   return {
@@ -309,6 +314,7 @@ function configForCase(destinationDir: string, testCase: GeneratedProjectCase): 
     deployment: 'vercel-railway',
     includeShowcase: false,
     includeWorker: false,
+    includeLiveDemo: false,
     includeDocker: true,
     includeCi: true,
     initializeGit: false,
@@ -317,6 +323,7 @@ function configForCase(destinationDir: string, testCase: GeneratedProjectCase): 
     rustAuth: 'placeholder',
     preset: testCase.preset,
     ...defaults,
+    ...overrides,
   }
 }
 
@@ -607,7 +614,7 @@ export async function verifyGeneratedProject(
 
   try {
     const result = await createProject({
-      config: configForCase(destinationDir, options),
+      config: configForCase(destinationDir, options, options.configOverrides),
       dryRun: false,
     })
 

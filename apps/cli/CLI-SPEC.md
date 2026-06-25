@@ -6,6 +6,16 @@ The Arche CLI (`apps/cli`, `@kitsunekode/arche`, `npx @kitsunekode/arche create`
 
 ## Portfolio-ready output
 
+Default `fullstack` scaffolds are **minimal** (core stack only: Next.js, Express, tRPC, Better Auth, Prisma). Optional capabilities:
+
+| Flag          | What it adds                                                            |
+| ------------- | ----------------------------------------------------------------------- |
+| `--live-demo` | Interactive `/live` sandbox (Relay Run, chat, proof ladder, guest auth) |
+| `--showcase`  | `SHOWCASE.mdx` portfolio metadata (not runtime demo code)               |
+| `--worker`    | Background worker workspace                                             |
+
+The dogfood site in this repo (`apps/web`) is a rich landing/docs/preview surface. Generated projects do not inherit marketing routes unless you add them.
+
 When scaffolding fullstack with `--showcase`:
 
 1. **`SHOWCASE.mdx`** — plain markdown + frontmatter (no custom component imports)
@@ -19,14 +29,16 @@ See [docs/portfolio-sync.md](../../docs/portfolio-sync.md).
 ```
 $ npx @kitsunekode/arche create my-project fullstack
 
-? Include showcase landing routes and demo content? (y/N)
+? Include interactive live demo (/live, Relay Run, chat)? (y/N)
+? Include showcase portfolio metadata (SHOWCASE.mdx)? (y/N)
 ? Include the background worker workspace? (y/N)
 ? Package manager › bun
 
 Scaffolding my-project...
   ✓ arche.json
+  ✓ minimal core (default)
+  ✓ live-demo addon (when --live-demo)
   ✓ SHOWCASE.mdx (when showcase enabled)
-  ✓ portfolio metadata in package.json
 ```
 
 ## Families

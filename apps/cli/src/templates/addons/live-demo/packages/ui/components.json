@@ -1,0 +1,25 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "base-lyra",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/styles/globals.css",
+    "baseColor": "zinc",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "hugeicons",
+  "rtl": false,
+  "aliases": {
+    "components": "@arche-template/ui/components",
+    "utils": "@arche-template/ui/lib/utils",
+    "hooks": "@arche-template/ui/hooks",
+    "lib": "@arche-template/ui/lib",
+    "ui": "@arche-template/ui/components"
+  },
+  "menuColor": "default",
+  "menuAccent": "bold",
+  "registries": {}
+}

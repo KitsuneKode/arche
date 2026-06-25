@@ -9,6 +9,10 @@
 import { readFile, writeFile, rm, mkdir, stat } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import type { ProjectConfig } from '../../types/schemas'
+import {
+  removeLiveDemoPathsOnly,
+  applyLiveDemoContentPatches,
+} from '../capabilities/apply-capabilities'
 import { sanitizeProjectName } from '../slug'
 import { buildServerEnv } from './env'
 import { applyRustServiceApiScaffold } from './rust'
@@ -587,28 +591,12 @@ export function subscribeChatEvents(listener: (event: ChatStreamEvent) => void) 
 }
 
 export async function stripLiveDemoWeb(destinationDir: string): Promise<void> {
-  const livePaths = [
-    'apps/web/app/live',
-    'apps/web/app/(sandbox)',
-    'apps/web/app/(auth)',
-    'apps/web/components/live',
-    'apps/web/components/play',
-    'apps/web/components/sandbox',
-    'apps/web/lib/live-feed',
-    'apps/web/lib/live-chat-sync.ts',
-    'apps/web/lib/live-chat-sync-policy.ts',
-    'apps/server/src/modules/live',
-    'apps/server/src/modules/lattice',
-    'apps/web/lib/proof-run',
-    'apps/web/lib/proof-run-storage.ts',
-    'apps/web/lib/client-mounted.ts',
-    'apps/web/lib/api-health.ts',
-    'apps/web/lib/use-api-reachable.ts',
-    'apps/web/lib/relay-run',
-  ]
-  for (const relativePath of livePaths) {
-    await rm(join(destinationDir, relativePath), { recursive: true, force: true })
-  }
+  await removeLiveDemoPathsOnly(destinationDir)
+  await patchHomepageLiveCtaOnly(destinationDir)
+  await applyLiveDemoContentPatches(destinationDir)
+}
+
+async function patchHomepageLiveCtaOnly(destinationDir: string): Promise<void> {
   const homePage = join(destinationDir, 'apps/web/app/page.tsx')
   try {
     const content = await readFile(homePage, 'utf8')

@@ -19,7 +19,7 @@ import { existsSync } from 'node:fs'
 import { readFile, writeFile, rm, mkdir } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import type { ProjectConfig } from '../../types/schemas'
-import { stripLiveDemoWeb, stripRelayLatticeFromProject } from './backend'
+import { stripRelayLatticeFromProject } from './backend'
 
 // =============================================================================
 // Drizzle schema definitions (database-aware)
@@ -1008,10 +1008,16 @@ export async function applyOrmTransform(
       join(destinationDir, 'apps/server/src/modules/post/post.trpc.ts'),
       drizzlePostRouter(),
     )
-    await writeFile_(
-      join(destinationDir, 'apps/server/src/modules/chat/chat.trpc.ts'),
-      drizzleChatRouter(),
-    )
+    if (config.includeLiveDemo) {
+      await writeFile_(
+        join(destinationDir, 'apps/server/src/modules/chat/chat.trpc.ts'),
+        drizzleChatRouter(),
+      )
+      await writeFile_(
+        join(destinationDir, 'apps/server/src/modules/game/game.repository.ts'),
+        drizzleGameRepository(),
+      )
+    }
     await writeFile_(
       join(destinationDir, 'apps/server/src/modules/user/user.trpc.ts'),
       drizzleUserRouter(),
@@ -1025,10 +1031,6 @@ export async function applyOrmTransform(
     await writeFile_(
       join(destinationDir, 'apps/server/src/modules/health/health.repository.ts'),
       drizzleHealthRepository(database),
-    )
-    await writeFile_(
-      join(destinationDir, 'apps/server/src/modules/game/game.repository.ts'),
-      drizzleGameRepository(),
     )
     await patchServerShutdownForDrizzle(destinationDir)
 
@@ -1048,9 +1050,8 @@ export async function applyOrmTransform(
     // 13. Add drizzle-orm to server package for router imports
     await patchServerPackageJsonForDrizzle(join(destinationDir, 'apps/server/package.json'))
 
-    // 14. Relay Lattice requires Prisma service layers — strip for Drizzle scaffolds
+    // 14. Relay Lattice requires Prisma service layers — strip lattice wiring for Drizzle scaffolds
     await stripRelayLatticeFromProject(destinationDir)
-    await stripLiveDemoWeb(destinationDir)
 
     return
   }

@@ -150,6 +150,8 @@ export const ProjectConfigSchema = z.object({
   deployment: DeploymentSchema.default('vercel-railway'),
   includeShowcase: z.boolean().default(false),
   includeWorker: z.boolean().default(false),
+  /** Interactive live demo (Relay Run, chat, proof ladder). Default: off — minimal scaffold. */
+  includeLiveDemo: z.boolean().default(false),
   includeDocker: z.boolean().default(true),
   includeCi: z.boolean().default(true),
   initializeGit: z.boolean().default(true),
@@ -176,6 +178,7 @@ export const CLIArgsSchema = z.object({
   git: z.boolean().optional(),
   includeShowcase: z.boolean().optional(),
   includeWorker: z.boolean().optional(),
+  includeLiveDemo: z.boolean().optional(),
   testing: TestingSchema.optional(),
   includeDocker: z.boolean().optional(),
   includeCi: z.boolean().optional(),
@@ -361,6 +364,24 @@ export function checkCompatibility(config: Partial<ProjectConfig>): {
     warnings.push(
       'SQLite is file-based and does not need a Docker container. Docker will only include Redis.',
     )
+  }
+
+  if (config.includeLiveDemo && config.family === 'fullstack') {
+    if (config.orm === 'drizzle') {
+      errors.push(
+        'live-demo requires Prisma (Express + Postgres). Drizzle scaffolds omit the live demo stack.',
+      )
+    }
+    if (isRustFrameworkBackend(config.backend)) {
+      errors.push(
+        'live-demo requires the Express + Prisma fullstack backend. Rust API scaffolds omit the live demo stack.',
+      )
+    }
+    if (config.backend === 'hono-bun') {
+      warnings.push(
+        'live-demo is tested with express-bun. Hono scaffolds may need manual wiring for chat SSE routes.',
+      )
+    }
   }
 
   // Family-specific validation

@@ -1,0 +1,30 @@
+{
+  "name": "@arche-template/auth",
+  "private": true,
+  "type": "module",
+  "module": "src/index.ts",
+  "exports": {
+    "./server": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./guest-display-name": "./src/guest-display-name.ts"
+  },
+  "scripts": {
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@arche-template/backend-common": "workspace:*",
+    "@arche-template/common": "workspace:*",
+    "@arche-template/store": "workspace:*",
+    "better-auth": "catalog:"
+  },
+  "devDependencies": {
+    "@arche-template/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
+    "oxlint": "catalog:"
+  },
+  "peerDependencies": {
+    "typescript": "catalog:"
+  }
+}

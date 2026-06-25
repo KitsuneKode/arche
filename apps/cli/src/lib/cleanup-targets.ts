@@ -5,13 +5,20 @@ function shouldDefaultStripWorker(family: Family): boolean {
 }
 
 export function buildCleanupTargets(
-  options: Pick<ProjectConfig, 'includeShowcase' | 'includeWorker' | 'testing' | 'family'>,
+  options: Pick<
+    ProjectConfig,
+    'includeShowcase' | 'includeWorker' | 'includeLiveDemo' | 'testing' | 'family'
+  >,
 ): CleanupTarget[] {
   const targets = new Set<CleanupTarget>(['readme'])
 
   if (!options.includeShowcase || options.family !== 'fullstack') {
     targets.add('showcase')
     targets.add('seed')
+  }
+
+  if (options.family === 'fullstack' && !options.includeLiveDemo) {
+    targets.add('live')
   }
 
   if (!options.includeWorker) {

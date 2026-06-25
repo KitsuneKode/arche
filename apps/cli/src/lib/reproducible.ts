@@ -18,6 +18,7 @@ export function buildReproducibleCommand(
     | 'packageManager'
     | 'includeShowcase'
     | 'includeWorker'
+    | 'includeLiveDemo'
     | 'bundles'
     | 'testing'
     | 'includeDocker'
@@ -53,6 +54,7 @@ export function buildReproducibleCommand(
   if (config.deployment === 'none') parts.push('--deployment=none')
   if (familySupportsShowcase(config.family) && config.includeShowcase) parts.push('--showcase')
   if (familySupportsWorker(config.family) && config.includeWorker) parts.push('--worker')
+  if (config.family === 'fullstack' && config.includeLiveDemo) parts.push('--live-demo')
 
   return parts.join(' ')
 }

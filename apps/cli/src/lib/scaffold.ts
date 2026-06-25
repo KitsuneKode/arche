@@ -23,6 +23,7 @@ import {
   familySupportsRenameScope,
   familySupportsTemplateCleanup,
 } from '../types/schemas'
+import { applyLiveDemoAddon, applyLiveDemoRemoval } from './capabilities'
 import { buildCleanupTargets } from './cleanup-targets'
 import {
   renderDockerCompose,
@@ -693,21 +694,7 @@ async function applyGeneratedCleanup(
   }
 
   if (targets.has('live')) {
-    await removePath('apps/web/app/live')
-    await removePath('apps/web/app/(auth)')
-    await removePath('apps/web/components/live')
-    await removePath('apps/web/lib/proof-run-storage.ts')
-    const homePage = join(destinationDir, 'apps/web/app/page.tsx')
-    if (await pathExists(homePage)) {
-      const content = await readFile(homePage, 'utf8')
-      const withoutLiveCta = content
-        .replace(/\s*<Link href="\/live"[^>]*>[\s\S]*?<\/Link>\s*/g, '\n')
-        .replace(/import Link from 'next\/link'\n/, '')
-      if (withoutLiveCta !== content) {
-        await writeFile(homePage, withoutLiveCta)
-        removed.push('apps/web/app/page.tsx (live CTA removed)')
-      }
-    }
+    removed.push(...(await applyLiveDemoRemoval(destinationDir)))
   }
 
   return removed
@@ -755,6 +742,7 @@ function buildArcheConfig(options: ProjectConfig): string {
       deployment: options.deployment,
       includeWorker: options.includeWorker,
       includeShowcase: options.includeShowcase,
+      includeLiveDemo: options.includeLiveDemo,
       presets: options.presets,
       example: options.example,
       rustAuth: options.rustAuth,
@@ -870,6 +858,11 @@ export async function scaffoldProject(
       ? await applyGeneratedCleanup(destinationDir, cleanupTargets)
       : []
 
+    const liveDemoFiles =
+      family === 'fullstack' && options.includeLiveDemo
+        ? await applyLiveDemoAddon(destinationDir)
+        : []
+
     const prunedFiles =
       family === 'fullstack' && backendUsesServiceApi(options.backend)
         ? await pruneServiceApiFullstack(destinationDir)
@@ -917,6 +910,7 @@ export async function scaffoldProject(
       ...sanitizedArtifacts.map((file) => `${file} (removed)`),
       ...removedArtifacts.map((file) => `${file} (removed)`),
       ...cleanupFiles.map((file) => `${file} (removed)`),
+      ...liveDemoFiles.map((file) => `${file} (live-demo)`),
       ...prunedFiles.map((file) => `${file} (removed)`),
       ...workspaceFiles,
       ...turboFiles,

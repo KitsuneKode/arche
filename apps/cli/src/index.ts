@@ -131,8 +131,10 @@ ${pc.bold('Options:')}
   --no-git           Skip git initialization
   --install          Run bun install (default: yes)
   --no-install       Skip dependency installation
-  --showcase         Keep landing/demo content (default: no)
-  --no-showcase      Strip showcase content
+  --showcase         Keep portfolio showcase metadata (default: no)
+  --no-showcase      Strip showcase metadata
+  --live-demo        Include interactive live demo (/live, Relay Run, chat) (default: no)
+  --no-live-demo     Omit live demo (default)
   --worker           Keep background worker workspace (default: no)
   --no-worker        Remove worker workspace
   --docker           Generate docker-compose.yml (default: stack-aware)
@@ -260,6 +262,8 @@ function parseArgs(argv: string[]): CLIArgs {
     if (arg === '--no-git') parsed.git = false
     if (arg === '--showcase') parsed.includeShowcase = true
     if (arg === '--no-showcase') parsed.includeShowcase = false
+    if (arg === '--live-demo') parsed.includeLiveDemo = true
+    if (arg === '--no-live-demo') parsed.includeLiveDemo = false
     if (arg === '--worker') parsed.includeWorker = true
     if (arg === '--no-worker') parsed.includeWorker = false
     if (arg === '--docker') parsed.includeDocker = true
@@ -484,6 +488,7 @@ async function main(): Promise<void> {
   let presets: ProjectConfig['presets'] = []
   let includeShowcase = false
   let includeWorker = false
+  let includeLiveDemo = false
   const rustFramework: ProjectConfig['backend'] = 'rust-axum'
   let rustDatabase: ProjectConfig['database'] = 'postgres'
   let rustExample: ProjectConfig['example'] = 'posts'
@@ -688,6 +693,22 @@ async function main(): Promise<void> {
         })
   }
 
+  if (family === 'fullstack') {
+    includeLiveDemo = args.yes
+      ? (args.includeLiveDemo ?? false)
+      : await promptIfNeeded(args.includeLiveDemo, async () => {
+          const value = await confirm({
+            message: 'Include interactive live demo (/live, Relay Run, chat)?',
+            initialValue: false,
+          })
+          if (isCancel(value)) {
+            cancel('Project creation cancelled.')
+            process.exit(0)
+          }
+          return value
+        })
+  }
+
   const packageManager = args.yes
     ? (args.packageManager ?? 'bun')
     : await promptIfNeeded(args.packageManager, async () => {
@@ -836,6 +857,7 @@ async function main(): Promise<void> {
     rustAuth: family === 'rust' ? rustAuth : 'placeholder',
     includeShowcase,
     includeWorker,
+    includeLiveDemo,
     testing,
     includeDocker,
     includeCi,

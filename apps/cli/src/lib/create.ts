@@ -121,6 +121,11 @@ export function getSchema(): Record<string, unknown> {
       installDependencies: { type: 'boolean', default: true },
       includeShowcase: { type: 'boolean', default: false },
       includeWorker: { type: 'boolean', default: false },
+      includeLiveDemo: {
+        type: 'boolean',
+        default: false,
+        description: 'Include interactive live demo (/live, Relay Run, chat)',
+      },
     },
     required: ['projectName', 'destinationDir'],
   }
