@@ -125,6 +125,7 @@
     "format": "bun run --filter @arche-template/dev format",
     "format:check": "bun run --filter @arche-template/dev format:check",
     "db:migrate": "turbo run db:migrate",
+    "db:deploy": "turbo run db:deploy --filter=@arche-template/store",
     "rename-scope": "bun toolings/scripts/rename-scope.ts",
     "rename-scope:dry": "bun toolings/scripts/rename-scope.ts --dry-run",
     "rename-scope:verbose": "bun toolings/scripts/rename-scope.ts --verbose",

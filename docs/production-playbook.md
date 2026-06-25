@@ -26,7 +26,8 @@ Do **not** use Render Postgres or Render Key Value for this template.
 ```bash
 # From repo root; DATABASE_URL must point at the target database
 export DATABASE_URL='postgresql://...'
-bun run db:migrate
+bun run db:deploy
+bun run db:seed
 ```
 
 The API container does **not** run migrations on boot by default. Add a release-phase script only if you explicitly want that behavior.

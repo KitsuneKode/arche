@@ -57,6 +57,10 @@
       "cache": false,
       "persistent": true
     },
+    "db:deploy": {
+      "cache": false,
+      "env": ["DATABASE_URL"]
+    },
     "db:seed": {
       "persistent": true,
       "cache": false

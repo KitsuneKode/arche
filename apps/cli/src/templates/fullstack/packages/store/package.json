@@ -11,7 +11,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "bun run src/scripts/seed.ts",
     "db:studio": "prisma studio",
-    "db:deploy": "prisma deploy",
+    "db:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset",
     "lint": "oxlint -c ../../.oxlintrc.json",
     "lint:fix": "oxlint --fix",
