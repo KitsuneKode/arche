@@ -51,7 +51,7 @@ describe('/live SEO', () => {
     const source = readFileSync(join(appRoot, '(sandbox)/live/page.tsx'), 'utf8')
     expect(source).toContain('Relay Run')
     expect(source).toContain('LiveDemoJsonLd')
-    expect(source).toContain('<LiveDemo />')
+    expect(source).toContain('<LiveDemoShell')
     expect(source).not.toContain('isApiReachable')
   })
 

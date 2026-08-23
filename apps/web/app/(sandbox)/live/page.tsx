@@ -1,13 +1,15 @@
 import { Navbar } from '@/components/arche/navbar'
 import { HeroBlock, SiteFrame, SiteShell } from '@/components/arche/site-primitives'
-import { LiveDemo } from '@/components/live/live-demo'
+import { LiveDemoShell } from '@/components/live/live-demo-shell'
+import { StackProbeStrip } from '@/components/live/stack-probe-strip'
 import { LiveDemoJsonLd } from '@/components/seo/live-demo-json-ld'
 import { buildPageMetadata } from '@/lib/seo'
+import { HydrateClient, prefetch, trpc, trpcCaller } from '@/trpc/server'
 
 export const metadata = buildPageMetadata({
-  title: 'Live stack demo — Relay Run, chat, and proof run',
+  title: 'Live stack demo — Relay Run, Stack Lab, and proof run',
   description:
-    'Interactive TypeScript fullstack demo: Relay Run mini-game with leaderboard, tRPC, SSE, Prisma, Better Auth, and proof-run checks on arche.dev.',
+    'Interactive TypeScript fullstack demo: Relay Run mini-game, Stack Lab mini-projects, tRPC + RSC prefetch, SSE chat, Prisma, Better Auth, and proof-run checks on arche.dev.',
   path: '/live',
   keywords: [
     'tRPC',
@@ -17,10 +19,22 @@ export const metadata = buildPageMetadata({
     'fullstack TypeScript',
     'Next.js',
     'Express',
+    'RSC',
   ],
 })
 
-export default function LivePage() {
+export default async function LivePage() {
+  await Promise.all([
+    prefetch(trpc.chat.list.queryOptions()),
+    prefetch(trpc.post.list.queryOptions()),
+    prefetch(trpc.game.leaderboard.queryOptions()),
+    prefetch(trpc.demo.capabilities.queryOptions()),
+    prefetch(trpc.auth.getSession.queryOptions()),
+  ])
+
+  const api = await trpcCaller()
+  const snapshot = await api.demo.stackSnapshot().catch(() => null)
+
   return (
     <SiteShell>
       <LiveDemoJsonLd />
@@ -34,11 +48,16 @@ export default function LivePage() {
           size="md"
           className="!p-4 md:!p-8"
         >
-          Tap to play. Chat, posts, and sign-in are in the side panel — proof checks below.
+          Play the game, explore Stack Lab mini-projects, or join the room chat — proof checks
+          below.
         </HeroBlock>
 
+        {snapshot ? <StackProbeStrip snapshot={snapshot} /> : null}
+
         <section className="flex-1 bg-black p-4 md:p-8">
-          <LiveDemo />
+          <HydrateClient>
+            <LiveDemoShell initialSnapshot={snapshot} />
+          </HydrateClient>
         </section>
       </SiteFrame>
     </SiteShell>

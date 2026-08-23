@@ -1,18 +1,19 @@
-import { emitLiveEvent, subscribeLiveEvents } from '../live/live.events.js'
+import type { PublicChatMessage } from '../live/live.dto'
+import { emitLiveEvent, subscribeLiveEvents } from '../live/live.events'
 
 export type ChatStreamEvent = {
   type: 'message'
-  messageId: string
+  message: PublicChatMessage
 }
 
-export function emitChatMessage(messageId: string) {
-  emitLiveEvent({ type: 'chat:message', messageId })
+export function emitChatMessage(message: PublicChatMessage) {
+  emitLiveEvent({ type: 'chat:message', message })
 }
 
 export function subscribeChatEvents(listener: (event: ChatStreamEvent) => void) {
   return subscribeLiveEvents((event) => {
     if (event.type === 'chat:message') {
-      listener({ type: 'message', messageId: event.messageId })
+      listener({ type: 'message', message: event.message })
     }
   })
 }

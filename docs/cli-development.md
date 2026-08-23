@@ -112,19 +112,24 @@ apps/cli/
 │   │       └── showcase.ts   # SHOWCASE.mdx (fullstack only)
 │   ├── types/
 │   │   └── schemas.ts        # Zod schemas, family/bundle types, validators
-│   └── templates/            # Per-family template sources (future)
-│       └── fullstack/         # (defaults to repo root)
+│   ├── registry/             # Re-exports from packages/registry (presets)
+│   └── templates/            # Shipped family templates (canonical for npm)
+│       ├── fullstack/        # Minimal TS monorepo (extracted from live)
+│       ├── addons/live-demo/ # Optional capability overlay
+│       ├── _web-core/        # Shared Next.js foundation
+│       ├── polyglot/         # Thin Turbo multi-language shell
+│       └── …                 # next, backend, rust, solana, convex, …
 ├── tests/
-│   ├── scaffold.test.ts      # Scaffold + file-generation tests
-│   ├── schemas.test.ts       # Schema validation + compatibility tests
-│   ├── backend.test.ts       # Backend transform tests
-│   ├── database.test.ts      # Database transform tests
-│   ├── orm.test.ts           # ORM transform tests
-│   └── spawn.test.ts         # Spawn utility tests
-├── dist/                     # Built output
+│   ├── scaffold*.test.ts     # Scaffold + generator tests
+│   └── e2e-scaffold.test.ts  # Combo matrix
+├── dist/                     # Built CLI bundle (templates stay under src/)
 ├── package.json
 └── tsconfig.json
 ```
+
+Preset status and verification evidence live in `packages/registry` — see
+`.docs/product/cli-capability-registry.md`. Families remain the template copy
+unit; presets compose verified option sets on top.
 
 ### Key Design Decisions
 
@@ -132,13 +137,13 @@ apps/cli/
    Uses `child_process.spawnSync` instead of `Bun.spawnSync`.
 
 2. **Single-File Bundle**: Dependencies are bundled into `dist/index.js` for
-   faster installs and no version conflicts.
+   faster installs and no version conflicts. Templates ship as `src/templates/`.
 
-3. **Family-First Schema**: Zod schemas in `src/types/schemas.ts` define the
-   family model, bundles, addons, and per-family options.
+3. **Family + Preset Model**: Zod schemas in `src/types/schemas.ts` define
+   families/bundles; `packages/registry` owns preset stability evidence.
 
-4. **Template-Based**: Copies the parent monorepo (or a family-specific template
-   directory) and customizes via transforms and cleanup scripts.
+4. **Live-canonical templates**: Dogfood `apps/*` / `packages/*` are edited first;
+   `bun run template:extract` refreshes fullstack + live-demo addon trees.
 
 5. **Oxfmt Formatting**: All source files are formatted with oxfmt. Run
    `bun run format` to format, `bun run format:check` to verify.
@@ -148,11 +153,14 @@ apps/cli/
 1. Add the family name to `FamilySchema` in `src/types/schemas.ts`
 2. Add labels and helper functions (`hasBackendOptions`, etc.)
 3. Add the family to the prompt options in `src/index.ts`
-4. Add template source (directory in `apps/cli/templates/{family}/`) or
-   implement transforms in the scaffold pipeline
-5. Add family-specific generator content in `readme.ts` and `agent-docs.ts`
-6. Add a cleanup target if needed
-7. Add a scaffold smoke test in `tests/src/cli/create-arche.test.ts`
+4. Add template source under `apps/cli/src/templates/{family}/` (with
+   `.archefiles.json` when selective copy is needed) or implement transforms
+   in the scaffold pipeline
+5. Register the preset in `packages/registry` with verification evidence before
+   labeling it Stable
+6. Add family-specific generator content in `readme.ts` and `agent-docs.ts`
+7. Add a cleanup target if needed
+8. Add scaffold coverage under `apps/cli/tests/`
 
 ## Adding a New Feature Bundle
 

@@ -1,8 +1,8 @@
 import type { TRPCRouterRecord } from '@trpc/server'
 
-import { protectedProcedure, publicProcedure } from '../trpc/trpc.js'
-import { voteSchema } from './lattice.dto.js'
-import { latticeService } from './lattice.service.js'
+import { protectedProcedure, publicProcedure } from '../trpc/trpc'
+import { voteSchema } from './lattice.dto'
+import { latticeService } from './lattice.service'
 
 export const latticeRouter = {
   getState: publicProcedure.query(({ ctx }) =>

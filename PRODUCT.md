@@ -25,6 +25,10 @@ The public site exists to establish trust, explain the CLI, and make the
 verified routes easy to evaluate. It must never sell an unverified preset as
 production-ready.
 
+Maintainer note: live dogfood code under `apps/*` and `packages/*` is canonical.
+Refresh CLI templates with `bun run template:extract` (then
+`bun run template:sync:check`) after shared runtime changes.
+
 ## Brand Personality
 
 Precise, capable, intentional.

@@ -32,8 +32,8 @@ export function LiveChat({
       <div className="shrink-0 border-b border-zinc-800 bg-zinc-900/50 px-4 py-3">
         <p className="font-mono text-[10px] tracking-widest text-amber-400 uppercase">Live chat</p>
         <p className="mt-1 text-sm text-zinc-400">
-          Demo channel — public read. Post as a guest or sign in to keep your identity. Messages are
-          visible to everyone.
+          Shared demo room — everyone sees the same feed. Post as a guest or sign in to keep your
+          identity.
         </p>
         {stats ? (
           <p className="mt-2 font-mono text-[10px] text-zinc-600" suppressHydrationWarning>

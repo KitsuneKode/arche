@@ -4,7 +4,7 @@ import {
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
-} from '../../common/errors.js'
+} from '../../common/errors'
 
 export async function withAppErrors<T>(fn: () => Promise<T>): Promise<T> {
   try {

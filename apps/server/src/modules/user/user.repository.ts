@@ -1,4 +1,4 @@
-import { prisma } from '../../db/index.js'
+import { prisma } from '../../db/index'
 
 export const userRepository = {
   findAll() {

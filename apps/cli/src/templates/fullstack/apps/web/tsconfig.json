@@ -2,8 +2,14 @@
   "extends": "@arche-template/typescript-config/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "declaration": false,
+    "declarationMap": false,
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@arche-template/store/*": ["../../packages/store/src/*"],
+      "@arche-template/auth/*": ["../../packages/auth/src/*"],
+      "@arche-template/trpc/*": ["../../packages/trpc/src/*"],
+      "@arche-template/common/*": ["../../packages/common/src/*"]
     },
     "ignoreDeprecations": "6.0"
   },

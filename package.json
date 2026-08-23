@@ -71,6 +71,8 @@
   "scripts": {
     "agents:sync": "bun toolings/scripts/sync-template-agents.ts",
     "agents:sync:check": "bun toolings/scripts/sync-template-agents.ts --check",
+    "template:extract": "bun toolings/scripts/extract-fullstack-template.ts",
+    "template:extract:check": "bun toolings/scripts/extract-fullstack-template.ts --check",
     "template:sync:check": "bun toolings/scripts/sync-fullstack-template.ts --check",
     "web-core:sync": "bun toolings/scripts/sync-web-core.ts",
     "web-core:sync:check": "bun toolings/scripts/sync-web-core.ts --check",

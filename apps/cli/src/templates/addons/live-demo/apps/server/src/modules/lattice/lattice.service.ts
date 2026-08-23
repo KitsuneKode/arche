@@ -1,12 +1,12 @@
 import { logger } from '../../common/logger'
-import { prisma } from '../../db/index.js'
-import { chatService } from '../chat/chat.service.js'
-import type { LatticeStatePublic } from '../live/live.dto.js'
-import { emitLiveEvent } from '../live/live.events.js'
-import { isLatticeOpenRoundRace, isLatticeSchemaMissing } from './lattice-errors.js'
-import { CLASH_PAIRS, cellLabel, ROUND_DURATION_MS } from './lattice.deck.js'
-import { latticeRepository, type LatticeTx } from './lattice.repository.js'
-import { pickRoundWinner } from './lattice.tally.js'
+import { prisma } from '../../db/index'
+import { chatService } from '../chat/chat.service'
+import type { LatticeStatePublic } from '../live/live.dto'
+import { emitLiveEvent } from '../live/live.events'
+import { isLatticeOpenRoundRace, isLatticeSchemaMissing } from './lattice-errors'
+import { CLASH_PAIRS, cellLabel, ROUND_DURATION_MS } from './lattice.deck'
+import { latticeRepository, type LatticeTx } from './lattice.repository'
+import { pickRoundWinner } from './lattice.tally'
 
 const EMPTY_LATTICE_STATE: LatticeStatePublic = {
   now: new Date().toISOString(),

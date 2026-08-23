@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
-import { cellLabel, CLASH_PAIRS, LATTICE_CELLS } from './lattice.deck.js'
+import { cellLabel, CLASH_PAIRS, LATTICE_CELLS } from './lattice.deck'
 
 describe('lattice.deck', () => {
   it('defines 25 cells for the 5x5 grid', () => {

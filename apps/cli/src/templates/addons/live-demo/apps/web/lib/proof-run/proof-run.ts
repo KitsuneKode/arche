@@ -28,7 +28,7 @@ export const PROOF_RUNGS: ProofRungDef[] = [
   { id: 'session', layer: 'Auth', label: 'Session probe (guest OK)' },
   { id: 'game-board', layer: 'Game', label: 'Leaderboard readable' },
   { id: 'relay-write', layer: 'Chat', label: 'Silent send verify', requiresAuth: true },
-  { id: 'game-score', layer: 'Game', label: 'Score submit', requiresAuth: true },
+  { id: 'game-score', layer: 'Game', label: 'Score contract verify', requiresAuth: true },
   { id: 'secret', layer: 'Auth', label: 'Protected procedure', requiresAuth: true },
   {
     id: 'challenge-chat',
@@ -49,7 +49,7 @@ export type ProofRungResult = {
 
 export type ProofRunContext = {
   apiReachable: boolean
-  fetchHealth: () => Promise<{ ok: boolean; status: number; database?: string }>
+  fetchHealth: () => Promise<{ ok: boolean; status: number; database?: string; schema?: string }>
   fetchHello: () => Promise<string>
   fetchPosts: () => Promise<unknown[]>
   fetchChatMessages: () => Promise<Array<{ senderId: string; content: string }>>
@@ -59,7 +59,7 @@ export type ProofRunContext = {
   fetchLeaderboard: () => Promise<unknown[]>
   fetchMyBest: () => Promise<{ score: number } | null>
   verifyChatSend: (content: string) => Promise<void>
-  submitGameScore: (score: number) => Promise<void>
+  verifyGameScore: (score: number) => Promise<void>
   fetchSecretMessage: () => Promise<string>
   createDraftPost: (input: { title: string; content: string; slug: string }) => Promise<void>
 }
@@ -82,8 +82,15 @@ export async function runProofRungs(ctx: ProofRunContext): Promise<ProofRungResu
 
   try {
     const health = await ctx.fetchHealth()
-    if (!health.ok || health.database !== 'connected') {
-      results.push({ id: 'api', state: 'fail', receipt: `Health ${health.status}` })
+    if (!health.ok || health.database !== 'connected' || health.schema === 'pending') {
+      results.push({
+        id: 'api',
+        state: 'fail',
+        receipt:
+          health.schema === 'pending'
+            ? 'Database migrations pending (run bun run db:deploy)'
+            : `Health ${health.status}`,
+      })
       return results
     }
     results.push({ id: 'api', state: 'pass', receipt: 'database: connected' })
@@ -164,13 +171,13 @@ export async function runProofRungs(ctx: ProofRunContext): Promise<ProofRungResu
   }
 
   try {
+    await voidSend(() => ctx.verifyGameScore(1))
     const best = await ctx.fetchMyBest()
-    if (best && best.score >= 1) {
-      results.push({ id: 'game-score', state: 'pass', receipt: `best: ${best.score}` })
-    } else {
-      await voidSend(() => ctx.submitGameScore(1))
-      results.push({ id: 'game-score', state: 'pass', receipt: 'score saved' })
-    }
+    results.push({
+      id: 'game-score',
+      state: 'pass',
+      receipt: best ? `contract ok · best: ${best.score}` : 'contract ok',
+    })
   } catch (error) {
     results.push({
       id: 'game-score',

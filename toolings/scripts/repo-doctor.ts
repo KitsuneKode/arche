@@ -484,9 +484,33 @@ async function checkTemplateScaffoldOwnership(): Promise<Finding[]> {
       code: 'template-scaffold-drift',
       path: 'apps/cli/src/templates/fullstack',
       message: 'Fullstack template or live-demo addon failed minimal ownership checks.',
-      suggestion: `Run \`bun run template:sync:check\` and align template/addon files. Details:\n${output}`,
+      suggestion: `Run \`bun run template:extract\` then \`bun run template:sync:check\`. Details:\n${output}`,
     },
   ]
+}
+
+async function checkCrossWorkspaceRelativeImports(): Promise<Finding[]> {
+  const findings: Finding[] = []
+  const scopes = ['tests/src/**/*.{ts,tsx}', 'toolings/scripts/**/*.{ts,tsx}'] as const
+  const pattern = /from\s+['"](?:\.\.\/)+apps\//
+
+  for (const globPattern of scopes) {
+    for await (const path of new Bun.Glob(globPattern).scan('.')) {
+      if (isIgnored(path)) continue
+      const text = await Bun.file(path).text()
+      if (pattern.test(text)) {
+        findings.push({
+          severity: 'error',
+          code: 'cross-workspace-relative-import',
+          path,
+          message: 'Relative import reaches into apps/ across workspace boundaries.',
+          suggestion:
+            'Import via a workspace package export (e.g. @kitsunekode/arche/*) or move shared code into packages/.',
+        })
+      }
+    }
+  }
+  return findings
 }
 
 export async function collectRepoDoctorFindings(): Promise<Finding[]> {
@@ -506,6 +530,7 @@ export async function collectRepoDoctorFindings(): Promise<Finding[]> {
       ...(await checkUnusedDependencies()),
       ...(await checkTemplateDependencyPins()),
       ...(await checkTemplateScaffoldOwnership()),
+      ...(await checkCrossWorkspaceRelativeImports()),
     ].sort((a, b) => {
       const severityDiff = severityRank(a.severity) - severityRank(b.severity)
       if (severityDiff !== 0) return severityDiff

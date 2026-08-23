@@ -6,7 +6,7 @@ import {
   type GeneratedProjectCase,
   verifyGeneratedCombo,
   verifyGeneratedProject,
-} from '../../apps/cli/src/lib/generated-project-verifier'
+} from '@kitsunekode/arche/generated-project-verifier'
 import {
   PackageManagerSchema,
   PresetSchema,
@@ -14,13 +14,13 @@ import {
   type Family,
   type PackageManager,
   type Preset,
-} from '../../apps/cli/src/types/schemas'
+} from '@kitsunekode/arche/schemas'
 
 interface CliOptions {
   presets?: Preset[]
   packageManagers?: PackageManager[]
   commands: GeneratedProjectCommand[]
-  configOverrides?: Partial<import('../../apps/cli/src/types/schemas').ProjectConfig>
+  configOverrides?: Partial<import('@kitsunekode/arche/schemas').ProjectConfig>
   keepOutput: boolean
   json: boolean
   skipMissingTools: boolean

@@ -1,5 +1,22 @@
 import { z } from 'zod'
 
+export const publicChatMessageSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  kind: z.string(),
+  senderId: z.string(),
+  createdAt: z.date(),
+  sender: z
+    .object({
+      id: z.string(),
+      name: z.string().nullable(),
+      image: z.string().nullable(),
+    })
+    .nullable(),
+})
+
+export type PublicChatMessage = z.infer<typeof publicChatMessageSchema>
+
 export const latticeCellPublicSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -32,5 +49,6 @@ export const latticeStatePublicSchema = z.object({
 export type LatticeStatePublic = z.infer<typeof latticeStatePublicSchema>
 
 export type LiveStreamEvent =
-  | { type: 'chat:message'; messageId: string }
+  | { type: 'chat:message'; message: PublicChatMessage }
+  | { type: 'game:leaderboard' }
   | { type: 'lattice:state'; state: LatticeStatePublic }

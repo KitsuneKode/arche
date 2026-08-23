@@ -17,6 +17,13 @@ bun install
 bun dev
 ```
 
+## Scope
+
+Polyglot is a **thin Turbo shell** (`@acme/*` placeholders). It does **not** run
+the fullstack ORM/backend transforms — add language services under `services/`
+yourself. Shared Next.js foundation files sync from `_web-core` via
+`bun run web-core:sync`.
+
 ## Adding Services
 
 To add a Rust service:

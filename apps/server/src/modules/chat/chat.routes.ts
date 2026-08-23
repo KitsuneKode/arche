@@ -1,6 +1,6 @@
 import { Router } from 'express'
-import { chatStreamRateLimit } from '../../common/middleware/rate-limit.js'
-import { subscribeChatEvents } from './chat.events.js'
+import { chatStreamRateLimit } from '../../common/middleware/rate-limit'
+import { subscribeChatEvents } from './chat.events'
 
 export const chatRoutes = Router()
 

@@ -80,6 +80,17 @@ describe('minimal fullstack scaffold structure', () => {
 
       expect(existsSync(join(destinationDir, 'apps/web/components/live'))).toBe(false)
       expect(existsSync(join(destinationDir, 'apps/server/src/modules/game'))).toBe(false)
+
+      const webPkg = JSON.parse(readScaffolded('apps/web/package.json', destinationDir)) as {
+        dependencies?: Record<string, string>
+      }
+      expect(webPkg.dependencies?.['@minimal-scaffold/server']).toBeUndefined()
+      expect(webPkg.dependencies?.['@arche-template/server']).toBeUndefined()
+      expect(webPkg.dependencies?.['@minimal-scaffold/trpc']).toBeDefined()
+
+      const caller = readScaffolded('apps/web/trpc/caller.ts', destinationDir)
+      expect(caller).toContain("from '@minimal-scaffold/trpc'")
+      expect(caller).not.toContain('/server/trpc')
     } finally {
       rmSync(tmpRoot, { recursive: true, force: true })
     }

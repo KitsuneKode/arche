@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from '@trpc/server'
 import { TRPCError } from '@trpc/server'
-import { toPublicUser } from '../common/public-dto.js'
-import { protectedProcedure, publicProcedure } from '../trpc/trpc.js'
+import { toPublicUser } from '../common/public-dto'
+import { protectedProcedure, publicProcedure } from '../trpc/trpc'
 import { findUserByEmailSchema } from './user.dto'
 import { userService } from './user.service'
 

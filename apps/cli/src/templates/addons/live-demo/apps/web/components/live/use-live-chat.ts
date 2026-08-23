@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 
 import { resolveDisplayName } from '@arche-template/auth/guest-display-name'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useLiveRoom } from '@/components/live/live-room-context'
+import { useIsInLiveRoom, useLiveRoom } from '@/components/live/live-room-context'
 import { useChatStream } from '@/components/live/use-chat-stream'
 import { ensureGuestSession } from '@/lib/ensure-guest-session'
 import { DEFAULT_POLL_INTERVAL_MS } from '@/lib/live-feed'
@@ -22,28 +22,30 @@ export function useLiveChat({
   signedIn,
   userId,
   guestPostEnabled = false,
-  useSharedRoom = false,
+  useSharedRoom,
 }: {
   signedIn: boolean
   userId?: string
   /** When true, guests can post after an anonymous session is created on send. */
   guestPostEnabled?: boolean
-  /** When true, SSE is owned by LiveRoomProvider (no duplicate connection). */
+  /** When true, SSE is owned by LiveRoomProvider (no duplicate connection). Defaults to auto-detect. */
   useSharedRoom?: boolean
 }) {
   const trpc = useTRPC()
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState('')
   const [guestSessionError, setGuestSessionError] = useState<string | null>(null)
+  const inLiveRoom = useIsInLiveRoom()
   const room = useLiveRoom()
+  const sharedRoom = useSharedRoom ?? inLiveRoom
 
   const invalidateChat = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.chat.list.queryKey() })
   }, [queryClient, trpc.chat.list])
 
-  const standalone = useChatStream(invalidateChat, !useSharedRoom && (signedIn || guestPostEnabled))
-  const mode = useSharedRoom ? room.mode : standalone.mode
-  const pollingFallback = useSharedRoom ? room.pollingFallback : standalone.pollingFallback
+  const standalone = useChatStream(invalidateChat, !sharedRoom && (signedIn || guestPostEnabled))
+  const mode = sharedRoom ? room.mode : standalone.mode
+  const pollingFallback = sharedRoom ? room.pollingFallback : standalone.pollingFallback
 
   const messagesQuery = useQuery({
     ...trpc.chat.list.queryOptions(),
@@ -92,9 +94,13 @@ export function useLiveChat({
         }
         setDraft(variables.content)
       },
-      onSuccess: async () => {
+      onSuccess: async (saved) => {
         setDraft('')
-        invalidateChat()
+        queryClient.setQueryData(trpc.chat.list.queryKey(), (old) => {
+          const list = old ?? []
+          if (list.some((row) => row.id === saved.id)) return list
+          return [...list, saved]
+        })
       },
     }),
   )

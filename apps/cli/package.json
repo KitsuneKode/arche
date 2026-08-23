@@ -44,6 +44,13 @@
     "CLI-SPEC.md"
   ],
   "type": "module",
+  "exports": {
+    "./create": "./src/lib/create.ts",
+    "./generated-project-verifier": "./src/lib/generated-project-verifier.ts",
+    "./schemas": "./src/types/schemas.ts",
+    "./preset-config": "./src/registry/preset-config.ts",
+    "./capabilities/apply": "./src/lib/capabilities/apply-capabilities.ts"
+  },
   "publishConfig": {
     "access": "public"
   },

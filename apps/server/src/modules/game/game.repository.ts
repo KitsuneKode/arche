@@ -1,5 +1,5 @@
 import { guestDisplayName } from '@arche-template/auth/guest-display-name'
-import { prisma } from '../../db/index.js'
+import { prisma } from '../../db/index'
 
 const LEADERBOARD_LIMIT = 10
 

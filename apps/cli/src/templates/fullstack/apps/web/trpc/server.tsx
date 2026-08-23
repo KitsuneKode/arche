@@ -34,7 +34,7 @@ export const trpc = createTRPCOptionsProxy({
 })
 
 /** Typed hello query options for the homepage demo (avoids non-null assertions on optional routers). */
-export function helloQueryOptions(name: string) {
+export function helloQueryOptions(name: string): ReturnType<typeof trpc.hello.queryOptions> {
   return trpc.hello.queryOptions({ name })
 }
 

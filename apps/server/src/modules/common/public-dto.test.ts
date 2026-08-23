@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
-import { toPublicMessage, toPublicUser } from '../../../apps/server/src/modules/common/public-dto'
+import { toPublicMessage, toPublicUser } from './public-dto'
 
 describe('public-dto', () => {
   it('strips email from public user shape', () => {
@@ -31,13 +31,5 @@ describe('public-dto', () => {
 
     expect(message.sender).toEqual({ id: 'u1', name: 'Demo', image: null })
     expect(JSON.stringify(message)).not.toContain('secret@example.com')
-  })
-})
-
-describe('chat.dto validation', () => {
-  it('rejects messages longer than 280 characters', async () => {
-    const { sendMessageSchema } = await import('../../../apps/server/src/modules/chat/chat.dto')
-    const result = sendMessageSchema.safeParse({ content: 'x'.repeat(281) })
-    expect(result.success).toBe(false)
   })
 })

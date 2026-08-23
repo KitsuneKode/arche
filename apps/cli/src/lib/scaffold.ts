@@ -834,6 +834,11 @@ export async function scaffoldProject(
     const removedArtifacts = await removeGeneratedArtifacts(destinationDir)
     await updateRootPackageJson(destinationDir, packageName, options)
 
+    const liveDemoFiles =
+      family === 'fullstack' && options.includeLiveDemo
+        ? await applyLiveDemoAddon(destinationDir)
+        : []
+
     let rustGeneratedFiles: string[] = []
     let solanaGeneratedFiles: string[] = []
     if (family === 'rust') {
@@ -857,11 +862,6 @@ export async function scaffoldProject(
     const cleanupFiles = familySupportsTemplateCleanup(family)
       ? await applyGeneratedCleanup(destinationDir, cleanupTargets)
       : []
-
-    const liveDemoFiles =
-      family === 'fullstack' && options.includeLiveDemo
-        ? await applyLiveDemoAddon(destinationDir)
-        : []
 
     const prunedFiles =
       family === 'fullstack' && backendUsesServiceApi(options.backend)
