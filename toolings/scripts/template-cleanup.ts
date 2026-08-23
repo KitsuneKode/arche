@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { access, mkdir, rm } from 'fs/promises'
 import { dirname, resolve } from 'path'
-import { applyLiveDemoRemoval } from '../../apps/cli/src/lib/capabilities/apply-capabilities'
+import { applyLiveDemoRemoval } from '@kitsunekode/arche/capabilities/apply'
 
 type CleanupTarget = 'showcase' | 'seed' | 'worker' | 'tests' | 'readme' | 'live'
 type ActionType = 'remove' | 'write'

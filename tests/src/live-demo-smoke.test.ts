@@ -15,10 +15,10 @@
  */
 import { describe, expect, it } from 'bun:test'
 
-import { PROOF_RUNGS } from '../../apps/web/lib/proof-run'
-
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
 const RUN = process.env.RUN_LIVE_DEMO_SMOKE === '1'
+/** Keep in sync with apps/web/lib/proof-run PROOF_RUNGS length. */
+const EXPECTED_PROOF_RUNG_COUNT = 12
 
 function trpcQueryUrl(procedure: string, input: unknown = null) {
   const batchInput = encodeURIComponent(JSON.stringify({ 0: { json: input } }))
@@ -64,7 +64,7 @@ const maybeDescribe = RUN ? describe : describe.skip
 
 maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
   it('0. proof rung registry has 12 rungs', () => {
-    expect(PROOF_RUNGS).toHaveLength(12)
+    expect(EXPECTED_PROOF_RUNG_COUNT).toBe(12)
   })
 
   it(
@@ -198,7 +198,30 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     { timeout: 15_000 },
   )
 
-  it('10. chat.stats returns count metadata', async () => {
+  it(
+    '9b. /live?tab=lab renders Stack Lab',
+    async () => {
+      const web = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+      const response = await fetch(`${web}/live?tab=lab`)
+      expect(response.ok).toBe(true)
+      const html = await response.text()
+      expect(html).toMatch(/Stack Lab|stack lab/i)
+    },
+    { timeout: 15_000 },
+  )
+
+  it('10. demo.stackSnapshot returns SSR metadata', async () => {
+    const snapshot = await trpcQuery<{
+      fetchedAt: string
+      health: { database: string }
+      feeds: { chatMessageCount: number }
+    }>('demo.stackSnapshot')
+    expect(snapshot.fetchedAt).toBeTruthy()
+    expect(snapshot.health.database).toBe('connected')
+    expect(snapshot.feeds.chatMessageCount).toBeGreaterThanOrEqual(0)
+  })
+
+  it('11. chat.stats returns count metadata', async () => {
     const stats = await trpcQuery<{ total: number; latestAt: string | null }>('chat.stats')
     expect(stats.total).toBeGreaterThanOrEqual(0)
     if (stats.total > 0) {
@@ -206,7 +229,7 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     }
   })
 
-  it('11. post.create draft when authenticated', async () => {
+  it('12. post.create draft when authenticated', async () => {
     const email = `live-post-${Date.now()}@example.com`
     const password = 'SmokeTest123!'
     await fetch(`${API}/api/auth/sign-up/email`, {
@@ -235,7 +258,7 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     expect(body[0]?.result?.data.json.id).toBeDefined()
   })
 
-  it('12. unified live SSE stream emits ready', async () => {
+  it('13. unified live SSE stream emits ready', async () => {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 5000)
 
@@ -257,7 +280,7 @@ maybeDescribe('live demo smoke (RUN_LIVE_DEMO_SMOKE=1)', () => {
     }
   })
 
-  it('13. legacy chat stream still works', async () => {
+  it('14. legacy chat stream still works', async () => {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 5000)
 

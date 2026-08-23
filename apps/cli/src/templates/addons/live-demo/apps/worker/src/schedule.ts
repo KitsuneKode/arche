@@ -35,8 +35,3 @@ export async function ensureCleanupSchedule(): Promise<void> {
     },
   })
 }
-
-/** Live-demo registers guest cleanup; minimal template leaves this as a no-op. */
-export async function registerSchedules(): Promise<void> {
-  await ensureCleanupSchedule()
-}

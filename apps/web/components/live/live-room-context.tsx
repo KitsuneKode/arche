@@ -37,6 +37,10 @@ type LiveRoomContextValue = {
 
 const LiveRoomContext = createContext<LiveRoomContextValue | null>(null)
 
+export function useIsInLiveRoom() {
+  return useContext(LiveRoomContext) !== null
+}
+
 export function LiveRoomProvider({ children }: { children: React.ReactNode }) {
   const trpc = useTRPC()
   const queryClient = useQueryClient()
@@ -60,20 +64,43 @@ export function LiveRoomProvider({ children }: { children: React.ReactNode }) {
   const onEvent = useCallback(
     (event: LiveStreamClientEvent) => {
       if (event.type === 'chat:message') {
-        void queryClient.invalidateQueries({ queryKey: trpc.chat.list.queryKey() })
+        const incoming = event.message
+        queryClient.setQueryData(trpc.chat.list.queryKey(), (old) => {
+          const list = old ?? []
+          if (list.some((row) => row.id === incoming.id)) return list
+          const createdAt =
+            incoming.createdAt instanceof Date ? incoming.createdAt : new Date(incoming.createdAt)
+          return [
+            ...list,
+            {
+              id: incoming.id,
+              content: incoming.content,
+              kind: incoming.kind,
+              senderId: incoming.senderId,
+              createdAt,
+              sender: incoming.sender,
+            },
+          ]
+        })
+        return
+      }
+      if (event.type === 'game:leaderboard') {
+        void queryClient.invalidateQueries({ queryKey: trpc.game.leaderboard.queryKey() })
+        void queryClient.invalidateQueries({ queryKey: trpc.game.myBest.queryKey() })
         return
       }
       if (event.type === 'lattice:state') {
         queryClient.setQueryData(trpc.lattice.getState.queryKey(), event.state as LatticeState)
       }
     },
-    [queryClient, trpc.chat.list, trpc.lattice.getState],
+    [queryClient, trpc.chat.list, trpc.game.leaderboard, trpc.game.myBest, trpc.lattice.getState],
   )
 
   const onPollTick = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: trpc.chat.list.queryKey() })
+    void queryClient.invalidateQueries({ queryKey: trpc.game.leaderboard.queryKey() })
     void queryClient.invalidateQueries({ queryKey: trpc.lattice.getState.queryKey() })
-  }, [queryClient, trpc.chat.list, trpc.lattice.getState])
+  }, [queryClient, trpc.chat.list, trpc.game.leaderboard, trpc.lattice.getState])
 
   const handlersRef = useRef({ onEvent, onPollTick })
   handlersRef.current = { onEvent, onPollTick }

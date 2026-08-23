@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",
+    "@kitsunekode/arche": "workspace:*",
     "@types/bun": "catalog:",
     "oxlint": "catalog:",
     "sharp": "^0.34.5"

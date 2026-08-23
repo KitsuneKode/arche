@@ -55,6 +55,13 @@ export function getThemeColors(): ThemeColors {
 const SPRITE_SCALE = 4
 
 function createCanvas(width: number, height: number): HTMLCanvasElement {
+  if (typeof document === 'undefined') {
+    return {
+      width: width * SPRITE_SCALE,
+      height: height * SPRITE_SCALE,
+      getContext: () => null,
+    } as unknown as HTMLCanvasElement
+  }
   const canvas = document.createElement('canvas')
   canvas.width = width * SPRITE_SCALE
   canvas.height = height * SPRITE_SCALE

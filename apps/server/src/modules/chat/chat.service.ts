@@ -1,7 +1,8 @@
-import { toPublicMessage } from '../common/public-dto.js'
-import { SYSTEM_USER_ID } from '../lattice/lattice.deck.js'
-import { emitChatMessage } from './chat.events.js'
-import { chatRepository } from './chat.repository.js'
+import { toPublicMessage } from '../common/public-dto'
+import { SYSTEM_USER_ID } from '../lattice/lattice.deck'
+import { emitChatMessage } from './chat.events'
+import { assertCanSendMessage } from './chat.policy'
+import { chatRepository } from './chat.repository'
 
 export const chatService = {
   async listMessages() {
@@ -14,9 +15,11 @@ export const chatService = {
   },
 
   async sendMessage(senderId: string, content: string) {
+    await assertCanSendMessage(senderId, content)
     const message = await chatRepository.createMessage({ content, senderId, kind: 'user' })
-    emitChatMessage(message.id)
-    return toPublicMessage(message)
+    const publicMessage = toPublicMessage(message)
+    emitChatMessage(publicMessage)
+    return publicMessage
   },
 
   async verifySend(senderId: string, content: string) {
@@ -32,7 +35,8 @@ export const chatService = {
       senderId: SYSTEM_USER_ID,
       kind: 'system',
     })
-    emitChatMessage(message.id)
-    return toPublicMessage(message)
+    const publicMessage = toPublicMessage(message)
+    emitChatMessage(publicMessage)
+    return publicMessage
   },
 }

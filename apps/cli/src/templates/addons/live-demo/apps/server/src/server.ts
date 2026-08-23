@@ -10,8 +10,8 @@ import { validateEnvironment } from '@arche-template/backend-common/validate-env
 import app from './app'
 import { env } from './common/env'
 import { logger } from './common/logger'
-import { prisma } from './db/index.js'
-import { connectRedis, redis } from './db/redis.js'
+import { prisma } from './db/index'
+import { connectRedis, redis } from './db/redis'
 
 function resolveListenPort(): number {
   const raw = process.env.PORT
@@ -84,7 +84,7 @@ async function main(): Promise<void> {
 
   const latticeEngineEnabled = isLatticeRoundEngineEnabled()
   if (latticeEngineEnabled) {
-    const { latticeService } = await import('./modules/lattice/lattice.service.js')
+    const { latticeService } = await import('./modules/lattice/lattice.service')
     void latticeService.tickEngine()
     setInterval(() => {
       void latticeService.tickEngine()

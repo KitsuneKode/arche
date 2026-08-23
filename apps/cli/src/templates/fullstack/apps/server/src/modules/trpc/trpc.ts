@@ -4,7 +4,7 @@ import type * as trpcExpress from '@trpc/server/adapters/express'
 import superjson from 'superjson'
 import { z, ZodError } from 'zod/v4'
 import { logger } from '../../common/logger'
-import { prisma as db } from '../../db/index.js'
+import { prisma as db } from '../../db/index'
 
 export const createTRPCContext = async ({
   req,

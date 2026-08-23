@@ -37,6 +37,15 @@ Template: `src/templates/rust/` (Axum module-first). `rust-fullstack` nests API 
 
 Generator: `generators/solana.ts` (string scaffold). Anchor Counter + solana-config/solana-client workspaces when selected; wallet web page; Expo mobile stub. CI: `renderSolanaCi()`. Doc: `docs/solana-development.md`. Verify: `bun test apps/cli/tests/solana-preset.test.ts`
 
+## Template source of truth
+
+Live dogfood (`apps/*`, `packages/*`) is canonical for runtime code.
+
+- `bun run template:extract` — write fullstack core allowlist + live-demo addon from live
+- `bun run template:extract:check` / `bun run template:sync:check` — fail on drift
+- Dogfood marketing routes stay live-only; addon keeps self-contained live page shells
+- Dual overlays (guest auth, full schema) live in the addon; minimal fixtures stay in `templates/fullstack`
+
 ## When to Update
 
 New options, changed pipeline, or modified generated output. Internal design:

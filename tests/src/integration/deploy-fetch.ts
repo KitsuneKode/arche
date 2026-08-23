@@ -34,7 +34,7 @@ export async function fetchJson<T = unknown>(
     return { status: res.status, body, headers: res.headers }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Timed out after ${timeoutMs}ms: ${url}`)
+      throw new Error(`Timed out after ${timeoutMs}ms: ${url}`, { cause: error })
     }
     throw error
   } finally {

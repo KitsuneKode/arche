@@ -9,8 +9,18 @@ export function resolveLiveFeedMode(): LiveFeedMode {
 }
 
 export type LiveStreamClientEvent =
-  | { type: 'chat:message'; messageId: string }
+  | { type: 'chat:message'; message: ChatMessagePayload }
+  | { type: 'game:leaderboard' }
   | { type: 'lattice:state'; state: unknown }
+
+export type ChatMessagePayload = {
+  id: string
+  content: string
+  kind: string
+  senderId: string
+  createdAt: string | Date
+  sender: { id: string; name: string | null; image: string | null } | null
+}
 
 export type LiveFeedHandle = {
   start: () => void
@@ -44,14 +54,24 @@ function defaultEventSourceFactory(url: string): EventSourceLike {
 function parseClientEvent(type: string, data: string): LiveStreamClientEvent | null {
   try {
     const payload = JSON.parse(data) as Record<string, unknown>
-    if (type === 'chat:message' && typeof payload.messageId === 'string') {
-      return { type: 'chat:message', messageId: payload.messageId }
+    if (type === 'chat:message' && payload.message && typeof payload.message === 'object') {
+      return { type: 'chat:message', message: payload.message as ChatMessagePayload }
+    }
+    if (type === 'game:leaderboard') {
+      return { type: 'game:leaderboard' }
     }
     if (type === 'lattice:state') {
       return { type: 'lattice:state', state: payload }
     }
+    if (type === 'message' && payload.message && typeof payload.message === 'object') {
+      return { type: 'chat:message', message: payload.message as ChatMessagePayload }
+    }
+    // Legacy: messageId-only events still trigger a refetch via onInvalidate
+    if (type === 'chat:message' && typeof payload.messageId === 'string') {
+      return null
+    }
     if (type === 'message' && typeof payload.messageId === 'string') {
-      return { type: 'chat:message', messageId: payload.messageId }
+      return null
     }
   } catch {
     return null
@@ -119,7 +139,7 @@ export function createLiveFeed(options: CreateLiveFeedOptions): LiveFeedHandle {
 
     setMode('sse')
     source = eventSourceFactory(streamUrl)
-    for (const type of ['chat:message', 'lattice:state', 'message'] as const) {
+    for (const type of ['chat:message', 'game:leaderboard', 'lattice:state', 'message'] as const) {
       bindEvent(type)
     }
     source.addEventListener('heartbeat', () => {

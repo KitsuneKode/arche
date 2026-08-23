@@ -1,19 +1,22 @@
 {
   "extends": "@arche-template/typescript-config/nextjs.json",
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@arche-template/ui/*": ["../../packages/ui/src/*"]
+      "@arche-template/ui/*": ["../../packages/ui/src/*"],
+      "@arche-template/store/*": ["../../packages/store/src/*"],
+      "@arche-template/auth/*": ["../../packages/auth/src/*"],
+      "@arche-template/trpc/*": ["../../packages/trpc/src/*"],
+      "@arche-template/common/*": ["../../packages/common/src/*"]
     },
-    "ignoreDeprecations": "6.0"
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": ["node_modules"]
+  "include": ["**/*.ts", "**/*.tsx", "next-env.d.ts", "next.config.js", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx"]
 }

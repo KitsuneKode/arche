@@ -38,8 +38,10 @@ function setupCanvasResolution(
 ): CanvasRenderingContext2D | null {
   const dprCap = isFullscreen ? 3 : 2
   const dpr = Math.min(window.devicePixelRatio || 1, dprCap)
-  const physicalWidth = Math.round(playAreaSize.width * dpr)
-  const physicalHeight = Math.round(playAreaSize.height * dpr)
+  const clientW = canvas.clientWidth || Math.max(1, playAreaSize.width - 12)
+  const clientH = canvas.clientHeight || Math.max(1, playAreaSize.height - 12)
+  const physicalWidth = Math.round(clientW * dpr)
+  const physicalHeight = Math.round(clientH * dpr)
 
   canvas.width = physicalWidth
   canvas.height = physicalHeight
@@ -50,7 +52,8 @@ function setupCanvasResolution(
   const scaleX = physicalWidth / gameWidth
   const scaleY = physicalHeight / GAME_HEIGHT
   ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0)
-  ctx.imageSmoothingEnabled = false
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
 
   return ctx
 }
@@ -160,6 +163,7 @@ export function RelayRunGame({
   const playAreaRef = useRef<HTMLDivElement>(null)
   const stateRef = useRef<GameState>(createInitialState())
   const rafRef = useRef<number | null>(null)
+  const loopRef = useRef<(timestamp: number) => void>(() => {})
   const lastFrameRef = useRef<number | null>(null)
   const spritesRef = useRef<ReturnType<typeof createThemedSprites> | null>(null)
   const submittedDeathRef = useRef<number | null>(null)
@@ -282,10 +286,11 @@ export function RelayRunGame({
         }
       }
 
-      rafRef.current = requestAnimationFrame(loop)
+      rafRef.current = requestAnimationFrame((t) => loopRef.current(t))
     },
     [render, offline, stopLoop, syncLiveScore],
   )
+  loopRef.current = loop
 
   const startLoop = useCallback(() => {
     if (manualPausedRef.current || relayChatOpenRef.current) return
@@ -690,8 +695,6 @@ export function RelayRunGame({
       cancelled = true
     }
   }, [
-    apiReachable,
-    browserOnline,
     offline,
     queryClient,
     signedIn,

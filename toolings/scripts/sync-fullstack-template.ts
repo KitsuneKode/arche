@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 /**
- * Verify the fullstack scaffold template stays minimal and the live-demo addon stays complete.
- * Does not sync dogfood marketing — only checks owned scaffold paths.
+ * Verify fullstack template stays minimal and live-demo addon stays complete.
+ * With --extract / default write path via template:extract — see extract-fullstack-template.ts.
  */
 import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { extractTemplates } from './extract-fullstack-template'
 
 const ROOT = resolve(import.meta.dir, '../..')
 const TEMPLATE = join(ROOT, 'apps/cli/src/templates/fullstack')
@@ -93,6 +94,13 @@ function checkTemplateInvariants(): string[] {
     errors.push('template: worker cleanup must not depend on guest auth')
   }
 
+  const webPkg = readIfExists(join(TEMPLATE, 'apps/web/package.json'))
+  if (webPkg?.includes('"@arche-template/server"')) {
+    errors.push(
+      'template: apps/web must not depend on @arche-template/server (use @arche-template/trpc)',
+    )
+  }
+
   return errors
 }
 
@@ -146,12 +154,23 @@ function checkPaths(label: string, base: string, paths: string[], shouldExist: b
 }
 
 const check = process.argv.includes('--check')
+const skipExtract = process.argv.includes('--ownership-only')
+
 const errors = [
   ...checkPaths('template', TEMPLATE, TEMPLATE_MUST_NOT_HAVE, false),
   ...checkPaths('addon', ADDON, ADDON_MUST_HAVE, true),
   ...checkTemplateInvariants(),
   ...checkAddonInvariants(),
 ]
+
+if (!skipExtract && check) {
+  const extract = extractTemplates({ check: true })
+  errors.push(
+    ...extract.addonDrift.map((p) => `extract addon drift: ${p}`),
+    ...extract.coreDrift.map((p) => `extract core drift: ${p}`),
+    ...extract.skippedMissing.filter((s) => s.startsWith('addon-only-missing:')).map((s) => s),
+  )
+}
 
 if (errors.length > 0) {
   console.error('template sync check failed:\n' + errors.map((e) => `  - ${e}`).join('\n'))
@@ -161,5 +180,5 @@ if (errors.length > 0) {
 if (check) {
   console.log('template sync: fullstack minimal + live-demo addon OK')
 } else {
-  console.log('template sync: nothing to write (check-only script)')
+  console.log('template sync: nothing to write (use `bun run template:extract`)')
 }

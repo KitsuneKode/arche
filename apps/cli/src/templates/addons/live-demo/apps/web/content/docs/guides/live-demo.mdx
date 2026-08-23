@@ -5,25 +5,44 @@ description: What /live proves, how to run it locally, and how to harden before 
 
 The **Live demo** route (`/live`) is a bounded sandbox on arche.dev and in generated fullstack scaffolds. It runs real checks against your API—health, tRPC, Prisma reads, session probes, **Relay Run** mini-game scores, live chat, posts, and optional challenges—not illustrative snippets.
 
+The page is **RSC-first**: the server prefetches public demo queries, renders an SSR snapshot strip, and hydrates client islands for the game, Stack Lab, and room chat.
+
+## Tabs
+
+| Tab | Role |
+| --- | ---- |
+| **Play** | Relay Run canvas game + built-in leaderboard / stats panels |
+| **Stack Lab** | Six guided mini-projects (Web RSC, API health, tRPC hello, Prisma posts, Auth gate, Realtime SSE) |
+| **Room** | Live chat, seeded posts, and sign-in |
+
+Share a tab with `?tab=lab` or `?tab=room` (`play` is the default).
+
 ## Relay Run
 
-The center column is a **Flappy-style** canvas game with a persisted **leaderboard** (`game.submitScore` / `game.leaderboard`). Guests can play locally; signed-in users save high scores to the database.
+The **Play** tab is a **Flappy-style** canvas game with a persisted **leaderboard** (`game.submitScore` / `game.leaderboard`). Guests can play locally; signed-in users save high scores to the database.
 
-| Column        | Role                                         |
-| ------------- | -------------------------------------------- |
-| Proof ladder  | Personal rung checks (localStorage progress) |
-| Relay Run     | Canvas game + top-10 leaderboard strip       |
-| #relay popup  | FAB opens room chat (SSE-backed feed)        |
+| Surface | Role |
+| ------- | ---- |
+| Proof ladder | Personal rung checks (localStorage progress) |
+| Stack Lab | Educational mini-projects with live JSON results |
+| #relay popup | FAB opens room chat (SSE-backed feed) |
 
-Realtime uses **one** `GET /api/live/stream` connection (SSE) for chat invalidation. Polling is fallback only when the stream drops.
+Realtime uses **one** `GET /api/live/stream` connection (SSE) for chat and leaderboard ticks. Polling is fallback only when the stream drops.
 
 **Relay Lattice** (5×5 clash grid) is deprecated on `/live`. The round engine is opt-in via `LATTICE_ROUND_ENGINE=true` on a single API host if you still need lattice APIs for backwards compatibility.
 
-## Footer drawer
+## Stack Lab
 
-**Posts** and **You** (sign-in) live in a collapsible footer row so the game stays focal.
+Stack Lab demonstrates each layer with **Try it** controls:
 
-## What it proves
+- **Web · RSC** — `demo.stackSnapshot` via in-process `trpcCaller` on the server
+- **API** — `probeHealth` server action (`GET /health` from the Next server)
+- **tRPC** — `probeHello` server action (no HTTP loopback)
+- **Prisma** — hydrated `post.list`
+- **Auth** — `auth.getSession` + `auth.getSecretMessage`
+- **Realtime** — links to the Room tab and documents SSE vs poll
+
+## What the proof ladder verifies
 
 | Rung               | Layer   | Check                                 |
 | ------------------ | ------- | ------------------------------------- |
@@ -36,7 +55,7 @@ Realtime uses **one** `GET /api/live/stream` connection (SSE) for chat invalidat
 | Relay read         | Chat    | `chat.list` returns messages          |
 | Game board         | Game    | `game.leaderboard` (public read)      |
 | Relay write        | Chat    | `chat.verifySend` (silent, no feed)   |
-| Game score         | Game    | `game.submitScore` after sign-in      |
+| Game score         | Game    | `game.verifyScore` after sign-in      |
 | Secret             | Auth    | `auth.getSecretMessage` after sign-in |
 | Challenge: arche   | Chat    | User message containing `arche`       |
 | Challenge: post    | Posts   | `post.create` draft after sign-in     |
@@ -62,7 +81,7 @@ bun run db:migrate
 bun run db:seed
 ```
 
-Open [http://localhost:3000/live](http://localhost:3000/live). Use the **You** tab to sign in and unlock write access and challenges. Open **#relay** (bottom-right) to chat.
+Open [http://localhost:3000/live](http://localhost:3000/live). Use the **Room** tab → **You** to sign in. Try **Stack Lab** at `/live?tab=lab`. Open **#relay** (bottom-right) to chat from any tab.
 
 Generated scaffolds include the same module under `apps/web/app/live/` with CSS-only styling (no Tailwind required).
 

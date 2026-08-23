@@ -14,7 +14,6 @@
   "dependencies": {
     "@arche-template/auth": "workspace:*",
     "@arche-template/common": "workspace:*",
-    "@arche-template/server": "workspace:*",
     "@arche-template/store": "workspace:*",
     "@arche-template/trpc": "workspace:*",
     "@tanstack/react-query": "^5.101.1",

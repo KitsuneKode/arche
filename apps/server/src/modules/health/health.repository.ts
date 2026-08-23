@@ -1,4 +1,4 @@
-import { prisma } from '../../db/index.js'
+import { prisma } from '../../db/index'
 
 type SchemaColumnRow = { exists: boolean }
 

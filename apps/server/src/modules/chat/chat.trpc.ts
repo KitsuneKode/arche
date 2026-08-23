@@ -1,5 +1,5 @@
 import type { TRPCRouterRecord } from '@trpc/server'
-import { protectedProcedure, publicProcedure } from '../trpc/trpc.js'
+import { protectedProcedure, publicProcedure } from '../trpc/trpc'
 import { sendMessageSchema } from './chat.dto'
 import { chatService } from './chat.service'
 

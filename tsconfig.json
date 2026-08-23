@@ -1,1 +1,3 @@
-{ "extends": "@arche-template/typescript-config/base.json" }
+{
+  "extends": "./toolings/typescript-config/base.json"
+}

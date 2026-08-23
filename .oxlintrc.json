@@ -21,6 +21,12 @@
     "prefer-tag-over-role": "warn",
     "label-has-associated-control": "warn",
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn"
+    "react-hooks/exhaustive-deps": "warn",
+    "react/refs": "off",
+    "react/set-state-in-effect": "off",
+    "react/exhaustive-effect-dependencies": "warn",
+    "react/memo-dependencies": "warn",
+    "react/immutability": "warn",
+    "react/purity": "off"
   }
 }

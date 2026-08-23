@@ -1,7 +1,53 @@
-import { readFile, rm, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { existsSync } from 'node:fs'
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { LIVE_DEMO_MANIFEST } from './manifests'
 import type { CapabilityManifest } from './types'
+
+const isBundled =
+  typeof __dirname !== 'undefined' && (__dirname.includes('/dist') || !__dirname.includes('/src/'))
+
+function resolveFullstackTemplateRoot(): string {
+  const packageDir = resolve(
+    typeof __dirname !== 'undefined' ? __dirname : dirname(fileURLToPath(import.meta.url)),
+    isBundled ? '..' : '../..',
+  )
+  const candidates = [
+    resolve(
+      typeof __dirname !== 'undefined' ? __dirname : dirname(fileURLToPath(import.meta.url)),
+      '../../templates/fullstack',
+    ),
+    join(packageDir, 'src', 'templates', 'fullstack'),
+  ]
+  for (const dir of candidates) {
+    if (existsSync(dir)) return dir
+  }
+  throw new Error('Missing fullstack template at src/templates/fullstack')
+}
+
+/**
+ * Dual overlay files restored from the minimal fullstack template when live-demo
+ * is removed. Must stay in sync with LIVE_DEMO_OVERLAY_PATHS (minus addon-only fragments).
+ */
+const MINIMAL_OVERLAY_PATHS = [
+  'packages/auth/package.json',
+  'packages/auth/src/index.ts',
+  'packages/auth/src/client.ts',
+  'packages/backend-common/src/env.ts',
+  'packages/store/prisma/schema.prisma',
+  'packages/store/src/scripts/seed.ts',
+  'apps/server/src/server.ts',
+  'apps/server/src/common/middleware/rate-limit.ts',
+  'apps/server/src/modules/common/public-dto.ts',
+  'apps/server/src/modules/trpc/app.router.ts',
+  'apps/server/src/app.ts',
+  'apps/server/src/modules/auth/auth.routes.ts',
+  'apps/worker/src/index.ts',
+  'apps/worker/src/schedule.ts',
+  'apps/worker/src/jobs/cleanup.ts',
+  'apps/web/tsconfig.json',
+] as const
 
 async function pathExists(filePath: string): Promise<boolean> {
   try {
@@ -60,423 +106,79 @@ async function patchNextConfigPlayRedirect(destinationDir: string): Promise<stri
   return null
 }
 
-async function patchAppRouterForLiveDemoRemoval(
-  destinationDir: string,
-  serverDir = 'apps/server',
-): Promise<string[]> {
-  const patched: string[] = []
-  const appRouterPath = join(destinationDir, serverDir, 'src/modules/trpc/app.router.ts')
-  try {
-    let content = await readFile(appRouterPath, 'utf8')
-    const next = content
-      .replace(/import { chatRouter } from '\.\.\/chat\/chat\.trpc'\n/, '')
-      .replace(/import { demoRouter } from '\.\.\/demo\/demo\.trpc'\n/, '')
-      .replace(/import { gameRouter } from '\.\.\/game\/game\.trpc'\n/, '')
-      .replace(/import { latticeRouter } from '\.\.\/lattice\/lattice\.trpc'\n/, '')
-      .replace(/\n  chat: chatRouter,/, '')
-      .replace(/\n  game: gameRouter,/, '')
-      .replace(/\n  lattice: latticeRouter,/, '')
-      .replace(/\n  demo: demoRouter,/, '')
-    if (next !== content) {
-      await writeFile(appRouterPath, next)
-      patched.push(`${serverDir}/src/modules/trpc/app.router.ts`)
-    }
-  } catch {
-    // router not present
-  }
-  return patched
-}
-
-async function patchExpressAppForLiveDemoRemoval(
-  destinationDir: string,
-  serverDir = 'apps/server',
-): Promise<string[]> {
-  const patched: string[] = []
-  const appPath = join(destinationDir, serverDir, 'src/app.ts')
-  try {
-    let content = await readFile(appPath, 'utf8')
-    const next = content
-      .replace(/import { chatRoutes } from '\.\/modules\/chat\/chat\.routes'\n/, '')
-      .replace(/import { liveRoutes } from '\.\/modules\/live\/live\.routes'\n/, '')
-      .replace(/\napp\.use\('\/api\/chat', chatRoutes\)/, '')
-      .replace(/\napp\.use\('\/api\/live', liveRoutes\)/, '')
-    if (next !== content) {
-      await writeFile(appPath, next)
-      patched.push(`${serverDir}/src/app.ts`)
-    }
-  } catch {
-    // app not present
-  }
-  return patched
-}
-
-async function patchAuthRoutesForLiveDemoRemoval(
-  destinationDir: string,
-  serverDir = 'apps/server',
-): Promise<string[]> {
-  const patched: string[] = []
-  const authRoutesPath = join(destinationDir, serverDir, 'src/modules/auth/auth.routes.ts')
-  try {
-    let content = await readFile(authRoutesPath, 'utf8')
-    const next = content
-      .replace(
-        /import \{ anonymousSignInRateLimit \} from '\.\.\/\.\.\/common\/middleware\/rate-limit'\n/,
-        '',
-      )
-      .replace(/\nauthRouter\.post\('\/sign-in\/anonymous'[\s\S]*?\n\)/, '')
-      .replace(/\n  anonymousSignInRateLimit,/, '')
-    if (next !== content) {
-      await writeFile(authRoutesPath, next)
-      patched.push(`${serverDir}/src/modules/auth/auth.routes.ts`)
-    }
-  } catch {
-    // auth routes not present
-  }
-  return patched
-}
-
-async function patchCoreAuthPackage(destinationDir: string): Promise<string[]> {
-  const patched: string[] = []
-  const authIndex = join(destinationDir, 'packages/auth/src/index.ts')
-  const authClient = join(destinationDir, 'packages/auth/src/client.ts')
-  const coreAuthIndex = `import { prisma } from '@arche-template/store'
-import { betterAuth } from 'better-auth'
-export { fromNodeHeaders, toNodeHandler } from 'better-auth/node'
-import { prismaAdapter } from 'better-auth/adapters/prisma'
-
-export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: 'postgresql',
-  }),
-  trustedOrigins: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [],
-  emailAndPassword: {
-    enabled: true,
-    autoSignIn: process.env.NODE_ENV !== 'production',
-  },
-  socialProviders: {
-    //   github: {
-    //     clientId: process.env.GITHUB_CLIENT_ID as string,
-    //     clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-    //   },
-    //   google: {
-    //     clientId: process.env.GOOGLE_CLIENT_ID as string,
-    //     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-    //   },
-  },
-})
-`
-  const coreAuthClient = `import { createAuthClient } from 'better-auth/react'
-
-export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
-})
-
-export const { signIn, signUp, signOut, useSession } = authClient
-`
-  try {
-    await writeFile(authIndex, coreAuthIndex)
-    patched.push('packages/auth/src/index.ts')
-  } catch {
-    // auth package not present
-  }
-  try {
-    await writeFile(authClient, coreAuthClient)
-    patched.push('packages/auth/src/client.ts')
-  } catch {
-    // client not present
-  }
-  return patched
-}
-
-async function patchCorePrismaSchema(destinationDir: string): Promise<string[]> {
-  const schemaPath = join(destinationDir, 'packages/store/prisma/schema.prisma')
-  const coreSchema = `// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client"
-  output   = "../src/generated"
-}
-
-datasource db {
-  provider = "postgresql"
-}
-
-model User {
-  id            String    @id
-  name          String
-  email         String    @unique
-  emailVerified Boolean
-  image         String?
-  createdAt     DateTime
-  updatedAt     DateTime
-  sessions      Session[]
-  accounts      Account[]
-  posts         Post[]
-
-  @@map("user")
-}
-
-model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime
-  updatedAt DateTime
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([token])
-  @@map("session")
-}
-
-model Account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime
-  updatedAt             DateTime
-
-  @@map("account")
-}
-
-model Verification {
-  id         String    @id
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
-
-  @@map("verification")
-}
-
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  slug      String   @unique
-  published Boolean  @default(false)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("post")
-}
-`
-  try {
-    await writeFile(schemaPath, coreSchema)
-    return ['packages/store/prisma/schema.prisma']
-  } catch {
-    return []
-  }
-}
-
-async function patchWorkerScheduleForLiveDemoRemoval(destinationDir: string): Promise<string[]> {
-  const schedulePath = join(destinationDir, 'apps/worker/src/schedule.ts')
-  const indexPath = join(destinationDir, 'apps/worker/src/index.ts')
-  const cleanupPath = join(destinationDir, 'apps/worker/src/jobs/cleanup.ts')
-  const patched: string[] = []
-  try {
-    const content = await readFile(schedulePath, 'utf8')
-    if (!content.includes('stale-anonymous-users')) return []
-    const next = `/** Repeatable jobs — add schedules when background work is needed. */
-export async function registerSchedules(): Promise<void> {
-  // No default schedules. Add repeatable BullMQ jobs here when needed.
-}
-`
-    await writeFile(schedulePath, next)
-    patched.push('apps/worker/src/schedule.ts')
-  } catch {
-    // schedule not present
-  }
-
-  try {
-    const cleanup = `import type { Job } from 'bullmq'
-import { logger } from '../utils/logger'
-
-export type CleanupJobData = {
-  task?: string
-}
-
-/** Default cleanup handler — extend when you add retention or housekeeping jobs. */
-export async function runCleanup(job: Job<CleanupJobData>): Promise<void> {
-  logger.info('Cleanup job received (no default tasks configured)', {
-    payload: { jobId: job.id, task: job.data.task ?? 'none' },
-  })
-}
-`
-    await writeFile(cleanupPath, cleanup)
-    patched.push('apps/worker/src/jobs/cleanup.ts')
-  } catch {
-    // cleanup job not present
-  }
-
-  try {
-    const indexContent = await readFile(indexPath, 'utf8')
-    const nextIndex = indexContent
-      .replace(
-        /logger\.error\('Failed to schedule cleanup jobs'/,
-        "logger.error('Failed to register worker schedules'",
-      )
-      .replace(/ensureCleanupSchedule/g, 'registerSchedules')
-    if (nextIndex !== indexContent) {
-      await writeFile(indexPath, nextIndex)
-      patched.push('apps/worker/src/index.ts')
-    }
-  } catch {
-    // worker entry not present
-  }
-
-  return patched
-}
-
-async function patchServerLatticeRemoval(
-  destinationDir: string,
-  serverDir = 'apps/server',
-): Promise<string[]> {
-  const serverPath = join(destinationDir, serverDir, 'src/server.ts')
-  try {
-    let content = await readFile(serverPath, 'utf8')
-    if (!content.includes('LATTICE_ROUND_ENGINE')) return []
-    const next = content
-      .replace(
-        /\nfunction isLatticeRoundEngineEnabled\(\): boolean \{\n  return process\.env\.LATTICE_ROUND_ENGINE\?\.trim\(\) === 'true'\n\}\n/,
-        '\n',
-      )
-      .replace(
-        /\n  const latticeEngineEnabled[\s\S]*?logger\.info\('Relay Lattice round engine started'\)\n  \}/,
-        '',
-      )
-    if (next !== content) {
-      await writeFile(serverPath, next)
-      return [`${serverDir}/src/server.ts`]
-    }
-  } catch {
-    // server bootstrap not present
-  }
-  return []
-}
-
-async function patchRateLimitForLiveDemoRemoval(
-  destinationDir: string,
-  serverDir = 'apps/server',
-): Promise<string[]> {
-  const rateLimitPath = join(destinationDir, serverDir, 'src/common/middleware/rate-limit.ts')
-  try {
-    const content = await readFile(rateLimitPath, 'utf8')
-    if (!content.includes('anonymousSignInRateLimit') && !content.includes('chatStreamRateLimit')) {
-      return []
-    }
-    const next = content
-      .replace(
-        /\n\/\*\* Stricter cap for anonymous session creation[\s\S]*?message: \{ error: 'Too many guest sessions\. Please try again later\.' \},\n\}\)\n/,
-        '\n',
-      )
-      .replace(
-        /\nexport const chatStreamRateLimit[\s\S]*?export const liveStreamRateLimit = chatStreamRateLimit\n?/,
-        '\n',
-      )
-    if (next !== content) {
-      await writeFile(rateLimitPath, next)
-      return [`${serverDir}/src/common/middleware/rate-limit.ts`]
-    }
-  } catch {
-    // rate limit not present
-  }
-  return []
-}
-
-async function patchPublicDtoForLiveDemoRemoval(
-  destinationDir: string,
-  serverDir = 'apps/server',
-): Promise<string[]> {
-  const publicDtoPath = join(destinationDir, serverDir, 'src/modules/common/public-dto.ts')
-  const corePublicDto = `type PublicUserShape = {
-  id: string
-  name: string | null
-  image: string | null
-}
-
-type UserWithOptionalFields = {
-  id: string
-  name: string | null
-  image: string | null
-  email?: string | null
-  emailVerified?: boolean | null
-}
-
-export function toPublicUser(user: UserWithOptionalFields | null): PublicUserShape | null {
-  if (!user) return null
-  const trimmed = user.name?.trim()
-  return { id: user.id, name: trimmed || 'User', image: user.image }
-}
-`
-  try {
-    const content = await readFile(publicDtoPath, 'utf8')
-    if (!content.includes('toPublicMessage') && !content.includes('isAnonymous')) return []
-    await writeFile(publicDtoPath, corePublicDto)
-    return [`${serverDir}/src/modules/common/public-dto.ts`]
-  } catch {
-    return []
-  }
-}
-
-async function patchEnvForLiveDemoRemoval(destinationDir: string): Promise<string[]> {
-  const envPath = join(destinationDir, 'packages/backend-common/src/env.ts')
-  try {
-    let content = await readFile(envPath, 'utf8')
-    if (!content.includes('DEMO_AUTO_SIGN_IN')) return []
-    const next = content
-      .replace(
-        /\n    \/\/ Marketing \/live demo:[\s\S]*?\n    DEMO_AUTO_SIGN_IN: envBooleanSchema\(false\)\.default\(false\),\n/,
-        '\n',
-      )
-      .replace(/\n    DEMO_AUTO_SIGN_IN: envBooleanSchema\(false\)\.default\(false\),\n/, '\n')
-    if (next !== content) {
-      await writeFile(envPath, next)
-      return ['packages/backend-common/src/env.ts']
-    }
-  } catch {
-    // env not present
-  }
-  return []
-}
-
 async function patchEnvExampleForLiveDemoRemoval(
   destinationDir: string,
   serverDir = 'apps/server',
 ): Promise<string[]> {
-  const envExamplePath = join(destinationDir, serverDir, '.env.example')
-  try {
-    let content = await readFile(envExamplePath, 'utf8')
-    const original = content
-    for (const key of LIVE_DEMO_MANIFEST.removeEnvKeys ?? []) {
-      content = content.replace(new RegExp(`\\n#.*${key}[\\s\\S]*?\\n${key}=.*\\n`, 'm'), '\n')
-      content = content.replace(new RegExp(`\\n${key}=.*\\n`, 'g'), '\n')
-      content = content.replace(new RegExp(`\\n#.*${key}[\\s\\S]*?\\n#${key}=.*\\n`, 'm'), '\n')
+  const patched: string[] = []
+  for (const relative of [
+    `${serverDir}/.env.example`,
+    'packages/backend-common/.env.example',
+    '.env.example',
+  ]) {
+    const fullPath = join(destinationDir, relative)
+    try {
+      const content = await readFile(fullPath, 'utf8')
+      const next = content
+        .replace(/^DEMO_AUTO_SIGN_IN=.*\n?/gm, '')
+        .replace(/^NEXT_PUBLIC_ENABLE_CHAT_SSE=.*\n?/gm, '')
+        .replace(/^LATTICE_ROUND_ENGINE=.*\n?/gm, '')
+      if (next !== content) {
+        await writeFile(fullPath, next)
+        patched.push(relative)
+      }
+    } catch {
+      // optional
     }
-    content = content.replace(/\n# Relay Lattice:[\s\S]*?\n#LATTICE_ROUND_ENGINE=false\n?/, '\n')
-    if (content !== original) {
-      await writeFile(envExamplePath, content)
-      return [`${serverDir}/.env.example`]
-    }
-  } catch {
-    // env example not present
   }
-  return []
+  return patched
+}
+
+/**
+ * Restore minimal dual-overlay files from the shipped fullstack template.
+ * Skips auth/schema when the destination already uses Drizzle.
+ */
+async function restoreMinimalOverlays(destinationDir: string): Promise<string[]> {
+  const templateRoot = resolveFullstackTemplateRoot()
+  const restored: string[] = []
+
+  let skipAuth = false
+  let skipPrismaSchema = false
+  try {
+    const authContent = await readFile(join(destinationDir, 'packages/auth/src/index.ts'), 'utf8')
+    skipAuth = authContent.includes('drizzleAdapter')
+  } catch {
+    // auth missing
+  }
+  try {
+    const schemaContent = await readFile(
+      join(destinationDir, 'packages/store/prisma/schema.prisma'),
+      'utf8',
+    )
+    // If there is no prisma schema (drizzle-only), skip
+    skipPrismaSchema = false
+    void schemaContent
+  } catch {
+    skipPrismaSchema = true
+  }
+
+  for (const relative of MINIMAL_OVERLAY_PATHS) {
+    if (skipAuth && relative.startsWith('packages/auth/')) continue
+    if (skipPrismaSchema && relative === 'packages/store/prisma/schema.prisma') continue
+
+    const source = join(templateRoot, relative)
+    if (!existsSync(source)) continue
+    const dest = join(destinationDir, relative)
+    if (!(await pathExists(dirname(dest))) && !(await pathExists(dirname(dirname(dest))))) {
+      // only restore when the parent package/app already exists in the scaffold
+      const top = relative.split('/').slice(0, 2).join('/')
+      if (!(await pathExists(join(destinationDir, top)))) continue
+    }
+    await mkdir(dirname(dest), { recursive: true })
+    await cp(source, dest, { recursive: true, force: true })
+    restored.push(relative)
+  }
+  return restored
 }
 
 /** Content-driven live-demo patches shared by scaffold cleanup and alternate backends. */
@@ -489,45 +191,8 @@ export async function applyLiveDemoContentPatches(
   if (homepagePatch) patched.push(homepagePatch)
   const redirectPatch = await patchNextConfigPlayRedirect(destinationDir)
   if (redirectPatch) patched.push(redirectPatch)
-  patched.push(...(await patchAppRouterForLiveDemoRemoval(destinationDir, serverDir)))
-  patched.push(...(await patchExpressAppForLiveDemoRemoval(destinationDir, serverDir)))
-  patched.push(...(await patchAuthRoutesForLiveDemoRemoval(destinationDir, serverDir)))
-  patched.push(...(await patchServerLatticeRemoval(destinationDir, serverDir)))
-  patched.push(...(await patchRateLimitForLiveDemoRemoval(destinationDir, serverDir)))
-  patched.push(...(await patchPublicDtoForLiveDemoRemoval(destinationDir, serverDir)))
-  patched.push(...(await patchEnvForLiveDemoRemoval(destinationDir)))
   patched.push(...(await patchEnvExampleForLiveDemoRemoval(destinationDir, serverDir)))
-  patched.push(...(await patchWorkerScheduleForLiveDemoRemoval(destinationDir)))
-
-  const authIndexPath = join(destinationDir, 'packages/auth/src/index.ts')
-  try {
-    const authContent = await readFile(authIndexPath, 'utf8')
-    const hasGuestAuth =
-      authContent.includes('anonymous(') ||
-      authContent.includes('migrateGuestData') ||
-      authContent.includes('deleteStaleAnonymousUsers')
-    const usesDrizzle = authContent.includes('drizzleAdapter')
-    if (hasGuestAuth && !usesDrizzle) {
-      patched.push(...(await patchCoreAuthPackage(destinationDir)))
-    }
-  } catch {
-    // auth package not present
-  }
-
-  const schemaPath = join(destinationDir, 'packages/store/prisma/schema.prisma')
-  try {
-    const schemaContent = await readFile(schemaPath, 'utf8')
-    const hasLiveDemoModels =
-      schemaContent.includes('model Message') ||
-      schemaContent.includes('model LatticeCell') ||
-      schemaContent.includes('isAnonymous')
-    if (hasLiveDemoModels) {
-      patched.push(...(await patchCorePrismaSchema(destinationDir)))
-    }
-  } catch {
-    // schema not present
-  }
-
+  patched.push(...(await restoreMinimalOverlays(destinationDir)))
   return patched
 }
 

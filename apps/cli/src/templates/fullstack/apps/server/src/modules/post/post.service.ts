@@ -1,4 +1,4 @@
-import { toPublicUser } from '../common/public-dto.js'
+import { toPublicUser } from '../common/public-dto'
 import { postPolicy } from './post.policy'
 import { postRepository } from './post.repository'
 

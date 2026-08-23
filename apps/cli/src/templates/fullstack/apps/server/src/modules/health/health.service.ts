@@ -1,12 +1,26 @@
 import { healthRepository } from './health.repository'
 
+export type HealthCheckResult =
+  | { status: 'OK'; database: 'connected'; schema: 'ready' }
+  | { status: 'OK'; database: 'connected'; schema: 'pending' }
+  | { status: 'ERROR'; database: 'disconnected'; schema: 'unknown' }
+
 export const healthService = {
-  async check() {
+  async check(): Promise<HealthCheckResult> {
     try {
       await healthRepository.pingDatabase()
-      return { status: 'OK' as const, database: 'connected' as const }
     } catch {
-      return { status: 'ERROR' as const, database: 'disconnected' as const }
+      return { status: 'ERROR', database: 'disconnected', schema: 'unknown' }
+    }
+
+    try {
+      const schemaReady = await healthRepository.isLiveDemoSchemaReady()
+      if (!schemaReady) {
+        return { status: 'OK', database: 'connected', schema: 'pending' }
+      }
+      return { status: 'OK', database: 'connected', schema: 'ready' }
+    } catch {
+      return { status: 'OK', database: 'connected', schema: 'pending' }
     }
   },
 }

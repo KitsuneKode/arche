@@ -1,4 +1,4 @@
-import { prisma } from '../../db/index.js'
+import { prisma } from '../../db/index'
 
 export function buildPublicFeedWhere() {
   return {
@@ -11,13 +11,40 @@ export function buildPublicFeedWhere() {
   }
 }
 
+const PUBLIC_FEED_LIMIT = 100
+
 export const chatRepository = {
   findRecentMessages() {
     return prisma.message.findMany({
       where: buildPublicFeedWhere(),
       orderBy: { createdAt: 'asc' },
-      take: 50,
+      take: PUBLIC_FEED_LIMIT,
       include: { sender: true },
+    })
+  },
+
+  findById(id: string) {
+    return prisma.message.findFirst({
+      where: { id, ...buildPublicFeedWhere() },
+      include: { sender: true },
+    })
+  },
+
+  countRecentBySender(senderId: string, since: Date) {
+    return prisma.message.count({
+      where: {
+        senderId,
+        kind: 'user',
+        createdAt: { gte: since },
+      },
+    })
+  },
+
+  findLatestBySender(senderId: string) {
+    return prisma.message.findFirst({
+      where: { senderId, kind: 'user' },
+      orderBy: { createdAt: 'desc' },
+      select: { content: true, createdAt: true },
     })
   },
 

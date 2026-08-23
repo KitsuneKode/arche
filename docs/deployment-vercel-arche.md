@@ -111,6 +111,15 @@ NEXT_PUBLIC_API_URL=https://api.arche.kitsunelabs.xyz
 
 `FRONTEND_URL` must match the **exact** public web origin. If it still points at an old host (for example `https://stack.kitsunelabs.xyz` while the site is `https://arche.kitsunelabs.xyz`), browser calls to `/health`, auth, and tRPC fail CORS — the proof ladder shows "Network error" even when server-side smoke tests pass.
 
+### Anonymous guest identity on `/live`
+
+Guest chat and scores bind to a Better Auth **anonymous** user id stored in a session cookie. Two misconfigurations make it look like messages “don’t persist” or you get a **new** `Guest · …` name every visit:
+
+1. **Cross-origin API without the proxy** — `NEXT_PUBLIC_API_URL` points at `api.…` while the site is `arche.…`. The session cookie is set on the API host; some browsers drop or partition it between visits. **Fix:** use the same-origin proxy (`API_UPSTREAM_URL` + `NEXT_PUBLIC_API_URL` = web origin) and set `BETTER_AUTH_URL` on the API project to the **web** origin.
+2. **Lazy guest sign-in** — anonymous sessions were only created on first send/score. If the cookie was missing, each action minted a new user; old messages stayed in the room under the previous id (shown as `Guest · …`, not “You”). The live demo now bootstraps a guest session on page load when the API is reachable.
+
+Anonymous users older than 7 days may be deleted by the worker cleanup job; their messages are removed (`ON DELETE CASCADE`).
+
 ## Deployment protection
 
 `arche-api` may return **401** when Vercel Deployment Protection is on. For smoke tests, add `VERCEL_PROTECTION_BYPASS` or disable protection on the API project. See [deploy-smoke.md](./deploy-smoke.md).

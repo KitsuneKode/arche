@@ -82,12 +82,12 @@ export function ProofLadder({
   const signedIn = signedInProp ?? Boolean(sessionQuery.data?.user)
   const userId = userIdProp ?? sessionQuery.data?.user?.id
   const verifySendMutation = useMutation(trpc.chat.verifySend.mutationOptions())
-  const submitScoreMutation = useMutation(trpc.game.submitScore.mutationOptions())
+  const verifyScoreMutation = useMutation(trpc.game.verifyScore.mutationOptions())
   const createPostMutation = useMutation(trpc.post.create.mutationOptions())
   const verifySendRef = useRef(verifySendMutation.mutateAsync)
   verifySendRef.current = verifySendMutation.mutateAsync
-  const submitScoreRef = useRef(submitScoreMutation.mutateAsync)
-  submitScoreRef.current = submitScoreMutation.mutateAsync
+  const verifyScoreRef = useRef(verifyScoreMutation.mutateAsync)
+  verifyScoreRef.current = verifyScoreMutation.mutateAsync
   const createPostRef = useRef(createPostMutation.mutateAsync)
   createPostRef.current = createPostMutation.mutateAsync
 
@@ -126,8 +126,8 @@ export function ProofLadder({
       verifyChatSend: async (content) => {
         await verifySendRef.current({ content })
       },
-      submitGameScore: async (score) => {
-        await submitScoreRef.current({ score })
+      verifyGameScore: async (score) => {
+        await verifyScoreRef.current({ score })
       },
       fetchSecretMessage: () => queryClient.fetchQuery(trpc.auth.getSecretMessage.queryOptions()),
       createDraftPost: async (input) => {
@@ -139,8 +139,6 @@ export function ProofLadder({
     })
 
     applyResults(results, setStates, setReceipts)
-    await queryClient.invalidateQueries({ queryKey: trpc.game.leaderboard.queryKey() })
-    await queryClient.invalidateQueries({ queryKey: trpc.game.myBest.queryKey() })
   }, [apiReachable, queryClient, trpc])
 
   runChecksRef.current = runChecks

@@ -11,9 +11,9 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statfsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { createProject } from '../../apps/cli/src/lib/create'
-import { projectDefaultsForPreset } from '../../apps/cli/src/registry/preset-config'
-import type { Preset } from '../../apps/cli/src/types/schemas'
+import { createProject } from '@kitsunekode/arche/create'
+import { projectDefaultsForPreset } from '@kitsunekode/arche/preset-config'
+import type { Preset } from '@kitsunekode/arche/schemas'
 
 const GRADUATED_PRESETS: Preset[] = [
   'typescript-fullstack',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
-import { mergeBestPerUser, rankForBestScore } from './game.rank.js'
+import { mergeBestPerUser, rankForBestScore } from './game.rank'
 
 describe('game.rank', () => {
   it('rankForBestScore is one plus users above', () => {

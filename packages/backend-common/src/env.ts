@@ -51,7 +51,14 @@ export const serverEnv = createEnv({
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? process.env.RENDER_EXTERNAL_URL,
   },
   emptyStringAsUndefined: true,
-  skipValidation: !!process.env.CI || !!process.env.VERCEL || !!process.env.RENDER,
+  skipValidation:
+    !!process.env.CI ||
+    !!process.env.VERCEL ||
+    !!process.env.RENDER ||
+    process.env.SKIP_ENV_VALIDATION === 'true' ||
+    process.env.SKIP_ENV_VALIDATION === '1' ||
+    process.env.npm_lifecycle_event === 'build' ||
+    Boolean(process.env.NEXT_PHASE),
 })
 
 export type ServerEnv = typeof serverEnv

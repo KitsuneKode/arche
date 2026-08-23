@@ -5,6 +5,18 @@ stable. A scaffold option is `Stable` only after the generated project passes
 the advertised install, check, test, build, and capability-specific verification
 matrix for every first-class route it claims to support.
 
+## Maintainer extract (this repo)
+
+When changing shared runtime code in the dogfood monorepo, refresh CLI templates:
+
+```bash
+bun run template:extract
+bun run template:sync:check
+```
+
+Generated fullstack web must depend on `@scope/trpc` (client contract), not `@scope/server`.
+`packages/trpc` re-exports from the server package — that package→app inversion is intentional.
+
 ## Core rules
 
 - Framework entrypoints stay thin.

@@ -1,8 +1,8 @@
 import { Router } from 'express'
 
-import { liveStreamRateLimit } from '../../common/middleware/rate-limit.js'
-import { latticeService } from '../lattice/lattice.service.js'
-import { subscribeLiveEvents } from './live.events.js'
+import { liveStreamRateLimit } from '../../common/middleware/rate-limit'
+import { latticeService } from '../lattice/lattice.service'
+import { subscribeLiveEvents } from './live.events'
 
 export const liveRoutes = Router()
 
@@ -31,7 +31,11 @@ liveRoutes.get('/stream', liveStreamRateLimit, async (req, res) => {
 
   const unsubscribe = subscribeLiveEvents((payload) => {
     if (payload.type === 'chat:message') {
-      send('chat:message', { messageId: payload.messageId })
+      send('chat:message', { message: payload.message })
+      return
+    }
+    if (payload.type === 'game:leaderboard') {
+      send('game:leaderboard', { ok: true })
       return
     }
     if (payload.type === 'lattice:state') {

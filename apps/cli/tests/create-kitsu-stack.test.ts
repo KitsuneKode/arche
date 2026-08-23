@@ -4,17 +4,13 @@ import { join } from 'node:path'
 import {
   buildGeneratedArchitectureMd,
   buildRootAgentsMd,
-} from '../../../apps/cli/src/lib/generators/agent-docs'
-import { renderGithubActionsWorkflow } from '../../../apps/cli/src/lib/generators/ci'
-import { renderDockerCompose } from '../../../apps/cli/src/lib/generators/docker'
-import { buildServerEnv } from '../../../apps/cli/src/lib/generators/env'
-import { buildReadme } from '../../../apps/cli/src/lib/generators/readme'
-import {
-  buildCleanupTargets,
-  sanitizeProjectName,
-  scaffoldProject,
-} from '../../../apps/cli/src/lib/scaffold'
-import type { ProjectConfig } from '../../../apps/cli/src/types/schemas'
+  renderGithubActionsWorkflow,
+  renderDockerCompose,
+  buildServerEnv,
+  buildReadme,
+} from '../src/lib/generators'
+import { buildCleanupTargets, sanitizeProjectName, scaffoldProject } from '../src/lib/scaffold'
+import type { ProjectConfig } from '../src/types/schemas'
 
 function baseConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
   return {
@@ -59,7 +55,7 @@ describe('cleanup targets', () => {
       buildCleanupTargets({
         includeShowcase: false,
         includeWorker: false,
-    includeLiveDemo: false,
+        includeLiveDemo: false,
         testing: 'none',
         family: 'fullstack',
       }),
@@ -70,7 +66,7 @@ describe('cleanup targets', () => {
     const targets = buildCleanupTargets({
       includeShowcase: false,
       includeWorker: false,
-    includeLiveDemo: false,
+      includeLiveDemo: false,
       testing: 'bun',
       family: 'next',
     })

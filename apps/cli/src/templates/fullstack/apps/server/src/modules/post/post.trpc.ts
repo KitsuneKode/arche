@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from '@trpc/server'
-import { withAppErrors } from '../common/trpc-errors.js'
-import { protectedProcedure, publicProcedure } from '../trpc/trpc.js'
+import { withAppErrors } from '../common/trpc-errors'
+import { protectedProcedure, publicProcedure } from '../trpc/trpc'
 import { createPostSchema, postIdSchema, postSlugSchema, updatePostSchema } from './post.dto'
 import { postService } from './post.service'
 

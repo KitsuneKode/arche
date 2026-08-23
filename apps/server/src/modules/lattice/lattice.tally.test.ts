@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
-import { pickRoundWinner } from './lattice.tally.js'
+import { pickRoundWinner } from './lattice.tally'
 
 describe('pickRoundWinner', () => {
   it('picks higher vote count', () => {
