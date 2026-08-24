@@ -5,8 +5,8 @@ import { join } from 'node:path'
 const rootDir = join(import.meta.dir, '../../..')
 
 describe('post CRUD integration', () => {
-  it('has tRPC package with index entry', () => {
-    expect(existsSync(join(rootDir, 'packages/trpc/src/index.ts'))).toBe(true)
+  it('has tRPC module with index entry', () => {
+    expect(existsSync(join(rootDir, 'apps/server/src/modules/trpc/index.ts'))).toBe(true)
   })
 
   it('has store package with index entry', () => {
@@ -14,7 +14,7 @@ describe('post CRUD integration', () => {
   })
 
   it('tRPC index exports appRouter', async () => {
-    const content = await Bun.file(join(rootDir, 'packages/trpc/src/index.ts')).text()
+    const content = await Bun.file(join(rootDir, 'apps/server/src/modules/trpc/index.ts')).text()
     expect(content).toMatch(/appRouter|createCaller/)
   })
 

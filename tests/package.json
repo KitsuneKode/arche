@@ -13,8 +13,7 @@
   "dependencies": {
     "@arche-template/auth": "workspace:*",
     "@arche-template/server": "workspace:*",
-    "@arche-template/store": "workspace:*",
-    "@arche-template/trpc": "workspace:*"
+    "@arche-template/store": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "catalog:"

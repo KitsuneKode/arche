@@ -1,6 +1,6 @@
 import 'server-only'
 
-import type { AppRouter } from '@arche-template/trpc'
+import type { AppRouter } from '@arche-template/server/trpc'
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { createTRPCClient, httpLink } from '@trpc/client'
 import { createTRPCOptionsProxy, TRPCQueryOptions } from '@trpc/tanstack-react-query'

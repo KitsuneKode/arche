@@ -121,7 +121,7 @@ describe('family-aware agent docs', () => {
   it('includes fullstack key dirs for fullstack family', () => {
     const agents = buildRootAgentsMd(baseConfig())
     expect(agents).toContain('apps/web')
-    expect(agents).toContain('packages/trpc')
+    expect(agents).toContain('apps/server')
     expect(agents).toContain('packages/store')
   })
 
@@ -129,7 +129,7 @@ describe('family-aware agent docs', () => {
     const agents = buildRootAgentsMd(baseConfig({ family: 'next' }))
     expect(agents).toContain('components')
     expect(agents).not.toContain('apps/web')
-    expect(agents).not.toContain('packages/trpc')
+    expect(agents).not.toContain('apps/server')
   })
 })
 
@@ -194,7 +194,6 @@ describe('scaffold smoke tests', () => {
     expect(existsSync(join(tsTurboDir, 'package.json'))).toBe(true)
     expect(existsSync(join(tsTurboDir, 'apps/server'))).toBe(true)
     expect(existsSync(join(tsTurboDir, 'apps/web'))).toBe(true)
-    expect(existsSync(join(tsTurboDir, 'packages/trpc'))).toBe(true)
     expect(existsSync(join(tsTurboDir, 'docker-compose.yml'))).toBe(true)
     expect(existsSync(join(tsTurboDir, 'SHOWCASE.mdx'))).toBe(true)
   })

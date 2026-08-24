@@ -9,6 +9,7 @@
     "./trpc": "./src/modules/trpc/index.ts"
   },
   "scripts": {
+    "test": "bun test",
     "check-types": "tsc --noEmit",
     "build": "bun build ./src/server.ts --outdir ./dist --target bun --minify --sourcemap",
     "build:vercel": "bun build ./src/vercel-handler.ts --outdir ./dist --target bun --minify --sourcemap",

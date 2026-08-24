@@ -14,7 +14,7 @@ Run `bun run repo:doctor` before release or after large cleanup passes.
 ## Repo-specific invariants
 
 - tRPC: `apps/server/src/modules/<feature>/*.trpc.ts` → `apps/server/src/modules/trpc/app.router.ts`.
-- `packages/trpc` is the **client contract only** (re-exports `AppRouter` / `createCaller`).
+- tRPC contract: `apps/server/src/modules/trpc` exports `AppRouter` and `createCaller` directly to web/worker.
 - Production default: Vercel web + Render Docker API + Neon + Upstash — [docs/production-playbook.md](docs/production-playbook.md).
 - Prefer correctness and robustness over short-term convenience.
 
@@ -29,7 +29,6 @@ CI: `bun run ci:min` (full `bun run ci` on `main`/`prod`/`develop`) — [docs/ci
 | `apps/web`                | Next.js App Router; tRPC client + `trpcCaller` for RSC |
 | `apps/server`             | Express, Better Auth, `src/modules/*`                  |
 | `apps/worker`             | Background jobs (Redis/BullMQ when enabled)            |
-| `packages/trpc`           | Client contract only                                   |
 | `packages/store`          | Prisma schema and client                               |
 | `packages/auth`           | Better Auth server + client                            |
 | `packages/backend-common` | `serverEnv`, Redis, BullMQ, logging, `validate-env`    |

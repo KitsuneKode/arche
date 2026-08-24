@@ -7,7 +7,6 @@
       "@/*": ["./src/*"],
       "@arche-template/store/*": ["../../packages/store/src/*"],
       "@arche-template/auth/*": ["../../packages/auth/src/*"],
-      "@arche-template/trpc/*": ["../../packages/trpc/src/*"],
       "@arche-template/backend-common/*": ["../../packages/backend-common/src/*"],
       "@arche-template/common/*": ["../../packages/common/src/*"]
     }

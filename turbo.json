@@ -1,6 +1,6 @@
 {
   "$schema": "https://v2-10-0.turborepo.dev/schema.json",
-  "ui": "tui",
+  "ui": "stream",
   "globalEnv": [
     "NODE_ENV",
     "NEXT_PUBLIC_APP_URL",
@@ -24,6 +24,9 @@
     "GOOGLE_CLIENT_SECRET"
   ],
   "tasks": {
+    "test": {
+      "dependsOn": ["transit"]
+    },
     "transit": {
       "dependsOn": ["^transit"]
     },
@@ -64,6 +67,10 @@
     "db:seed": {
       "persistent": true,
       "cache": false
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

@@ -14,7 +14,6 @@
     "@arche-template/server",
     "@arche-template/store",
     "@arche-template/tooling-scripts",
-    "@arche-template/trpc",
     "@arche-template/typescript-config",
     "@arche-template/ui",
     "@arche-template/web",

@@ -17,16 +17,17 @@ function vercelWebOrigin(): string | undefined {
 export const clientEnv = createEnv({
   server: {},
   client: {
-    NEXT_PUBLIC_APP_URL: z.string().url(),
-    NEXT_PUBLIC_API_URL: z.string().url(),
+    NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
+    NEXT_PUBLIC_API_URL: z.string().url().default('http://localhost:8080'),
   },
   clientPrefix: 'NEXT_PUBLIC_',
   runtimeEnvStrict: {
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? vercelWebOrigin(),
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_APP_URL:
+      process.env.NEXT_PUBLIC_APP_URL ?? vercelWebOrigin() ?? 'http://localhost:3000',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080',
   },
   emptyStringAsUndefined: true,
-  skipValidation: !!process.env.CI,
+  skipValidation: !!process.env.CI || !!process.env.VERCEL,
 })
 
 export type ClientEnv = typeof clientEnv

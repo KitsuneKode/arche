@@ -1,7 +1,6 @@
-#!/usr/bin/env bun
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 
-const ROOT = process.cwd()
+const ROOT = resolve(import.meta.dir, '../..')
 const TEMPLATE_PREFIX = join(ROOT, 'apps/cli/src/templates/fullstack')
 
 async function fileExists(path: string): Promise<boolean> {

@@ -12,7 +12,7 @@ import {
   type RefObject,
 } from 'react'
 
-import type { RouterOutputs } from '@arche-template/trpc'
+import type { RouterOutputs } from '@arche-template/server/trpc'
 import { liveStreamUrl } from '@/lib/live-chat-sync'
 import {
   createLiveFeed,
@@ -76,7 +76,9 @@ export function LiveRoomProvider({ children }: { children: React.ReactNode }) {
   }, [queryClient, trpc.chat.list, trpc.lattice.getState])
 
   const handlersRef = useRef({ onEvent, onPollTick })
-  handlersRef.current = { onEvent, onPollTick }
+  useEffect(() => {
+    handlersRef.current = { onEvent, onPollTick }
+  }, [onEvent, onPollTick])
 
   useEffect(() => {
     const feed = createLiveFeed({

@@ -20,7 +20,7 @@ interface CliOptions {
   strict: boolean
 }
 
-const ROOT = process.cwd()
+const ROOT = resolve(import.meta.dir, '../..')
 const IGNORE_SEGMENTS = ['node_modules', '.git', '.turbo', '.next', 'dist', 'build', 'out']
 const DOC_GLOBS = [
   'README.md',

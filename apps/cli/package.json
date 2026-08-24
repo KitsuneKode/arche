@@ -53,24 +53,24 @@
     "dev": "bun run ./src/index.ts",
     "link": "bun run build && bun link",
     "unlink": "bun unlink",
-    "test": "bun test",
+    "test": "bun test tests",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "check-types": "tsc --noEmit",
-    "pack:dry-run": "bun run build && npm pack --dry-run",
+    "pack:dry-run": "bun run build && bun pm pack --dry-run",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@arche-template/registry": "workspace:*",
     "@clack/prompts": "^1.4.0",
-    "picocolors": "^1.1.1",
-    "zod": "catalog:"
+    "picocolors": "^1.1.1"
   },
   "devDependencies": {
+    "@arche-template/registry": "workspace:*",
     "@arche-template/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "oxlint": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "zod": "catalog:"
   },
   "engines": {
     "node": ">=20.0.0"

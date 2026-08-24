@@ -1,5 +1,5 @@
 'use client'
-import type { AppRouter } from '@arche-template/trpc'
+import type { AppRouter } from '@arche-template/server/trpc'
 import type { QueryClient } from '@tanstack/react-query'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { createTRPCClient, httpBatchLink, loggerLink } from '@trpc/client'

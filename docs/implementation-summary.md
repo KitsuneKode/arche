@@ -16,7 +16,7 @@ This is a **decision tree** for navigating production documentation. Use this to
 
 ### Building Features
 
-- Adding a new API endpoint? → `packages/trpc/README.md` + `backend-only.md` (API section)
+- Adding a new API endpoint? → `apps/server/src/modules/trpc` + `backend-only.md` (API section)
 - Building UI components? → `packages/ui/AGENTS.md` + `frontend-design` skill
 - Working with authentication? → `packages/auth/README.md`
 - Setting up background jobs? → `apps/worker/README.md` or `backend-only.md` (Job Processing section)

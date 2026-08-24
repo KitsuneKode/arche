@@ -8,7 +8,7 @@ import {
 } from '../../../toolings/scripts/sync-template-agents'
 
 describe('sync-template-agents', () => {
-  it('finds the eight fullstack template pairs in the real repo', async () => {
+  it('finds the seven fullstack template pairs in the real repo', async () => {
     const pairs = await collectTemplateAgentsPairs()
     const relatives = pairs.map((p) => p.relative).sort()
     expect(relatives).toEqual([
@@ -18,7 +18,6 @@ describe('sync-template-agents', () => {
       'packages/backend-common/AGENTS.md',
       'packages/common/AGENTS.md',
       'packages/store/AGENTS.md',
-      'packages/trpc/AGENTS.md',
       'toolings/typescript-config/AGENTS.md',
     ])
   })
