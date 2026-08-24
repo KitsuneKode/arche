@@ -6,7 +6,7 @@
       "apps/*",
       "packages/*",
       "toolings/*",
-      "tests/*"
+      "tests"
     ],
     "catalog": {
       "@bull-board/api": "^7.1.5",
@@ -84,12 +84,12 @@
     "deps:audit": "bun toolings/scripts/audit-dependencies.ts",
     "deps:unused": "bun toolings/scripts/audit-unused-dependencies.ts",
     "template-deps:check": "bun toolings/scripts/audit-template-deps.ts",
-    "ci": "bun run format:check && bunx turbo run lint check-types && bun test && bunx turbo run build && bun run pkg:check && bun run repo:doctor:strict",
-    "ci:affected": "bun run format:check && bunx turbo run lint check-types --affected && bun test && bunx turbo run build --affected && bun run pkg:check && bun run repo:doctor:strict",
-    "ci:min": "bun run format:check && bunx turbo run lint check-types && bun test && bunx turbo run build",
+    "ci": "bun run format:check && turbo run lint check-types test build && bun run pkg:check && bun run repo:doctor:strict",
+    "ci:affected": "bun run format:check && turbo run lint check-types test build --affected && bun run pkg:check && bun run repo:doctor:strict",
+    "ci:min": "bun run format:check && turbo run lint check-types test build",
     "ci:full": "bun run ci && bun toolings/scripts/verify-generated-project.ts --combo-matrix --run=install,typecheck,lint,build",
-    "check:cli": "bun run format:check && bunx turbo run lint check-types --filter=@kitsunekode/arche && bun test apps/cli/tests",
-    "check:web": "bun run format:check && bunx turbo run lint check-types --filter=@arche-template/web && bun test apps/web",
+    "check:cli": "bun run format:check && turbo run lint check-types test --filter=@kitsunekode/arche",
+    "check:web": "bun run format:check && turbo run lint check-types test --filter=@arche-template/web",
     "secret-scan": "gitleaks detect --source . --redact=100 --config .gitleaks.toml",
     "secret-scan:staged": "gitleaks protect --staged --redact --config .gitleaks.toml",
     "dev": "turbo run dev",

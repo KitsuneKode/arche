@@ -1,8 +1,11 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const WEB_CORE_DIR = join(dirname(fileURLToPath(import.meta.url)), '../templates/_web-core')
+const __dir = dirname(fileURLToPath(import.meta.url))
+const WEB_CORE_DIR = existsSync(join(__dir, '../templates/_web-core'))
+  ? join(__dir, '../templates/_web-core')
+  : join(__dir, '../src/templates/_web-core')
 
 export interface WebCoreVersions {
   dependencies: Record<string, string>

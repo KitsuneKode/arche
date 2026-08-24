@@ -22,16 +22,16 @@
         "create-arche": "dist/index.js",
       },
       "dependencies": {
-        "@arche-template/registry": "workspace:*",
         "@clack/prompts": "^1.4.0",
         "picocolors": "^1.1.1",
-        "zod": "catalog:",
       },
       "devDependencies": {
+        "@arche-template/registry": "workspace:*",
         "@arche-template/typescript-config": "workspace:*",
         "@types/node": "catalog:",
         "oxlint": "catalog:",
         "typescript": "catalog:",
+        "zod": "catalog:",
       },
     },
     "apps/server": {
@@ -71,8 +71,8 @@
         "@arche-template/auth": "workspace:*",
         "@arche-template/common": "workspace:*",
         "@arche-template/registry": "workspace:*",
+        "@arche-template/server": "workspace:*",
         "@arche-template/store": "workspace:*",
-        "@arche-template/trpc": "workspace:*",
         "@arche-template/ui": "workspace:*",
         "@t3-oss/env-nextjs": "catalog:",
         "@tanstack/react-query": "catalog:",
@@ -96,6 +96,7 @@
       "devDependencies": {
         "@arche-template/typescript-config": "workspace:*",
         "@tailwindcss/postcss": "catalog:",
+        "@types/express": "catalog:",
         "@types/mdx": "catalog:",
         "@types/node": "catalog:",
         "@types/react": "catalog:",
@@ -206,20 +207,6 @@
         "typescript": "catalog:",
       },
     },
-    "packages/trpc": {
-      "name": "@arche-template/trpc",
-      "dependencies": {
-        "@arche-template/server": "workspace:*",
-      },
-      "devDependencies": {
-        "@arche-template/typescript-config": "workspace:*",
-        "@types/bun": "catalog:",
-        "oxlint": "catalog:",
-      },
-      "peerDependencies": {
-        "typescript": "catalog:",
-      },
-    },
     "packages/ui": {
       "name": "@arche-template/ui",
       "version": "0.0.0",
@@ -245,6 +232,20 @@
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "oxlint": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
+    "tests": {
+      "name": "@arche-template/tests",
+      "dependencies": {
+        "@arche-template/auth": "workspace:*",
+        "@arche-template/server": "workspace:*",
+        "@arche-template/store": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "catalog:",
+      },
+      "peerDependencies": {
         "typescript": "catalog:",
       },
     },
@@ -358,9 +359,9 @@
 
     "@arche-template/store": ["@arche-template/store@workspace:packages/store"],
 
-    "@arche-template/tooling-scripts": ["@arche-template/tooling-scripts@workspace:toolings/scripts"],
+    "@arche-template/tests": ["@arche-template/tests@workspace:tests"],
 
-    "@arche-template/trpc": ["@arche-template/trpc@workspace:packages/trpc"],
+    "@arche-template/tooling-scripts": ["@arche-template/tooling-scripts@workspace:toolings/scripts"],
 
     "@arche-template/typescript-config": ["@arche-template/typescript-config@workspace:toolings/typescript-config"],
 

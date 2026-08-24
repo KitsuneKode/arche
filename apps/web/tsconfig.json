@@ -8,7 +8,7 @@
       "@arche-template/ui/*": ["../../packages/ui/src/*"],
       "@arche-template/store/*": ["../../packages/store/src/*"],
       "@arche-template/auth/*": ["../../packages/auth/src/*"],
-      "@arche-template/trpc/*": ["../../packages/trpc/src/*"],
+      "@arche-template/server/trpc": ["../server/src/modules/trpc/index.ts"],
       "@arche-template/common/*": ["../../packages/common/src/*"]
     },
     "plugins": [

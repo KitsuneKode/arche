@@ -10,7 +10,6 @@
     "packages/backend-common",
     "packages/common",
     "packages/store",
-    "packages/trpc",
     "toolings/typescript-config"
   ],
   "exclude": [".vercel", "logs"]

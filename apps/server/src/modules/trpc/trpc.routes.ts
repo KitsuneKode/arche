@@ -1,11 +1,11 @@
 import { createExpressMiddleware } from '@trpc/server/adapters/express'
-import { Router } from 'express'
+import { type Router as ExpressRouter, Router } from 'express'
 import { env } from '../../common/env'
 import { logger } from '../../common/logger'
 import { appRouter } from './app.router'
 import { createTRPCContext } from './trpc'
 
-export const trpcRoutes = Router()
+export const trpcRoutes: ExpressRouter = Router()
 
 const expressMiddleWare = createExpressMiddleware({
   router: appRouter,

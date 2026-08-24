@@ -1,8 +1,7 @@
-#!/usr/bin/env bun
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 
-const ROOT = process.cwd()
+const ROOT = resolve(import.meta.dir, '../..')
 const WEB_CORE = join(ROOT, 'apps/cli/src/templates/_web-core')
 
 const SHARED_COPY_FILES = [

@@ -1,7 +1,7 @@
 import 'server-only' // <-- ensure this file cannot be imported from the client
 import { auth } from '@arche-template/auth/server'
+import { createCaller } from '@arche-template/server/trpc'
 import { prisma as db } from '@arche-template/store'
-import { createCaller } from '@arche-template/trpc'
 import { headers } from 'next/headers'
 import { cache } from 'react'
 

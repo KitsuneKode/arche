@@ -47,19 +47,20 @@ export const env = createEnv({
     NEXT_PUBLIC_SITE_NAME: z.string().default('Arche'),
     NEXT_PUBLIC_SITE_URL: z.string().url().default('http://localhost:3000'),
     NEXT_PUBLIC_SITE_DESCRIPTION: z.string().default(defaultSiteDescription),
-    NEXT_PUBLIC_APP_URL: z.string().url(),
-    NEXT_PUBLIC_API_URL: z.string().url(),
+    NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
+    NEXT_PUBLIC_API_URL: z.string().url().default('http://localhost:8080'),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_SITE_NAME: publicSiteName,
     NEXT_PUBLIC_SITE_URL: publicSiteUrl,
     NEXT_PUBLIC_SITE_DESCRIPTION: publicSiteDescription,
-    NEXT_PUBLIC_APP_URL: publicAppUrl,
-    NEXT_PUBLIC_API_URL: sanitizePublicEnv(process.env.NEXT_PUBLIC_API_URL),
+    NEXT_PUBLIC_APP_URL: publicAppUrl ?? 'http://localhost:3000',
+    NEXT_PUBLIC_API_URL:
+      sanitizePublicEnv(process.env.NEXT_PUBLIC_API_URL) ?? 'http://localhost:8080',
   },
   emptyStringAsUndefined: true,
   // CI/Vercel set CI=1; runtime fallbacks above must stay in sync with Zod defaults.
-  skipValidation: !!process.env.CI,
+  skipValidation: !!process.env.CI || !!process.env.VERCEL,
 })
 
 export type Env = typeof env

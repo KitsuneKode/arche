@@ -22,7 +22,6 @@ function keyDirs(config: ProjectConfig): string[] {
       dirs.push('`apps/server` — API server')
       dirs.push('`packages/auth` — Better Auth configuration')
       dirs.push('`packages/store` — Database schema and client')
-      dirs.push('`packages/trpc` — tRPC routers and context')
       dirs.push('`packages/common` — Shared TypeScript helpers')
     }
     if (includeWorker) dirs.push('`apps/worker` — Background job processing')

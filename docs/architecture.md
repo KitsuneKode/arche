@@ -17,7 +17,7 @@ Runtime flow across workspaces. For variant families (next, backend, rust), see 
 - `apps/web` → `@arche-template/auth`, `@arche-template/common`, `@arche-template/store`, `@arche-template/trpc`, `@arche-template/ui`
 - `apps/server` → `@arche-template/auth`, `@arche-template/backend-common`, `@arche-template/store`; implements tRPC
 - `apps/worker` → `@arche-template/backend-common`, `@arche-template/store` (jobs; needs `REDIS_URL`)
-- `packages/trpc` → re-exports server router types and `createCaller` only
+- `apps/server/src/modules/trpc` → exports router types and `createCaller` directly to web/worker
 - `packages/backend-common` → `serverEnv`, application Redis (`redis`), BullMQ connections (`ioredis`), logging, `validate-env`
 
 ## Config

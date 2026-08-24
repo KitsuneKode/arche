@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "bun test",
     "dev": "next dev --turbopack --port 3000",
     "build": "next build",
     "start": "next start",
@@ -18,8 +19,8 @@
     "@arche-template/auth": "workspace:*",
     "@arche-template/common": "workspace:*",
     "@arche-template/registry": "workspace:*",
+    "@arche-template/server": "workspace:*",
     "@arche-template/store": "workspace:*",
-    "@arche-template/trpc": "workspace:*",
     "@arche-template/ui": "workspace:*",
     "@t3-oss/env-nextjs": "catalog:",
     "@tanstack/react-query": "catalog:",
@@ -43,6 +44,7 @@
   "devDependencies": {
     "@arche-template/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:",
+    "@types/express": "catalog:",
     "@types/mdx": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

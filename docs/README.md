@@ -47,7 +47,6 @@ current implementation sources.
 - `apps/worker` - optional worker template source.
 - `packages/auth` - Better Auth template package.
 - `packages/store` - Prisma/store template package.
-- `packages/trpc` - client contract template package.
 - `packages/backend-common` - env, logging, Redis helpers.
 - `packages/ui` - shared UI components.
 - `toolings/*` - shared config and repo scripts.

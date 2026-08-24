@@ -67,7 +67,6 @@ This project was scaffolded with the **product** bundle (auth, database, API).
 - \`apps/web\` — Next.js frontend
 - \`apps/server\` — Express API + tRPC + Better Auth
 - \`packages/store\` — Database (Prisma/Drizzle)
-- \`packages/trpc\` — API contract (re-exports server router)
 - \`packages/auth\` — Better Auth configuration
 
 ## Commands

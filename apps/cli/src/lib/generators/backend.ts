@@ -220,12 +220,6 @@ export const protectedProcedure = t.procedure
 `
 }
 
-/** Keep @arche-template/trpc as a thin re-export for web clients */
-function trpcIndexFetch(): string {
-  return `export type { AppRouter, RouterInputs, RouterOutputs } from '@arche-template/server/trpc'
-`
-}
-
 /** Server-side tRPC barrel after removing Express-only route modules (Hono fetch adapter). */
 function trpcIndexFetchServer(): string {
   return `import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server'
@@ -663,10 +657,10 @@ export async function applyBackendTransform(
     // 3. Patch server package.json
     await patchPackageJson(join(destinationDir, serverDir, 'package.json'), honoPackageJsonPatch())
 
-    // 4. Rewrite tRPC package for fetch-based context (fullstack only)
-    const trpcSrcDir = join(destinationDir, 'packages', 'trpc', 'src')
+    // 4. Rewrite tRPC server module for fetch-based context (fullstack only)
+    const trpcModuleDir = join(destinationDir, serverDir, 'src/modules/trpc')
     try {
-      await stat(trpcSrcDir)
+      await stat(trpcModuleDir)
       await writeFile_(
         join(destinationDir, serverDir, 'src/modules/trpc/trpc.ts'),
         trpcContextFetch(),
@@ -675,9 +669,8 @@ export async function applyBackendTransform(
         join(destinationDir, serverDir, 'src/modules/trpc/index.ts'),
         trpcIndexFetchServer(),
       )
-      await writeFile_(join(destinationDir, 'packages/trpc/src/index.ts'), trpcIndexFetch())
     } catch {
-      // tRPC package not present — standalone or polyglot without tRPC
+      // tRPC module not present — standalone or polyglot without tRPC
     }
 
     await patchFullstackHomepageCopy(destinationDir, config.backend)

@@ -16,7 +16,6 @@
     "@arche-template/common": "workspace:*",
     "@arche-template/server": "workspace:*",
     "@arche-template/store": "workspace:*",
-    "@arche-template/trpc": "workspace:*",
     "@tanstack/react-query": "^5.101.1",
     "@trpc/client": "^11.18.0",
     "@trpc/tanstack-react-query": "^11.18.0",

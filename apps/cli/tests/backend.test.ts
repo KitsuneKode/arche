@@ -56,7 +56,6 @@ describe('applyBackendTransform', () => {
     await mkdir(join(tempDir, 'apps/server/src/modules/auth'), { recursive: true })
     await mkdir(join(tempDir, 'apps/server/src/modules/health'), { recursive: true })
     await mkdir(join(tempDir, 'apps/server/src/modules/root'), { recursive: true })
-    await mkdir(join(tempDir, 'packages/trpc/src'), { recursive: true })
 
     // Mock Express app.ts
     await writeFile(
@@ -96,12 +95,6 @@ describe('applyBackendTransform', () => {
       join(tempDir, 'apps/server/src/modules/trpc/trpc.ts'),
       'import { createExpressMiddleware } from "@trpc/server/adapters/express"\n',
     )
-    // Mock tRPC index.ts
-    await writeFile(
-      join(tempDir, 'packages/trpc/src/index.ts'),
-      'export { expressMiddleWare } from "./middleware"\n',
-    )
-    // Mock Express-only artifacts removed by hono-bun transform
     await writeFile(
       join(tempDir, 'apps/server/src/vercel-handler.ts'),
       'import express from "express"\n',
@@ -210,15 +203,6 @@ describe('applyBackendTransform', () => {
       expect(trpcTs).toContain('createTRPCContext')
       expect(trpcTs).not.toContain('createExpressMiddleware')
       expect(trpcTs).not.toContain('CreateExpressContextOptions')
-    })
-
-    it('rewrites tRPC index.ts to client contract types only', async () => {
-      await applyBackendTransform(tempDir, makeConfig({ backend: 'hono-bun' }))
-      const indexTs = await readFile(join(tempDir, 'packages/trpc/src/index.ts'), 'utf8')
-      expect(indexTs).toContain('AppRouter')
-      expect(indexTs).toContain('RouterInputs')
-      expect(indexTs).not.toContain('expressMiddleWare')
-      expect(indexTs).not.toContain('createCaller')
     })
 
     it('app.ts mounts auth, trpc, health, and 404 routes', async () => {

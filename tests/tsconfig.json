@@ -25,7 +25,7 @@
       "@arche-template/server": ["apps/server/src/server.ts"],
       "@arche-template/auth/*": ["packages/auth/src/*"],
       "@arche-template/auth": ["packages/auth/src/index.ts"],
-      "@arche-template/trpc": ["packages/trpc/src/index.ts"],
+      "@arche-template/server/trpc": ["apps/server/src/modules/trpc/index.ts"],
       "@arche-template/store": ["packages/store/src/index.ts"],
       "@arche-template/common": ["packages/common/src/index.ts"],
       "@arche-template/backend-common": ["packages/backend-common/src/index.ts"],

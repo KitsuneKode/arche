@@ -575,7 +575,6 @@ async function pruneServiceApiFullstack(destinationDir: string): Promise<string[
     'apps/web/trpc',
     'packages/auth',
     'packages/store',
-    'packages/trpc',
     'packages/backend-common',
     'packages/common',
   ]) {
@@ -604,11 +603,10 @@ async function pruneServiceApiFullstack(destinationDir: string): Promise<string[
   })
 
   await patchJsonFile(join(destinationDir, 'apps/web/package.json'), (pkg) => {
-    removeWorkspacePackages(pkg.dependencies, ['auth', 'store', 'trpc', 'common', 'server'])
+    removeWorkspacePackages(pkg.dependencies, ['auth', 'store', 'common', 'server'])
     removeKeys(pkg.dependencies, [
       '@arche-template/auth',
       '@arche-template/store',
-      '@arche-template/trpc',
       '@arche-template/common',
       '@arche-template/server',
       '@trpc/client',
@@ -624,11 +622,10 @@ async function pruneServiceApiFullstack(destinationDir: string): Promise<string[
   await patchJsonFile(join(destinationDir, 'apps/web/tsconfig.json'), (tsconfig) => {
     const compilerOptions = tsconfig.compilerOptions as Record<string, unknown> | undefined
     const paths = compilerOptions?.paths as Record<string, unknown> | undefined
-    removeWorkspacePathAliases(paths, ['auth', 'store', 'trpc', 'common', 'server'])
+    removeWorkspacePathAliases(paths, ['auth', 'store', 'common', 'server'])
     removeKeys(paths, [
       '@arche-template/store/*',
       '@arche-template/auth/*',
-      '@arche-template/trpc/*',
       '@arche-template/common/*',
       '@arche-template/server/*',
     ])

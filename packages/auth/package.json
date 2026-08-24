@@ -9,6 +9,7 @@
     "./guest-display-name": "./src/guest-display-name.ts"
   },
   "scripts": {
+    "test": "bun test",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "check-types": "tsc --noEmit"
